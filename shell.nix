@@ -7,6 +7,7 @@ pkgs.mkShell {
     pkgs.python3
     pkgs.python3Packages.django
     pkgs.python313Packages.fastapi-cli
+    pkgs.python313Packages.fastapi
   ];
 
   shellHook = '''';
