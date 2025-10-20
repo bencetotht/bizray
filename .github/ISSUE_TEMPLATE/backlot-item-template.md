@@ -14,4 +14,4 @@ assignees: ''
 - *As a [type of user], I want to [perform an action], so that [achieve a goal].*
 
 ## Acceptance Criteria
-- *measurable conditions that define when the story is done*
+- [ ] *measurable conditions that define when the story is done*
