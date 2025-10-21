@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from api import api_router
 
 app = FastAPI()
 
@@ -11,13 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to BizRay API"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+app.include_router(api_router)
 
 if __name__ == "__main__":
     import uvicorn
