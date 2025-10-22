@@ -2,7 +2,7 @@
 
 ## Company information
 ### Search for companies
-Request: `GET /api/v1/?q=search`
+Request: `GET /api/v1/company?q=search`
 
 Parameters:
 - `q`: search query
