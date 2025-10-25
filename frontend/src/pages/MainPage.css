@@ -1,13 +1,6 @@
 .App {
-  text-align: right;
+  text-align: left;
 }
-
-* {
-  background: red !important;
-}
-
-
-
 
 /* Additional app-specific styles */
 .gradient-bg {
