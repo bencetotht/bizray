@@ -1,11 +1,7 @@
 # Builder stage
 FROM node:24-bullseye AS builder
-# Install devDependencies to run Vite build
-ENV NODE_ENV=development
 WORKDIR /app
 COPY ./package.json ./
-# Intentionally do NOT copy package-lock.json to avoid npm optional-deps bug with Rollup on Linux
-# Install deps including dev so Vite build works
 RUN npm install --include=dev
 COPY . .
 ENV TSC_COMPILE_ON_ERROR=true
