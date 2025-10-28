@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - backend/**
+      - .github/workflows/cd-b.yaml
 jobs:
   build-push-gcr:
     name: Build and Push to GCP

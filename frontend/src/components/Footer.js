@@ -72,15 +72,15 @@ const Footer = () => {
               </div>
             </div>
             <div className="social-links">
-              <a href="#" className="social-link">
+              <button type="button" className="social-link" aria-label="GitHub">
                 <Github size={20} />
-              </a>
-              <a href="#" className="social-link">
+              </button>
+              <button type="button" className="social-link" aria-label="LinkedIn">
                 <Linkedin size={20} />
-              </a>
-              <a href="#" className="social-link">
+              </button>
+              <button type="button" className="social-link" aria-label="Twitter">
                 <Twitter size={20} />
-              </a>
+              </button>
             </div>
           </div>
         </div>

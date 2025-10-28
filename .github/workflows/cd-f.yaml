@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - frontend/**
+      - .github/workflows/cd-f.yaml
 jobs:
   build-push-gcr:
     name: Build and Push to GCP
@@ -38,7 +39,7 @@ jobs:
         password: ${{ steps.auth.outputs.access_token }}
 
     - name: Build Docker Image
-      run: docker build -t $IMAGE_NAME:latest ./
+      run: docker build -t $IMAGE_NAME:latest .
 
     - name: Push Docker Image to Artifact Registry
       env:

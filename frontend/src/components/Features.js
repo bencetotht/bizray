@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Users, Network, Shield, Download, BarChart3, Eye, Database } from 'lucide-react';
+import { Users, Network, Shield, Download, BarChart3, Eye } from 'lucide-react';
 import './Features.css';
 
 const Features = () => {
