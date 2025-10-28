@@ -38,7 +38,7 @@ jobs:
         password: ${{ steps.auth.outputs.access_token }}
 
     - name: Build Docker Image
-      run: docker build -t $IMAGE_NAME:latest -f frontend/Dockerfile ./frontend
+      run: docker build -t $IMAGE_NAME:latest -f Dockerfile .
 
     - name: Push Docker Image to Artifact Registry
       env:
