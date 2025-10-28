@@ -4,7 +4,7 @@ import Features from '../components/Features';
 
 
 
-export default function Features_Page() {
+export default function FeaturesPage() {
   return (
     <div>
       <h1>Features</h1>

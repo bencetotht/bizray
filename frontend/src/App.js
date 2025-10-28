@@ -8,7 +8,7 @@ import MainPage from "./pages/MainPage";
 import AboutPage from "./pages/AboutPage"
 import CompanyDetails from "./pages/CompanyDetails"
 import Pricing from "./pages/Pricing"
-import Features_Page from "./pages/Features_Page";
+import FeaturesPage from "./pages/Features_Page";
 import Services from "./pages/Services";
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<MainPage />} />
-          <Route path="/features" element={<Features_Page />} />
+          <Route path="/features" element={<FeaturesPage />} />
           <Route path="/services" element={<Services />} />
 
           <Route path="/about" element={<AboutPage />} />
