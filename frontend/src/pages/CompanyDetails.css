@@ -1,0 +1,203 @@
+.company-details-section {
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+    margin-top: 20px;
+}
+
+.company-card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.company-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  width: 80vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.company-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.company-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.company-info h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.company-info p {
+  color: #718096;
+  font-size: 0.95rem;
+}
+
+
+.risk-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.risk-indicator.low {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+
+.company-details-content {
+  display: grid;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.firmenbuchnummer {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+
+
+
+@media (max-width: 480px) {
+  .company-card {
+    padding: 24px;
+  }
+
+  .company-info h2 {
+    font-size: 1.1rem;
+  }
+
+  .company-avatar {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 24px 0;
+}
+
+
+.network-preview {
+  margin-top: 16px;
+  color: #4a5568;
+  text-align: left;
+}
+
+.network-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.network-description {
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+
+
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 16px 0 12px;
+}
+
+.network-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+
+.network-description {
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  line-height: 1.55;
+}
+
+
+.network-graph {
+  height: 38vh;           
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
