@@ -19,10 +19,11 @@ const Header = () => {
 
           <nav className={`nav ${isMenuOpen ? "nav-open" : ""}`}>
             <NavLink to="/" className="nav-link" onClick={closeMenu}>Main Page</NavLink>
+            <NavLink to="/company_details" className="nav-link" onClick={closeMenu}>Company Demo</NavLink>
             <NavLink to="/features" className="nav-link" onClick={closeMenu}>Features</NavLink>
             <NavLink to="/pricing" className="nav-link" onClick={closeMenu}>Pricing</NavLink>
             <NavLink to="/about" className="nav-link" onClick={closeMenu}>About</NavLink>
-            <NavLink to="/company_details" className="nav-link" onClick={closeMenu}>Company</NavLink>
+            
           </nav>
 
           <div className="header-actions">
