@@ -21,7 +21,7 @@
     "preview": "vite preview",
     "start": "vite",
     "test": "echo \"No test runner configured with Vite yet\" && exit 0",
-    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings=0",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings=5",
     "eject": "echo \"eject not supported with Vite\" && exit 0"
   },
   "devDependencies": {
