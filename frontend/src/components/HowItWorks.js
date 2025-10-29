@@ -34,29 +34,6 @@ const HowItWorks = () => {
     }
   ];
 
-  const useCases = [
-    {
-      role: "Customer",
-      scenario: "A customer checks if a company actually exists before placing an order.",
-      icon: "👤"
-    },
-    {
-      role: "Supplier", 
-      scenario: "A supplier checks if a potential partner has any bankrupt connections.",
-      icon: "🏢"
-    },
-    {
-      role: "Sibling Company",
-      scenario: "A sibling company verifies if they share executives with another entity.",
-      icon: "🤝"
-    },
-    {
-      role: "Administrator",
-      scenario: "An administrator reviews logs and updates the database via API.",
-      icon: "⚙️"
-    }
-  ];
-
   return (
     <section id="how-it-works" className="section how-it-works">
       <div className="container">
@@ -88,18 +65,6 @@ const HowItWorks = () => {
           ))}
         </div>
 
-        <div className="use-cases">
-          <h3 className="use-cases-title">Real Use Cases</h3>
-          <div className="use-cases-grid">
-            {useCases.map((useCase, index) => (
-              <div key={index} className="use-case-card">
-                <div className="use-case-icon">{useCase.icon}</div>
-                <h4 className="use-case-role">{useCase.role}</h4>
-                <p className="use-case-scenario">{useCase.scenario}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

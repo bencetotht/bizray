@@ -14,7 +14,7 @@ const Features = () => {
       icon: <Network size={32} />,
       title: "Network Visualization",
       description: "Interactive map of company relationships. Influence networks analyzed using PageRank algorithm.",
-      highlight: "Up to 1000 nodes"
+      highlight: "Enterprise-scale graphs"
     },
     {
       icon: <Shield size={32} />,
@@ -24,9 +24,9 @@ const Features = () => {
     },
     {
       icon: <Download size={32} />,
-      title: "Data Export",
-      description: "Download and share company summaries. API access and bulk data management.",
-      highlight: "2TB+ data"
+      title: "Custom Report Builder",
+      description: "Generate detailed, downloadable reports tailored to your business needs. Combine data, analytics, and visualizations in a single click.",
+      highlight: "One-click PDF/CSV"
     },
     {
       icon: <BarChart3 size={32} />,
@@ -66,15 +66,6 @@ const Features = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="features-cta">
-          <h3>Ready to explore the business world?</h3>
-          <p>Join thousands of users who are already making more transparent decisions.</p>
-          <div className="cta-buttons">
-            <button className="btn btn-primary">Get Started Now</button>
-            <button className="btn btn-secondary">Learn More</button>
-          </div>
         </div>
       </div>
     </section>

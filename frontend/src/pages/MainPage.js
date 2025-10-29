@@ -8,7 +8,7 @@ export default function MainPage(){
         <div className="App">
         <Hero />
         <Features /> 
-         <HowItWorks /> 
+        <HowItWorks /> 
         <Stats /> 
         </div>
     )

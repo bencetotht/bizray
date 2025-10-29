@@ -1,22 +1,82 @@
 // src/pages/CompanyDetails.js
-import React, { useMemo } from "react";
+import React from "react";
 import { Shield } from "lucide-react";
-import CompanySummaryCard from "../components/CompanySummaryCard";
-import NetworkGraph from "../components/NetworkGraph";   // ⬅️ NEW
 import "./CompanyDetails.css";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import CompanySummaryCard from "../components/CompanySummaryCard";
+import NetworkGraph from "../components/NetworkGraph";
 
 export default function CompanyDetails() {
-  const company = useMemo(
-    () => ({
-      firmenbuchnummer: "661613k",
-      name: "Körpermanufaktur KG",
-      legal_form: "Kommanditgesellschaft",
-      business_purpose:
-        "Betrieb einer Praxis für Physiotherapie und Chiropraktik",
-      seat: "Dornbirn",
-    }),
-    []
-  );
+  const { id } = useParams();
+  const [company, setCompany] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setCompany(null);
+    setNotFound(false);
+    setLoading(true);
+
+    if (!id) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    fetch(`https://apibizray.bnbdevelopment.hu/api/v1/company/${id}`)
+      .then((res) => {
+        if (res.status === 404) {
+          setNotFound(true);
+          setLoading(false);
+          return;
+        }
+        if (!res.ok) {
+          throw new Error("Failed to fetch company data");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setCompany(data.company);
+          setNotFound(false);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching company data:", error);
+        setNotFound(true);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <section className="company-details-section">
+        <div className="container">
+          <div className="company-card-wrapper">
+            <div className="company-card">Loading...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <section className="company-details-section">
+        <div className="container">
+          <div className="company-card-wrapper">
+            <div className="company-card">
+              <h2>Company Not Found</h2>
+              <p>The company you're looking for does not exist or could not be found.</p>
+              {id && <p>Company ID: {id}</p>}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="company-details-section">
@@ -41,7 +101,7 @@ export default function CompanyDetails() {
               </div>
               <div className="risk-indicator low">
                 <Shield size={16} />
-                Low Risk
+                {company.riskScore}
               </div>
             </div>
 

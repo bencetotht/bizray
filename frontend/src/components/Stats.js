@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Users, Network, Shield, TrendingUp, Globe } from 'lucide-react';
+import { Database, Shield, TrendingUp } from 'lucide-react';
 import './Stats.css';
 
 const Stats = () => {
@@ -9,18 +9,6 @@ const Stats = () => {
       number: "2TB+",
       label: "Company Data",
       description: "Complete open database available via API and FTP server"
-    },
-    {
-      icon: <Users size={32} />,
-      number: "100%",
-      label: "Transparency", 
-      description: "All company data publicly accessible and interpretable"
-    },
-    {
-      icon: <Network size={32} />,
-      number: "1000+",
-      label: "Nodes",
-      description: "Network visualization with up to 1000 simultaneous connections"
     },
     {
       icon: <Shield size={32} />,
@@ -34,12 +22,6 @@ const Stats = () => {
       label: "Search Time",
       description: "Fast search results within 3 seconds"
     },
-    {
-      icon: <Globe size={32} />,
-      number: "API",
-      label: "Integration",
-      description: "API key access via eID (ID Austria)"
-    }
   ];
 
   return (

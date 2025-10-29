@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import "./MainPage.css"; // reuse container styles; adjust if you prefer a dedicated css
+import { Search, Loader2, AlertCircle } from "lucide-react";
+import SearchResultCard from "../components/SearchResultCard";
+import "./SearchResults.css";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -42,30 +44,66 @@ export default function SearchResults() {
   }, [q]);
 
   if (!q.trim()) {
-    return <div style={{ padding: "1rem" }}>Please enter a search term.</div>;
+    return (
+      <section className="search-results">
+        <div className="search-results-container">
+          <div className="search-results-empty">
+            <Search size={48} />
+            <h2>Start Your Search</h2>
+            <p>Enter a search term to find companies</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section className="search-results">
-      <div className="container">
-        <h1>Search results for “{q}”</h1>
-        {loading && <p>Loading…</p>}
-        {error && <p className="error">Error: {error}</p>}
-        {!loading && !error && companies.length === 0 && (
-          <p>No companies found for “{q}”.</p>
+      <div className="search-results-container">
+        <div className="search-results-header">
+          <h1 className="search-results-title">
+            Search results for <span className="search-query">"{q}"</span>
+          </h1>
+          {companies.length > 0 && (
+            <p className="search-results-count">
+              {companies.length} {companies.length === 1 ? "company" : "companies"} found
+            </p>
+          )}
+        </div>
+
+        {loading && (
+          <div className="search-results-loading">
+            <Loader2 size={32} className="spinner" />
+            <p>Searching...</p>
+          </div>
         )}
-        <ul className="company-list">
-          {companies.map((c) => (
-            <li key={c.firmenbuchnummer} className="company-list-item">
-              <h3>{c.name}</h3>
-              <p>
-                {c.seat} — {c.legal_form}
-              </p>
-              <p>Firmenbuchnummer: {c.firmenbuchnummer}</p>
-              <p>Risk score: {c.riskScore ?? "N/A"}</p>
-            </li>
-          ))}
-        </ul>
+
+        {error && (
+          <div className="search-results-error">
+            <AlertCircle size={24} />
+            <div>
+              <h3>Error loading results</h3>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && companies.length === 0 && (
+          <div className="search-results-empty">
+            <Search size={48} />
+            <h2>No companies found</h2>
+            <p>We couldn't find any companies matching "{q}"</p>
+            <p className="search-results-suggestion">Try adjusting your search terms</p>
+          </div>
+        )}
+
+        {!loading && !error && companies.length > 0 && (
+          <div className="search-results-grid">
+            {companies.map((company) => (
+              <SearchResultCard key={company.firmenbuchnummer} company={company} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

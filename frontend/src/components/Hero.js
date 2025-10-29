@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <section className="hero">
       <div className="container">
@@ -25,14 +41,17 @@ const Hero = () => {
                   type="text" 
                   placeholder="Search by company name, address, or person..." 
                   className="search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   autoFocus
                 />
-                <button className="search-btn">
+                <button className="search-btn" onClick={handleSearch} aria-label="Search">
                   <ArrowRight size={20} />
                 </button>
               </div>
               <p className="search-hint">
-                Over 2TB of open company data available via API and bulk download
+                Over 2TB of open company data available for free search
               </p>
             </div>
 
@@ -58,7 +77,7 @@ const Hero = () => {
                 <div className="company-info">
                   <div className="company-avatar">AC</div>
                   <div>
-                    <h3>Alpha Corp Ltd.</h3>
+                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I think of saving the world... */}
                     <p>Budapest, Hungary</p>
                   </div>
                 </div>

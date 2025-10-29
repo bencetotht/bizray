@@ -1,7 +1,3 @@
-
-
-
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layouts/MainLayout";
 import MainPage from "./pages/MainPage";
@@ -22,8 +18,8 @@ export default function App() {
           <Route path="/services" element={<Services />} />
 
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/company_details" element={<CompanyDetails />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/company/:id" element={<CompanyDetails />} />
           <Route path="/pricing" element={<Pricing />} />
 
           {/* optional 404: */}
