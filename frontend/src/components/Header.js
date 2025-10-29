@@ -1,12 +1,21 @@
-
 import React, { useState } from "react";
 import { Search, Menu, X, User, LogIn } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import "./Header.css";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const closeMenu = () => setIsMenuOpen(false);
+
+  const submitSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+    // Optionally close the menu on mobile after search
+    setIsMenuOpen(false);
+  };
 
   return (
     <header className="header">
@@ -29,7 +38,24 @@ const Header = () => {
           <div className="header-actions">
             <div className="search-container">
               <Search className="search-icon" size={20} />
-              <input type="text" placeholder="Search companies..." className="search-input" />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                }}
+              />
+              <button
+                type="button"
+                className="search-btn"
+                onClick={submitSearch}
+                aria-label="Search"
+              >
+                Search
+              </button>
             </div>
 
             <div className="auth-buttons">

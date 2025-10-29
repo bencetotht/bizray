@@ -10,6 +10,7 @@ import CompanyDetails from "./pages/CompanyDetails"
 import Pricing from "./pages/Pricing"
 import FeaturesPage from "./pages/Features_Page";
 import Services from "./pages/Services";
+import SearchResults from "./pages/SearchResults";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
 
           <Route path="/about" element={<AboutPage />} />
           <Route path="/company_details" element={<CompanyDetails />} />
+          <Route path="/search" element={<SearchResults />} />
           <Route path="/pricing" element={<Pricing />} />
 
           {/* optional 404: */}
