@@ -1,6 +1,7 @@
 
 
 import './Pricing.css';
+import { Check, X } from 'lucide-react';
 
 export default function Pricing(){
     const privileges = [
@@ -20,7 +21,9 @@ export default function Pricing(){
         if (isLimited) {
             return <span className="limited">Limited</span>;
         }
-        return hasAccess ? <span className="check">✓</span> : <span className="cross">✗</span>;
+        return hasAccess
+            ? <span className="check" aria-label="Available"><Check size={16} aria-hidden="true" /></span>
+            : <span className="cross" aria-label="Unavailable"><X size={16} aria-hidden="true" /></span>;
     };
 
     return (

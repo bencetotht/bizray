@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Shield, TrendingUp } from 'lucide-react';
+import { Database, Shield, TrendingUp, Check } from 'lucide-react';
 import './Stats.css';
 
 const Stats = () => {
@@ -54,15 +54,15 @@ const Stats = () => {
             <h3>Why Choose BizRay?</h3>
             <div className="highlight-features">
               <div className="highlight-feature">
-                <div className="feature-check">✓</div>
+                <div className="feature-check"><Check size={16} aria-hidden="true" /></div>
                 <span>Completely free basic features</span>
               </div>
               <div className="highlight-feature">
-                <div className="feature-check">✓</div>
+                <div className="feature-check"><Check size={16} aria-hidden="true" /></div>
                 <span>EU directive compliant data handling</span>
               </div>
               <div className="highlight-feature">
-                <div className="feature-check">✓</div>
+                <div className="feature-check"><Check size={16} aria-hidden="true" /></div>
                 <span>Real-time data updates</span>
               </div>
             </div>

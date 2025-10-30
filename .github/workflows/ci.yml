@@ -55,3 +55,13 @@ jobs:
         run: npm install
       - name: Run ESLint
         run: npm run lint
+
+  no-emojis-bruh:
+    name: Check repository for no emojis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run emoji check
+        run: |
+          python .github/scripts/check_emojis.py
