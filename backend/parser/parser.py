@@ -18,6 +18,16 @@ def get_text(element, path):
     node = element.find(path, ns)
     return node.text.strip() if node is not None and node.text else None
 
+def parse_date(date_string):
+    if not date_string:
+        return None
+    for fmt in ("%Y%m%d", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(date_string, fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f"Unsupported date format: {date_string}")
+
 def parse_entry(root):
     data = {
         "firmenbuchnummer": root.attrib.get("{ns://firmenbuch.justiz.gv.at/Abfrage/v2/AuszugResponse}FNR", "").replace(" ", ""),
@@ -87,7 +97,7 @@ def load_into_db(data):
             legal_form=data["legal_form"],
             business_purpose=data["business_purpose"],
             seat=data["seat"],
-            reference_date=datetime.strptime(data["reference_date"], "%Y%m%d").date() if data["reference_date"] else None
+            reference_date=parse_date(data["reference_date"]) if data["reference_date"] else None
         )
         
         # Create address
@@ -119,8 +129,8 @@ def load_into_db(data):
                 type=entry_data["type"],
                 court=entry_data["court"],
                 file_number=entry_data["file_number"],
-                application_date=datetime.strptime(entry_data["application_date"], "%Y%m%d").date() if entry_data["application_date"] else None,
-                registration_date=datetime.strptime(entry_data["registration_date"], "%Y%m%d").date() if entry_data["registration_date"] else None
+                application_date=parse_date(entry_data["application_date"]) if entry_data["application_date"] else None,
+                registration_date=parse_date(entry_data["registration_date"]) if entry_data["registration_date"] else None
             )
             company.registry_entries.append(entry)
 
@@ -149,7 +159,6 @@ def parse_file(file_path):
         return None
 
 if __name__ == "__main__":
-    # Initialize the database
     init_db()
     
     directory = '/Users/bencetoth/Downloads/bizrayds/node0/data1/fbp/appl_java/gesamtstand/auszuegeKurz/'
@@ -158,18 +167,15 @@ if __name__ == "__main__":
         try:
             if not file.endswith('.xml'):
                 continue
-            print(f"Parsing file {file} ({index + 1}/{len(os.listdir(directory))})")
+            # print(f"Parsing file {file} ({index + 1}/{len(os.listdir(directory))})")
             data = parse_file(os.path.join(directory, file))
             
             if data:
-                # Load the data into the database
                 load_into_db(data)
-                print(f"Successfully loaded {data['firmenbuchnummer']} into database")
+                # print(f"Successfully loaded {data['firmenbuchnummer']} into database")
         
         except Exception as e:
             print(f"Error processing file {file}: {e}")
         
         if index > 10:
             break
-
-    print(total_data)

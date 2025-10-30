@@ -40,22 +40,22 @@ class Company(Base):
     reference_date: Mapped[date | None] = mapped_column(Date)
 
     # Relationships
-    address: Mapped["Address" | None] = relationship(
+    address: Mapped[Address | None] = relationship(
         back_populates="company",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    partners: Mapped[list["Partner"]] = relationship(
+    partners: Mapped[list[Partner]] = relationship(
         back_populates="company",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    registry_entries: Mapped[list["RegistryEntry"]] = relationship(
+    registry_entries: Mapped[list[RegistryEntry]] = relationship(
         back_populates="company",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    risk_indicators: Mapped[list["RiskIndicator"]] = relationship(
+    risk_indicators: Mapped[list[RiskIndicator]] = relationship(
         back_populates="company",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -131,7 +131,7 @@ class RiskIndicator(Base):
 def _make_engine():
     database_url = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg://postgres:postgres@localhost:5432/bizray",
+        "postgresql+psycopg://admin:admin@localhost:5432/bizray",
     )
     return create_engine(database_url, pool_pre_ping=True)
 
