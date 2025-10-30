@@ -1,7 +1,16 @@
 import xml.etree.ElementTree as ET
 import json
 import os
+from datetime import datetime
 from tqdm import tqdm
+from src.db import (
+    get_session,
+    Company,
+    Address,
+    Partner,
+    RegistryEntry,
+    init_db,
+)
 
 ns = {"ns1": "ns://firmenbuch.justiz.gv.at/Abfrage/v2/AuszugResponse"}
 
@@ -67,6 +76,65 @@ def parse_registry_entries(root):
         registry_entries.append(entry)
     return registry_entries
 
+def load_into_db(data):
+    try:
+        session = get_session()
+        
+        # Create company
+        company = Company(
+            firmenbuchnummer=data["firmenbuchnummer"],
+            name=data["name"],
+            legal_form=data["legal_form"],
+            business_purpose=data["business_purpose"],
+            seat=data["seat"],
+            reference_date=datetime.strptime(data["reference_date"], "%Y%m%d").date() if data["reference_date"] else None
+        )
+        
+        # Create address
+        if any(data["address"].values()):
+            address = Address(
+                street=data["address"]["street"],
+                house_number=data["address"]["house_number"],
+                postal_code=data["address"]["postal_code"],
+                city=data["address"]["city"],
+                country=data["address"]["country"]
+            )
+            company.address = address
+
+        # Create partners
+        for partner_data in data["partners"]:
+            partner = Partner(
+                name=partner_data["name"],
+                first_name=partner_data["first_name"],
+                last_name=partner_data["last_name"],
+                birth_date=datetime.strptime(partner_data["birth_date"], "%Y-%m-%d").date() if partner_data["birth_date"] else None,
+                role=partner_data["role"],
+                representation=partner_data["representation"]
+            )
+            company.partners.append(partner)
+
+        # Create registry entries
+        for entry_data in data["registry_entries"]:
+            entry = RegistryEntry(
+                type=entry_data["type"],
+                court=entry_data["court"],
+                file_number=entry_data["file_number"],
+                application_date=datetime.strptime(entry_data["application_date"], "%Y%m%d").date() if entry_data["application_date"] else None,
+                registration_date=datetime.strptime(entry_data["registration_date"], "%Y%m%d").date() if entry_data["registration_date"] else None
+            )
+            company.registry_entries.append(entry)
+
+        # Add and commit
+        session.add(company)
+        session.commit()
+        
+    except Exception as e:
+        session.rollback()
+        print(f"Error loading data into database: {e}")
+        raise
+    finally:
+        session.close()
+
 def parse_file(file_path):
     try:
         with open(file_path) as f:
@@ -81,19 +149,25 @@ def parse_file(file_path):
         return None
 
 if __name__ == "__main__":
+    # Initialize the database
+    init_db()
+    
     directory = '/Users/bencetoth/Downloads/bizrayds/node0/data1/fbp/appl_java/gesamtstand/auszuegeKurz/'
-    total_data = []
+    
     for index, file in tqdm(enumerate(os.listdir(directory)), total=len(os.listdir(directory))):
         try:
             if not file.endswith('.xml'):
                 continue
             print(f"Parsing file {file} ({index + 1}/{len(os.listdir(directory))})")
             data = parse_file(os.path.join(directory, file))
-            json_data = json.dumps(data, indent=2, ensure_ascii=False)
-            print(json_data)
-            total_data.append(json_data)
+            
+            if data:
+                # Load the data into the database
+                load_into_db(data)
+                print(f"Successfully loaded {data['firmenbuchnummer']} into database")
+        
         except Exception as e:
-            print(f"Error parsing file {file}: {e}")
+            print(f"Error processing file {file}: {e}")
         
         if index > 10:
             break
