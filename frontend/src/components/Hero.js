@@ -77,7 +77,7 @@ const Hero = () => {
                 <div className="company-info">
                   <div className="company-avatar">AC</div>
                   <div>
-                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I think of saving the world... */}
+                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I dream of saving the world... */}
                     <p>Budapest, Hungary</p>
                   </div>
                 </div>
