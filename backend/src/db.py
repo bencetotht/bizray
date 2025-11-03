@@ -131,7 +131,7 @@ class RiskIndicator(Base):
 def _make_engine():
     database_url = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg://admin:admin@localhost:5432/bizray",
+        "postgresql+psycopg://admin:admin@192.168.88.47:25432/bizray",
     )
     return create_engine(database_url, pool_pre_ping=True)
 

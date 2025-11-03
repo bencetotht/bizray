@@ -177,5 +177,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Error processing file {file}: {e}")
         
-        if index > 10:
-            break
+        # if index > 10:
+        #     break
