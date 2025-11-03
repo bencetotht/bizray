@@ -5,7 +5,9 @@
 Request: `GET /api/v1/company?q=search`
 
 Parameters:
-- `q`: search query
+- `q`: search query (required)
+- `page`: page number (optional, default: 1)
+- `page_size`: number of results per page (optional, default: 10)
 
 Response:
 ```json

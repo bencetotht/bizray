@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
-from src.demo import companies
+from src.controller import search_companies, get_company_by_id
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -14,15 +14,21 @@ async def health_check():
     return {"status": "healthy"}
 
 @api_router.get("/company")
-async def get_companies(q: Optional[str] = None):
+async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
     """
     Company search
     Parameters:
     - q: str - query string
+    - page: int - page number
+    - page_size: int - page size
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
-    return {"companies": companies}
+    try:
+        companies = search_companies(q, page, page_size)
+        return {"companies": companies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/company/{company_id}")
 async def get_company(company_id: str):
@@ -31,7 +37,10 @@ async def get_company(company_id: str):
     Parameters:
     - company_id: firmenbuchnummer
     """
-    company = next((c for c in companies if c["firmenbuchnummer"] == company_id), None)
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return {"company": company}
+    try:
+        company = get_company_by_id(company_id)
+        if not company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        return {"company": company}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
