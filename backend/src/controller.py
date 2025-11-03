@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+from datetime import date
+from typing import Any, Dict, List, Optional, Tuple
+
+from sqlalchemy import or_, select, func
+from sqlalchemy.orm import Session
+
+from .db import (
+    SessionLocal,
+    Company,
+    Address,
+    Partner,
+    RegistryEntry,
+    RiskIndicator,
+)
+
+def _serialize_date(value: Optional[date]) -> Optional[str]:
+    """Serialize a date to an ISO string."""
+    if value is None:
+        return None
+    return value.isoformat()
+
+def _serialize_company(company: Company) -> Dict[str, Any]:
+    """Serialize a company to a dictionary."""
+    address_dict: Optional[Dict[str, Any]] = None
+    if company.address:
+        address_dict = {
+            "street": company.address.street,
+            "house_number": company.address.house_number,
+            "postal_code": company.address.postal_code,
+            "city": company.address.city,
+            "country": company.address.country,
+        }
+
+    partners_list: List[Dict[str, Any]] = []
+    for p in company.partners or []:
+        partners_list.append(
+            {
+                "name": p.name,
+                "first_name": p.first_name,
+                "last_name": p.last_name,
+                "birth_date": _serialize_date(p.birth_date),
+                "role": p.role,
+                "representation": p.representation,
+            }
+        )
+
+    registry_entries_list: List[Dict[str, Any]] = []
+    for r in company.registry_entries or []:
+        registry_entries_list.append(
+            {
+                "type": r.type,
+                "court": r.court,
+                "file_number": r.file_number,
+                "application_date": _serialize_date(r.application_date),
+                "registration_date": _serialize_date(r.registration_date),
+            }
+        )
+
+    risk_indicators_dict: Dict[str, float] = {}
+    for ri in company.risk_indicators or []:
+        if ri.key is not None and ri.value is not None:
+            risk_indicators_dict[ri.key] = float(ri.value)
+
+    return {
+        "firmenbuchnummer": company.firmenbuchnummer,
+        "name": company.name,
+        "legal_form": company.legal_form,
+        "address": address_dict,
+        "business_purpose": company.business_purpose,
+        "seat": company.seat,
+        "partners": partners_list,
+        "registry_entries": registry_entries_list,
+        "riskScore": float(company.risk_score) if company.risk_score is not None else None,
+        "riskIndicators": risk_indicators_dict,
+        "reference_date": _serialize_date(company.reference_date),
+    }
+
+def _serialize_company_list_item(company: Company) -> Dict[str, Any]:
+    """Serialize a company to the minimal list item used for search results."""
+    return {
+        "firmenbuchnummer": company.firmenbuchnummer,
+        "name": company.name,
+        "legal_form": company.legal_form,
+        "business_purpose": company.business_purpose,
+        "seat": company.seat,
+    }
+
+def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Optional[Dict[str, Any]]:
+    """
+    Fetch a single company by its firmenbuchnummer and return it serialized to the schema.
+    """
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+    try:
+        stmt = (
+            select(Company)
+            .where(Company.firmenbuchnummer == company_id)
+        )
+        result = session.execute(stmt).scalars().first()
+        if result is None:
+            return None
+
+        # preload relationships
+        _ = result.address
+        _ = list(result.partners or [])
+        _ = list(result.registry_entries or [])
+        _ = list(result.risk_indicators or [])
+        return _serialize_company(result)
+    finally:
+        if owns_session:
+            session.close()
+
+
+def search_companies(
+    query: str,
+    page: int = 1,
+    page_size: int = 10,
+    session: Optional[Session] = None,
+) -> Dict[str, Any]:
+    """
+    Search companies by string across several fields with pagination.
+    Returns a dict with keys: companies (list), page, page_size, total, pages.
+    """
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 10
+
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+
+    try:
+        like = f"%{query}%"
+        filters = or_(
+            Company.name.ilike(like),
+            Company.firmenbuchnummer.ilike(like),
+            Company.seat.ilike(like),
+            Company.business_purpose.ilike(like),
+        )
+
+        total = session.execute(select(func.count()).select_from(select(Company.id).where(filters).subquery())).scalar_one()
+
+        offset = (page - 1) * page_size
+        stmt = (
+            select(Company)
+            .where(filters)
+            .order_by(Company.name.asc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        results = session.execute(stmt).scalars().all()
+
+        # load relationships
+        for c in results:
+            _ = c.address
+            _ = list(c.partners or [])
+            _ = list(c.registry_entries or [])
+            _ = list(c.risk_indicators or [])
+
+        list_items = [_serialize_company_list_item(c) for c in results]
+
+        return {"results": list_items}
+    finally:
+        if owns_session:
+            session.close()
