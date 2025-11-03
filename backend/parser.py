@@ -1,8 +1,15 @@
 import xml.etree.ElementTree as ET
 import json
 import os
+import math
+import itertools
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
+from typing import Iterator, List, Dict, Any
+
 from tqdm import tqdm
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from src.db import (
     get_session,
     Company,
@@ -10,6 +17,7 @@ from src.db import (
     Partner,
     RegistryEntry,
     init_db,
+    engine,
 )
 
 ns = {"ns1": "ns://firmenbuch.justiz.gv.at/Abfrage/v2/AuszugResponse"}
@@ -134,7 +142,6 @@ def load_into_db(data):
             )
             company.registry_entries.append(entry)
 
-        # Add and commit
         session.add(company)
         session.commit()
         
@@ -158,24 +165,172 @@ def parse_file(file_path):
         print(f"Error parsing file {file_path}: {e}")
         return None
 
+def _iter_xml_files(root_dir: str) -> Iterator[str]:
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        for name in filenames:
+            if name.endswith('.xml'):
+                yield os.path.join(dirpath, name)
+
+def _chunked(iterable: Iterator[Any], size: int) -> Iterator[List[Any]]:
+    it = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(it, size))
+        if not chunk:
+            return
+        yield chunk
+
+def _normalize_company_row(data: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "firmenbuchnummer": data["firmenbuchnummer"],
+        "name": data["name"],
+        "legal_form": data.get("legal_form"),
+        "business_purpose": data.get("business_purpose"),
+        "seat": data.get("seat"),
+        "reference_date": parse_date(data.get("reference_date")) if data.get("reference_date") else None,
+    }
+
+
+def _normalize_children_rows(data: Dict[str, Any], company_id: int) -> Dict[str, List[Dict[str, Any]]]:
+    children: Dict[str, List[Dict[str, Any]]] = {
+        "addresses": [],
+        "partners": [],
+        "registry_entries": [],
+    }
+
+    addr = data.get("address") or {}
+    if any(addr.values()):
+        children["addresses"].append({
+            "company_id": company_id,
+            "street": addr.get("street"),
+            "house_number": addr.get("house_number"),
+            "postal_code": addr.get("postal_code"),
+            "city": addr.get("city"),
+            "country": addr.get("country"),
+        })
+
+    for p in data.get("partners", []):
+        # Parse malformed date strings
+        birth_date_val = None
+        if p.get("birth_date"):
+            try:
+                birth_date_val = parse_date(p["birth_date"])  # supports YYYYMMDD and YYYY-MM-DD
+            except Exception:
+                birth_date_val = None
+        children["partners"].append({
+            "company_id": company_id,
+            "name": p.get("name"),
+            "first_name": p.get("first_name"),
+            "last_name": p.get("last_name"),
+            "birth_date": birth_date_val,
+            "role": p.get("role"),
+            "representation": p.get("representation"),
+        })
+
+    for r in data.get("registry_entries", []):
+        children["registry_entries"].append({
+            "company_id": company_id,
+            "type": r.get("type"),
+            "court": r.get("court"),
+            "file_number": r.get("file_number"),
+            "application_date": parse_date(r.get("application_date")) if r.get("application_date") else None,
+            "registration_date": parse_date(r.get("registration_date")) if r.get("registration_date") else None,
+        })
+
+    return children
+
+def _batch_write(parsed_batch: List[Dict[str, Any]]) -> int:
+    if not parsed_batch:
+        return 0
+
+    companies_rows = [_normalize_company_row(d) for d in parsed_batch]
+
+    with engine.begin() as conn:
+        stmt = pg_insert(Company.__table__).values(companies_rows)
+        upsert = stmt.on_conflict_do_update(
+            index_elements=[Company.__table__.c.firmenbuchnummer],
+            set_={
+                "name": stmt.excluded.name,
+                "legal_form": stmt.excluded.legal_form,
+                "business_purpose": stmt.excluded.business_purpose,
+                "seat": stmt.excluded.seat,
+                "reference_date": stmt.excluded.reference_date,
+            },
+        ).returning(Company.__table__.c.id, Company.__table__.c.firmenbuchnummer)
+
+        result = conn.execute(upsert)
+        id_rows = result.fetchall()
+        fnr_to_id = {row.firmenbuchnummer: row.id for row in id_rows}
+
+        # Ensure we have IDs for any rows that might have been inserted earlier concurrently
+        missing_fnrs = [r["firmenbuchnummer"] for r in companies_rows if r["firmenbuchnummer"] not in fnr_to_id]
+        if missing_fnrs:
+            sel = select(Company.__table__.c.id, Company.__table__.c.firmenbuchnummer).where(Company.__table__.c.firmenbuchnummer.in_(missing_fnrs))
+            for row in conn.execute(sel):
+                fnr_to_id[row.firmenbuchnummer] = row.id
+
+        company_ids = list({fnr_to_id[d["firmenbuchnummer"]] for d in parsed_batch})
+
+        # Delete existing children for idempotent reload
+        if company_ids:
+            conn.execute(delete(Address.__table__).where(Address.__table__.c.company_id.in_(company_ids)))
+            conn.execute(delete(Partner.__table__).where(Partner.__table__.c.company_id.in_(company_ids)))
+            conn.execute(delete(RegistryEntry.__table__).where(RegistryEntry.__table__.c.company_id.in_(company_ids)))
+
+        # Prepare children rows and bulk insert
+        addr_rows: List[Dict[str, Any]] = []
+        partner_rows: List[Dict[str, Any]] = []
+        reg_rows: List[Dict[str, Any]] = []
+
+        for d in parsed_batch:
+            company_id = fnr_to_id[d["firmenbuchnummer"]]
+            ch = _normalize_children_rows(d, company_id)
+            addr_rows.extend(ch["addresses"])
+            partner_rows.extend(ch["partners"])
+            reg_rows.extend(ch["registry_entries"])
+
+        if addr_rows:
+            conn.execute(Address.__table__.insert(), addr_rows)
+        if partner_rows:
+            conn.execute(Partner.__table__.insert(), partner_rows)
+        if reg_rows:
+            conn.execute(RegistryEntry.__table__.insert(), reg_rows)
+
+    return len(parsed_batch)
+
 if __name__ == "__main__":
     init_db()
-    
-    directory = '/Users/bencetoth/Downloads/bizrayds/node0/data1/fbp/appl_java/gesamtstand/auszuegeKurz/'
-    
-    for index, file in tqdm(enumerate(os.listdir(directory)), total=len(os.listdir(directory))):
-        try:
-            if not file.endswith('.xml'):
-                continue
-            # print(f"Parsing file {file} ({index + 1}/{len(os.listdir(directory))})")
-            data = parse_file(os.path.join(directory, file))
-            
-            if data:
-                load_into_db(data)
-                # print(f"Successfully loaded {data['firmenbuchnummer']} into database")
-        
-        except Exception as e:
-            print(f"Error processing file {file}: {e}")
-        
-        # if index > 10:
-        #     break
+
+    directory = os.getenv(
+        "BIZRAY_XML_DIR",
+        '/Users/bencetoth/Downloads/bizrayds/node0/data1/fbp/appl_java/gesamtstand/auszuegeKurz/',
+    )
+    workers = int(os.getenv("BIZRAY_WORKERS", str(os.cpu_count() or 4)))
+    batch_size = int(os.getenv("BIZRAY_BATCH_SIZE", "2000"))
+
+    files_iter = _iter_xml_files(directory)
+    total_files = None  # optional: could compute, but walking is expensive; tqdm will be indeterminate
+
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        # Submit in rolling windows to avoid over-queuing
+        processed = 0
+        with tqdm(total=total_files, unit="file") as pbar:
+            for file_chunk in _chunked(files_iter, batch_size * 4):
+                futures = [executor.submit(parse_file, path) for path in file_chunk]
+
+                parsed_buffer: List[Dict[str, Any]] = []
+                for fut in as_completed(futures):
+                    data = fut.result()
+                    if data:
+                        parsed_buffer.append(data)
+                    if len(parsed_buffer) >= batch_size:
+                        processed += _batch_write(parsed_buffer)
+                        pbar.update(len(parsed_buffer))
+                        parsed_buffer.clear()
+
+                if parsed_buffer:
+                    processed += _batch_write(parsed_buffer)
+                    pbar.update(len(parsed_buffer))
+                    parsed_buffer.clear()
+
+    # Final note
+    print("Ingestion complete.")
