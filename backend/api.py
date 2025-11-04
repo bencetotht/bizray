@@ -26,7 +26,16 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
         raise HTTPException(status_code=400, detail="Query parameter is required")
     try:
         companies = search_companies(q, page, page_size)
-        return {"companies": companies}
+        # controller.search_companies expected a dict like {"results": [...]}
+        # but the frontend expects `data.companies` to be an array fixed (maybe lol) to always
+        # return an array under the "companies" (chatgpt emoji here :))) ).
+        if isinstance(companies, dict):
+            results = companies.get("results") or companies.get("companies") or []
+        elif isinstance(companies, list):
+            results = companies
+        else:
+            results = []
+        return {"companies": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
