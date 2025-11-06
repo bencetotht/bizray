@@ -2,15 +2,18 @@
   background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  padding: 80px 20px;
-    margin-top: 20px;
+  padding: 120px 20px 24px; 
+  scroll-margin-top: 120px; 
 }
 
 .company-card-wrapper {
   display: flex;
   justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .company-card {
@@ -19,10 +22,36 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   padding: 32px;
   width: 80vw;
-  height: 80vh;
+  min-height: calc(100vh - 160px); 
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+}
+
+.company-card-scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  justify-content: flex-start;
+  gap: 24px;
+  scroll-behavior: smooth;
+}
+
+.company-card-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.company-card-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.company-card-scrollable::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+.company-card-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 
@@ -106,6 +135,8 @@
 @media (max-width: 480px) {
   .company-card {
     padding: 24px;
+    width: 95vw;
+    min-height: calc(100vh - 140px);
   }
 
   .company-info h2 {
@@ -115,6 +146,18 @@
   .company-avatar {
     width: 48px;
     height: 48px;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-content {
+    margin-left: 0;
+  }
+
+  .company-card .section-title {
+    font-size: 1rem;
   }
 }
 
@@ -200,4 +243,159 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
+}
+
+/* Info Sections */
+.info-section {
+  margin-bottom: 24px;
+}
+
+.company-card .section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid #edf2f7;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.company-card .section-title:hover {
+  color: #667eea;
+}
+
+/* small chevron toggle next to section title */
+.toggle-btn {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #4a5568;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggle-btn:hover {
+  background: #f7fafc;
+}
+
+.toggle-btn.open svg {
+  transform: rotate(180deg);
+}
+
+.toggle-btn svg {
+  transition: transform 0.3s ease;
+}
+
+/* small number badge next to section titles */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+}
+
+.section-content {
+  margin-left: 26px;
+  margin-top: 12px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.section-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.section-content.expanded {
+  max-height: 5000px;
+  opacity: 1;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  color: #4a5568;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  transition: color 0.2s ease;
+}
+
+.detail-item:hover {
+  color: #2d3748;
+}
+
+.detail-item strong {
+  color: #2d3748;
+  margin-right: 6px;
+}
+
+/* Partners List */
+.partners-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.partner-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.partner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e0;
+}
+
+/* Registry List */
+.registry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.registry-card {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.registry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e0;
 }
