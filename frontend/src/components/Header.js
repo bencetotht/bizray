@@ -31,8 +31,6 @@ const Header = () => {
             <NavLink to="/features" className="nav-link" onClick={closeMenu}>Features</NavLink>
             <NavLink to="/about" className="nav-link" onClick={closeMenu}>About</NavLink>
             <NavLink to="/pricing" className="nav-link" onClick={closeMenu}>Pricing</NavLink>
-            <NavLink to="/company/334567m" className="nav-link" onClick={closeMenu}>Company Demo</NavLink>
-            
           </nav>
 
           <div className="header-actions">
