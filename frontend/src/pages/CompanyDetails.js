@@ -41,7 +41,7 @@ export default function CompanyDetails() {
         if (res.status === 404) {
           setNotFound(true);
           setLoading(false);
-          return;
+          return null;
         }
         if (!res.ok) {
           throw new Error("Failed to fetch company data");
@@ -49,9 +49,11 @@ export default function CompanyDetails() {
         return res.json();
       })
       .then((data) => {
-        if (data) {
+        if (data && data.company) {
           setCompany(data.company);
           setNotFound(false);
+        } else {
+          setNotFound(true);
         }
         setLoading(false);
       })
@@ -76,12 +78,18 @@ export default function CompanyDetails() {
     }
   }, [company]);
 
-  if (loading) {
+  // Show loading screen while fetching data
+  if (loading || (!company && !notFound)) {
     return (
       <section className="company-details-section">
         <div className="container">
           <div className="company-card-wrapper">
-            <div className="company-card">Loading...</div>
+            <div className="company-card">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <div className="loading-text">Loading company details...</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
