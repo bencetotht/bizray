@@ -1,3 +1,41 @@
+# Values
+
+## General Information
+- Fiscal Year
+- Currency (e.g., EUR)
+
+## Assets (Aktiva - § 224 Abs. 2)
+- Total Assets
+    - A. Fixed Assets (Anlagevermögen)
+        - I. Intangible Assets (Immaterielle Vermögensgegenstände)
+        - II. Tangible Assets (Sachanlagen)
+        - III. Financial Assets (Finanzanlagen)
+    - B. Current Assets (Umlaufvermögen)
+        - I. Inventories (Vorräte)
+        - II. Receivables and Other Assets (Forderungen...)
+        - III. Securities (Wertpapiere)
+        - IV. Cash and Cash Equivalents (Kassenbestand...)
+    - C. Prepaid Expenses (Rechnungsabgrenzungsposten)
+    - D. Active Deferred Taxes (Aktive latente Steuern)
+
+## Liabilities & Equity (Passiva - § 224 Abs. 3)
+- Total Liabilities and Equity
+    - A. Equity (Eigenkapital)
+        - I. Subscribed Capital (Nennkapital)
+        - II. Capital Reserves (Kapitalrücklagen)
+        - III. Revenue Reserves (Gewinnrücklagen)
+        - IV. Net Profit/Loss (Bilanzgewinn/Verlust)
+    - C. Liabilities (Verbindlichkeiten)
+    - D. Deferred Income (Rechnungsabgrenzungsposten)
+    - E. Passive Deferred Taxes (Passive latente Steuern)
+
+## Notes
+- Accounting and Valuation Principles
+- Foreign Currency Translation
+- Contingent Liabilities / Guarantees
+- Average Number of Employees
+- Information on Deferred Taxes
+
 # Risk Indicators
 
 ## 1. Balanced Sheet Indicators
