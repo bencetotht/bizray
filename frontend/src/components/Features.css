@@ -1,148 +1,99 @@
-.features {
-  background: white;
+.features-section {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  background: radial-gradient(1200px 700px at 20% 10%, rgba(63,81,181,.14), transparent 60%),
+              radial-gradient(900px 600px at 80% 90%, rgba(0,0,0,.06), transparent 60%);
 }
 
-.section-header {
+.features__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1200px 700px at 20% 10%, rgba(63,81,181,.14), transparent 60%),
+              radial-gradient(900px 600px at 80% 90%, rgba(0,0,0,.06), transparent 60%);
+  mix-blend-mode: normal;
+}
+
+.features-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.features-content {
+  position: relative;
+  z-index: 10;
+  width: 80vw;
+  max-width: 1200px;
+  margin: 0 auto;
   text-align: center;
-  margin-bottom: 60px;
+  padding: 0 2rem;
+}
+
+.features-header {
+  margin-bottom: 4rem;
+}
+
+.features-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #222;
+}
+
+.features-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  max-width: 700px;
+  margin: 1rem auto 0;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  margin-bottom: 80px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
 }
 
 .feature-card {
-  background: white;
+  background: #ffffffcc;
   border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  border: 1px solid #f1f5f9;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(6px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  border-color: #e2e8f0;
+  transform: translateY(-6px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
 .feature-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  transition: transform 0.3s ease;
+  color: #3f51b5;
+  margin-bottom: 1rem;
 }
 
-.feature-card:hover .feature-icon {
-  transform: scale(1.1);
-}
-
-.feature-content {
-  flex: 1;
-}
-
-.feature-title {
+.feature-name {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 12px;
+  color: #222;
+  margin-bottom: 0.5rem;
 }
 
 .feature-description {
-  color: #4a5568;
+  font-size: 1rem;
+  color: #444;
   line-height: 1.6;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .feature-highlight {
-  display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  color: #3f51b5;
   font-weight: 500;
-}
-
-.features-cta {
-  text-align: center;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-  border-radius: 20px;
-  padding: 60px 40px;
-}
-
-.features-cta h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 16px;
-}
-
-.features-cta p {
-  font-size: 1.1rem;
-  color: #4a5568;
-  margin-bottom: 30px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.cta-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .feature-card {
-    padding: 24px;
-  }
-  
-  .features-cta {
-    padding: 40px 20px;
-  }
-  
-  .features-cta h3 {
-    font-size: 1.5rem;
-  }
-  
-  .cta-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .cta-buttons .btn {
-    width: 100%;
-    max-width: 300px;
-  }
-}
-
-@media (max-width: 480px) {
-  .feature-icon {
-    width: 56px;
-    height: 56px;
-  }
-  
-  .feature-title {
-    font-size: 1.1rem;
-  }
-  
-  .features-cta h3 {
-    font-size: 1.3rem;
-  }
+  text-transform: uppercase;
 }

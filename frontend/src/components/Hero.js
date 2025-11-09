@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
 import './Hero.css';
 import SearchCompany from './SearchCompany'
+import NetworkGraph from './NetworkGraph';
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +35,7 @@ const Hero = () => {
               relationships, assess risks, and make informed business decisions based on 
               open data.
             </p>
-            <SearchCompany></SearchCompany>
+            
             
             <div className="hero-search">
               <div className="search-box">
@@ -73,13 +74,14 @@ const Hero = () => {
             </div>
           </div>
 
-          <div className="hero-visual">
+          {/* <div className="hero-visual">
             <div className="visual-card">
               <div className="card-header">
                 <div className="company-info">
                   <div className="company-avatar">AC</div>
                   <div>
-                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I dream of saving the world... */}
+                    <h3>Evil Corp Ltd.</h3>
+
                     <p>Budapest, Hungary</p>
                   </div>
                 </div>
@@ -114,7 +116,7 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

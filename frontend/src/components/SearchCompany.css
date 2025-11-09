@@ -1,5 +1,5 @@
 
-#search-wrapper {
+#search-company-warpper {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -8,6 +8,8 @@
   padding:30px;
   height: 300px;
   border-radius: 5px;
+  background-color: rgba(233, 233, 233, 0.5);
+
 }
 
 #search-wrapper > * {

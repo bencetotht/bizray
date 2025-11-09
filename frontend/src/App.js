@@ -8,6 +8,7 @@ import FeaturesPage from "./pages/Features_Page";
 import Services from "./pages/Services";
 import SearchResults from "./pages/SearchResults";
 import SearchPage from "./pages/SearchPage"
+import SearchResponsePage from "./pages/SearchResponsePage";
 import "./index.css";
 
 
@@ -17,16 +18,17 @@ export default function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<MainPage />} />
-          <Route path="/search" element={<SearchPage />} />
+          <Route path="/search_page" element={<SearchPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/response" element={<SearchResponsePage />} />
 
           <Route path="/about" element={<AboutPage />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/company/:id" element={<CompanyDetails />} />
           <Route path="/pricing" element={<Pricing />} />
 
-          {/* optional 404: */}
+         
           <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
         </Route>
       </Routes>
