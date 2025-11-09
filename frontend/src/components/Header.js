@@ -28,6 +28,7 @@ const Header = () => {
 
           <nav className={`nav ${isMenuOpen ? "nav-open" : ""}`}>
             {/* <NavLink to="/" className="nav-link" onClick={closeMenu}>Main Page</NavLink> */}
+            <NavLink to="/search" className="nav-link" onClick={closeMenu}>Search</NavLink>
             <NavLink to="/features" className="nav-link" onClick={closeMenu}>Features</NavLink>
             <NavLink to="/about" className="nav-link" onClick={closeMenu}>About</NavLink>
             <NavLink to="/pricing" className="nav-link" onClick={closeMenu}>Pricing</NavLink>

@@ -7,6 +7,9 @@ import Pricing from "./pages/Pricing"
 import FeaturesPage from "./pages/Features_Page";
 import Services from "./pages/Services";
 import SearchResults from "./pages/SearchResults";
+import SearchPage from "./pages/SearchPage"
+import "./index.css";
+
 
 export default function App() {
   return (
@@ -14,6 +17,7 @@ export default function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<MainPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/services" element={<Services />} />
 
