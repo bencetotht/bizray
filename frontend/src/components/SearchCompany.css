@@ -1,0 +1,15 @@
+
+#search-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  justify-content: center;
+  padding:30px;
+  height: 300px;
+  border-radius: 5px;
+}
+
+#search-wrapper > * {
+    margin-top: 20px;
+}

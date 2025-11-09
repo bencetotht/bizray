@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
 import './Hero.css';
+import SearchCompany from './SearchCompany'
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +34,7 @@ const Hero = () => {
               relationships, assess risks, and make informed business decisions based on 
               open data.
             </p>
+            <SearchCompany></SearchCompany>
             
             <div className="hero-search">
               <div className="search-box">
