@@ -13,19 +13,19 @@ export default function SearchResults() {
   const q = (query.get("q") || "").trim();
 
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!q);
   const [error, setError] = useState(null);
   const [companies, setCompanies] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-  
     setLoading(true);
     setError(null);
     setCompanies([]);
+    setHasSearched(false);
 
- 
     if (!q) {
       setLoading(false);
       controller.abort();
@@ -40,12 +40,13 @@ export default function SearchResults() {
         return res.json();
       })
       .then((data) => {
-      
         setCompanies(data.results || data.companies || []);
+        setHasSearched(true);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
           setError(err.message || "Unknown error");
+          setHasSearched(true);
         }
       })
       .finally(() => setLoading(false));
@@ -97,7 +98,7 @@ export default function SearchResults() {
     );
   }
 
-  if (!companies.length) {
+  if (!loading && hasSearched && !companies.length) {
     return (
       <section className="search-results">
         <div className="search-results-container">

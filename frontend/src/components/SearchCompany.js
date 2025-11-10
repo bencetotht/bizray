@@ -20,10 +20,6 @@ export default function SearchCompanies() {
         navigate(`/search?q=${encodeURIComponent(q)}`);
     }
     
-
-    
-
-
     return (
         <div id="search-company-warpper" className="bg-white h-[500px] w-[700px]">
 
@@ -45,19 +41,13 @@ export default function SearchCompanies() {
                     }}
                 />
 
-             
                 <Button 
-                    
                     onClick={submitSearch} 
                     className="search-btn" 
                     variant="contained" 
                     color="primary">
                         Search
                 </Button>
-                
-
-
-
             </div>
     )
 }

@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import './Hero.css';
-import SearchCompany from './SearchCompany'
-import NetworkGraph from './NetworkGraph';
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
