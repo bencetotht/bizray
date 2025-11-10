@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from .db import RegistryEntry
 
 def debt_to_equity_ratio(shareholders_equity: float, total_liabilities: float) -> Optional[float]:
@@ -49,12 +49,14 @@ def balance_sheet_volatility(current_value: float, previous_value: float) -> Opt
     growth_percentage = ((current_value - previous_value) / previous_value) * 100
     return growth_percentage
 
-def check_for_irregular_fiscal_year(start_date: date, end_date: date) -> bool:
+def check_for_irregular_fiscal_year(start_date: str, end_date: str) -> bool:
     """
     checks if the fiscal year is a short year (less than 12 months)
     flag for instability or major corporate event
     return true if year is irregular and false if standard year
     """
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
     nr_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
     #standard year can be 11 months + many days, up to 12.
     #checked if the month count is less than 11 to be safe.
