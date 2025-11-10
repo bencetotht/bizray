@@ -1,3 +1,80 @@
+# Values
+
+## General Information
+- Fiscal Year
+- Currency (e.g., EUR)
+
+## Assets (Aktiva - § 224 Abs. 2)
+- Total Assets
+    - A. Fixed Assets (Anlagevermögen)
+        - I. Intangible Assets (Immaterielle Vermögensgegenstände)
+        - II. Tangible Assets (Sachanlagen)
+        - III. Financial Assets (Finanzanlagen)
+    - B. Current Assets (Umlaufvermögen)
+        - I. Inventories (Vorräte)
+        - II. Receivables and Other Assets (Forderungen...)
+        - III. Securities (Wertpapiere)
+        - IV. Cash and Cash Equivalents (Kassenbestand...)
+    - C. Prepaid Expenses (Rechnungsabgrenzungsposten)
+    - D. Active Deferred Taxes (Aktive latente Steuern)
+
+## Liabilities & Equity (Passiva - § 224 Abs. 3)
+- Total Liabilities and Equity
+    - A. Equity (Eigenkapital)
+        - I. Subscribed Capital (Nennkapital)
+        - II. Capital Reserves (Kapitalrücklagen)
+        - III. Revenue Reserves (Gewinnrücklagen)
+        - IV. Net Profit/Loss (Bilanzgewinn/Verlust)
+    - C. Liabilities (Verbindlichkeiten)
+    - D. Deferred Income (Rechnungsabgrenzungsposten)
+    - E. Passive Deferred Taxes (Passive latente Steuern)
+
+## Notes
+- Accounting and Valuation Principles
+- Foreign Currency Translation
+- Contingent Liabilities / Guarantees
+- Average Number of Employees
+- Information on Deferred Taxes
+
+# Value Template
+```json
+{
+  "assets": {
+    "total_assets": 4760563481.15,
+    "fixed_assets": 1565094949.41,
+    "intangible_assets": 28256736.94,
+    "tangible_assets": 398153165.89,
+    "financial_assets": 1138685046.58,
+    "current_assets": 3147407832.25,
+    "inventories": 111383265.91,
+    "receivables_and_other_assets": 2749692806.52,
+    "securities": 0.0,
+    "cash_and_cash_equivalents": 286331759.82,
+    "prepaid_expenses": 48060699.49,
+    "active_deferred_taxes": 0.0
+  },
+  "liabilities_equity": {
+    "total_liabilities_and_equity": 4760563481.15,
+    "equity": 4272448952.01,
+    "subscribed_capital": 36336.42,
+    "capital_reserves": 0.0,
+    "revenue_reserves": 100003633.64,
+    "net_profit_loss": 4172408981.95,
+    "liabilities": 130778342.78,
+    "deferred_income": 356628627.62,
+    "passive_deferred_taxes": 707558.74
+  },
+  "currency": "EUR",
+  "notes": {
+    "accounting_and_valuation_principles": null,
+    "foreign_currency_translation": null,
+    "contingent_liabilities_guarantees": null,
+    "average_number_of_employees": null,
+    "information_on_deferred_taxes": null
+  }
+}
+```
+
 # Risk Indicators
 
 ## 1. Balanced Sheet Indicators
