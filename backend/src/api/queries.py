@@ -60,6 +60,8 @@ def calculate_risk_indicators(extracted_data):
     """
     if extracted_data is None:
         return None, None
+
+    
     
     assets = extracted_data.get('assets', {})
     liabilities_equity = extracted_data.get('liabilities_equity', {})
@@ -101,8 +103,7 @@ def calculate_risk_indicators(extracted_data):
         'balance_sheet_volatility': None,
         
         # Irregular Fiscal Year
-        # Requires fiscal year start and end dates - not available in extracted_data
-        'irregular_fiscal_year': None,  # Cannot calculate without fiscal year dates
+        'irregular_fiscal_year': check_for_irregular_fiscal_year(extracted_data.get('fiscal_year').get('start_date'), extracted_data.get('fiscal_year').get('end_date')),
         
         # Compliance Status
         'compliance_status': None,

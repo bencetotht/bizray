@@ -43,19 +43,36 @@ def extract_bilanz_fields(xml_input: str) -> Dict:
     if bilanzen is None:
         raise ValueError("BILANZ or HGB_Form_2 element not found in XML")
     
-    # Find ALLG_JUSTIZ for currency
+    # Find ALLG_JUSTIZ for currency and fiscal year
     allg_justiz = root.find('.//ns:ALLG_JUSTIZ', ns)
     currency = None
+    fiscal_year = {
+        "start_date": None,
+        "end_date": None
+    }
+    
     if allg_justiz is not None:
         waehrung_elem = allg_justiz.find('ns:WAEHRUNG', ns)
         if waehrung_elem is not None:
             currency = waehrung_elem.text
+        
+        # Extract fiscal year information (GJ - Geschäftsjahr)
+        gj_elem = allg_justiz.find('ns:GJ', ns)
+        if gj_elem is not None:
+            beginn_elem = gj_elem.find('ns:BEGINN', ns)
+            if beginn_elem is not None and beginn_elem.text:
+                fiscal_year["start_date"] = beginn_elem.text
+            
+            ende_elem = gj_elem.find('ns:ENDE', ns)
+            if ende_elem is not None and ende_elem.text:
+                fiscal_year["end_date"] = ende_elem.text
     
     # Initialize result dictionary
     result = {
         "assets": {},
         "liabilities_equity": {},
         "currency": currency,
+        "fiscal_year": fiscal_year,
         "notes": {}
     }
     
