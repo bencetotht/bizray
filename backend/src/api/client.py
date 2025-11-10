@@ -72,10 +72,6 @@ class ZeepClient:
         print(f"Getting urkunde with KEY: {key}")
         try:
             response = self.client.service.URKUNDE(KEY=key)
-
-            with open(f'{key}_urkunde.json', "w", encoding="utf-8") as f:
-                f.write(str(response))
-
             return response
 
         except Exception as e:

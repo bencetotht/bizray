@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import or_, select, func
 from sqlalchemy.orm import Session
 
+from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content
+
 from .db import (
     SessionLocal,
     Company,
@@ -109,6 +111,27 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
         _ = list(result.partners or [])
         _ = list(result.registry_entries or [])
         _ = list(result.risk_indicators or [])
+
+        # calculate risk indicators result
+        company_urkunde = get_company_urkunde(company_id)
+        if company_urkunde is not None:
+            urkunde_doc = get_urkunde_content(company_urkunde[-1].KEY)
+            if urkunde_doc is not None:
+                risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
+                print(risk_data)
+                # Clear existing risk indicators
+                result.risk_indicators.clear()
+                # Create new RiskIndicator instances from the dictionary
+                for key, value in risk_data.items():
+                    if value is not None:
+                        risk_indicator = RiskIndicator(
+                            company_id=result.id,
+                            key=key,
+                            value=float(value)
+                        )
+                        result.risk_indicators.append(risk_indicator)
+                result.risk_score = risk_score
+                session.commit()
         return _serialize_company(result)
     finally:
         if owns_session:
