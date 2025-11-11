@@ -21,16 +21,19 @@ export default function SearchResults() {
   useEffect(() => {
     const controller = new AbortController();
 
+    if (!q) {
+      setLoading(false);
+      setError(null);
+      setCompanies([]);
+      setHasSearched(false);
+      controller.abort();
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setCompanies([]);
     setHasSearched(false);
-
-    if (!q) {
-      setLoading(false);
-      controller.abort();
-      return;
-    }
 
     const url = `https://apibizray.bnbdevelopment.hu/api/v1/company?q=${encodeURIComponent(q)}`;
 
@@ -40,16 +43,18 @@ export default function SearchResults() {
         return res.json();
       })
       .then((data) => {
-        setCompanies(data.results || data.companies || []);
+        const results = data.results || data.companies || [];
+        setCompanies(results);
         setHasSearched(true);
+        setLoading(false);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
           setError(err.message || "Unknown error");
           setHasSearched(true);
+          setLoading(false);
         }
-      })
-      .finally(() => setLoading(false));
+      });
 
     return () => controller.abort();
   }, [q]);
@@ -98,7 +103,7 @@ export default function SearchResults() {
     );
   }
 
-  if (!loading && hasSearched && !companies.length) {
+  if (hasSearched && !companies.length && !loading) {
     return (
       <section className="search-results">
         <div className="search-results-container">

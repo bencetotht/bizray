@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
@@ -72,7 +72,7 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* <div className="hero-visual">
+          <div className="hero-visual">
             <div className="visual-card">
               <div className="card-header">
                 <div className="company-info">
@@ -80,7 +80,7 @@ const Hero = () => {
                   <div>
                     <h3>Evil Corp Ltd.</h3>
 
-                    <p>Budapest, Hungary</p>
+                    <p>Vienna, Austria</p>
                   </div>
                 </div>
                 <div className="risk-indicator low">
@@ -114,7 +114,7 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div> 
         </div>
       </div>
     </section>
