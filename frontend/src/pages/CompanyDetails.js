@@ -7,7 +7,6 @@ import { useParams } from "react-router-dom";
 import CompanySummaryCard from "../components/CompanySummaryCard";
 import NetworkGraph from "../components/NetworkGraph";
 
-//render empty string for missing values
 const displayValue = (value) => {
   if (value === null || value === undefined) {
     return "";
@@ -92,7 +91,7 @@ export default function CompanyDetails() {
     }
   }, [company]);
 
-  // Show loading screen while fetching data
+  //show a loading screen while fetching data
   if (loading || (!company && !notFound)) {
     return (
       <section className="company-details-section">
@@ -275,12 +274,16 @@ export default function CompanyDetails() {
                         <div className="detail-item">
                           <strong>Birth Date:</strong> {displayValue(partner.birth_date)}
                         </div>
-                        <div className="detail-item">
-                          <strong>Role:</strong> {displayValue(partner.role)}
-                        </div>
-                        <div className="detail-item">
-                          <strong>Representation:</strong> {displayValue(partner.representation)}
-                        </div>
+                        {(partner.role !== null && partner.role !== undefined && partner.role !== "") && (
+                          <div className="detail-item">
+                            <strong>Role:</strong> {displayValue(partner.role)}
+                          </div>
+                        )}
+                        {(partner.representation !== null && partner.representation !== undefined && partner.representation !== "") && (
+                          <div className="detail-item">
+                            <strong>Representation:</strong> {displayValue(partner.representation)}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

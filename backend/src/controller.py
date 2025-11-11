@@ -6,13 +6,14 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import or_, select, func
 from sqlalchemy.orm import Session
 
+from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content
+
 from .db import (
     SessionLocal,
     Company,
     Address,
     Partner,
     RegistryEntry,
-    RiskIndicator,
 )
 
 def _serialize_date(value: Optional[date]) -> Optional[str]:
@@ -58,10 +59,14 @@ def _serialize_company(company: Company) -> Dict[str, Any]:
             }
         )
 
+    # Use risk indicators from the object attribute if available, otherwise fall back to relationship
     risk_indicators_dict: Dict[str, float] = {}
-    for ri in company.risk_indicators or []:
-        if ri.key is not None and ri.value is not None:
-            risk_indicators_dict[ri.key] = float(ri.value)
+    if hasattr(company, '_risk_indicators_dict') and company._risk_indicators_dict is not None:
+        risk_indicators_dict = company._risk_indicators_dict
+    else:
+        for ri in company.risk_indicators or []:
+            if ri.key is not None and ri.value is not None:
+                risk_indicators_dict[ri.key] = float(ri.value)
 
     return {
         "firmenbuchnummer": company.firmenbuchnummer,
@@ -108,12 +113,19 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
         _ = result.address
         _ = list(result.partners or [])
         _ = list(result.registry_entries or [])
-        _ = list(result.risk_indicators or [])
+
+        # calculate risk indicators result
+        company_urkunde = get_company_urkunde(company_id)
+        if company_urkunde is not None:
+            urkunde_doc = get_urkunde_content(company_urkunde[-1].KEY)
+            if urkunde_doc is not None:
+                risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
+                result._risk_indicators_dict = {k: float(v) for k, v in risk_data.items() if v is not None}
+                result.risk_score = risk_score
         return _serialize_company(result)
     finally:
         if owns_session:
             session.close()
-
 
 def search_companies(
     query: str,

@@ -10,19 +10,30 @@ function useQuery() {
 
 export default function SearchResults() {
   const query = useQuery();
-  const q = query.get("q") || "";
-  const [loading, setLoading] = useState(false);
+  const q = (query.get("q") || "").trim();
+
+
+  const [loading, setLoading] = useState(!!q);
   const [error, setError] = useState(null);
   const [companies, setCompanies] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
-    if (!q.trim()) {
+    const controller = new AbortController();
+
+    if (!q) {
+      setLoading(false);
+      setError(null);
       setCompanies([]);
+      setHasSearched(false);
+      controller.abort();
       return;
     }
-    const controller = new AbortController();
+
     setLoading(true);
     setError(null);
+    setCompanies([]);
+    setHasSearched(false);
 
     const url = `https://apibizray.bnbdevelopment.hu/api/v1/company?q=${encodeURIComponent(q)}`;
 
@@ -32,18 +43,53 @@ export default function SearchResults() {
         return res.json();
       })
       .then((data) => {
-        setCompanies(data.companies || []);
+        const results = data.results || data.companies || [];
+        setCompanies(results);
+        setHasSearched(true);
+        setLoading(false);
       })
       .catch((err) => {
-        if (err.name === "AbortError") return;
-        setError(err.message || "Unknown error");
-      })
-      .finally(() => setLoading(false));
+        if (err.name !== "AbortError") {
+          setError(err.message || "Unknown error");
+          setHasSearched(true);
+          setLoading(false);
+        }
+      });
 
     return () => controller.abort();
   }, [q]);
 
-  if (!q.trim()) {
+
+  if (loading) {
+    return (
+      <section className="search-results">
+        <div className="search-results-container">
+          <div className="search-results-loading">
+            <Loader2 size={32} className="spinner" />
+            <p>Searching...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="search-results">
+        <div className="search-results-container">
+          <div className="search-results-error">
+            <AlertCircle size={24} />
+            <div>
+              <h3>Error loading results</h3>
+              <p>{error}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!q) {
     return (
       <section className="search-results">
         <div className="search-results-container">
@@ -57,6 +103,21 @@ export default function SearchResults() {
     );
   }
 
+  if (hasSearched && !companies.length && !loading) {
+    return (
+      <section className="search-results">
+        <div className="search-results-container">
+          <div className="search-results-empty">
+            <Search size={48} />
+            <h2>No companies found</h2>
+            <p>We couldn't find any companies matching "{q}"</p>
+            <p className="search-results-suggestion">Try adjusting your search terms</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="search-results">
       <div className="search-results-container">
@@ -64,46 +125,16 @@ export default function SearchResults() {
           <h1 className="search-results-title">
             Search results for <span className="search-query">"{q}"</span>
           </h1>
-          {companies.length > 0 && (
-            <p className="search-results-count">
-              {companies.length} {companies.length === 1 ? "company" : "companies"} found
-            </p>
-          )}
+          <p className="search-results-count">
+            {companies.length} {companies.length === 1 ? "company" : "companies"} found
+          </p>
         </div>
 
-        {loading && (
-          <div className="search-results-loading">
-            <Loader2 size={32} className="spinner" />
-            <p>Searching...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="search-results-error">
-            <AlertCircle size={24} />
-            <div>
-              <h3>Error loading results</h3>
-              <p>{error}</p>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && companies.length === 0 && (
-          <div className="search-results-empty">
-            <Search size={48} />
-            <h2>No companies found</h2>
-            <p>We couldn't find any companies matching "{q}"</p>
-            <p className="search-results-suggestion">Try adjusting your search terms</p>
-          </div>
-        )}
-
-        {!loading && !error && companies.length > 0 && (
-          <div className="search-results-grid">
-            {companies.map((company) => (
-              <SearchResultCard key={company.firmenbuchnummer} company={company} />
-            ))}
-          </div>
-        )}
+        <div className="search-results-grid">
+          {companies.map((company) => (
+            <SearchResultCard key={company.firmenbuchnummer} company={company} />
+          ))}
+        </div>
       </div>
     </section>
   );

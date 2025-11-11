@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
@@ -33,6 +33,7 @@ const Hero = () => {
               relationships, assess risks, and make informed business decisions based on 
               open data.
             </p>
+            
             
             <div className="hero-search">
               <div className="search-box">
@@ -77,8 +78,9 @@ const Hero = () => {
                 <div className="company-info">
                   <div className="company-avatar">AC</div>
                   <div>
-                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I dream of saving the world... */}
-                    <p>Budapest, Hungary</p>
+                    <h3>Evil Corp Ltd.</h3>
+
+                    <p>Vienna, Austria</p>
                   </div>
                 </div>
                 <div className="risk-indicator low">
@@ -112,7 +114,7 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> 
         </div>
       </div>
     </section>

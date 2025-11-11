@@ -6,6 +6,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
+  height: 10vh;
 }
 
 .header-content {
@@ -90,16 +91,65 @@
   align-items: center;
 }
 
-/* Ensure icon buttons in the header align and space consistently */
 .auth-buttons .btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px; /* space between icon and label */
+  gap: 8px; 
 }
 
 .auth-buttons .btn svg {
   flex-shrink: 0;
   vertical-align: middle;
+}
+
+.header-actions .search-container .search-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.header-actions .auth-buttons .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.header-actions .auth-buttons .btn-secondary {
+  background: transparent;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.header-actions .search-container .search-btn:hover {
+  transform: scale(1.05);
+}
+
+.header-actions .auth-buttons .btn-primary:hover {
+  transform: scale(1.05);
+}
+
+.header-actions .auth-buttons .btn-secondary:hover {
+  transform: scale(1.05);
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .menu-toggle {
