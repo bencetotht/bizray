@@ -61,8 +61,6 @@ def calculate_risk_indicators(extracted_data):
     if extracted_data is None:
         return None, None
 
-    
-    
     assets = extracted_data.get('assets', {})
     liabilities_equity = extracted_data.get('liabilities_equity', {})
     
@@ -109,5 +107,5 @@ def calculate_risk_indicators(extracted_data):
         'compliance_status': None,
     }
     
-    risk_score = np.mean([risk_indicator for risk_indicator in risk_indicators.values() if risk_indicator is not None])
+    risk_score = np.mean([risk_indicator for risk_indicator in risk_indicators.values() if risk_indicator is not None and risk_indicator is not False])
     return risk_indicators, risk_score
