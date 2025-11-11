@@ -1,6 +1,6 @@
 // src/pages/CompanyDetails.js
 import React from "react";
-import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink } from "lucide-react";
+import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink, Triangle } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -407,7 +407,7 @@ export default function CompanyDetails() {
                               className={`risk-bar-pointer ${v > 0.85 ? "flip-tooltip" : ""}`}
                               style={{ left: `${v * 100}%` }}
                             >
-                              <div className="risk-pointer-hitbox">▼</div>
+                              <div className="risk-pointer-hitbox"><Triangle size={12} fill="currentColor" /></div>
                               <span
                                 className="risk-arrow-tooltip"
                                 style={{
