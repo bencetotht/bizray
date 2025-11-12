@@ -31,5 +31,4 @@ zeep==4.3.2
 
 # Added for high-throughput parser pipeline
 psycopg[binary]==3.2.3
-lxml==5.3.0
 tqdm==4.67.1
