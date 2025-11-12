@@ -31,3 +31,8 @@ zeep==4.3.2
 
 # Added for high-throughput parser pipeline
 psycopg[binary]==3.2.3
+tqdm==4.67.1
+
+# Testing dependencies
+pytest==8.3.4
+pytest-mock==3.14.0

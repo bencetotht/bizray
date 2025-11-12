@@ -65,3 +65,22 @@ jobs:
       - name: Run emoji check
         run: |
           python .github/scripts/check_emojis.py
+
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest httpx
+      - name: Run tests
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          WSDL_URL: ${{ secrets.WSDL_URL }}
+        run: pytest tests/
