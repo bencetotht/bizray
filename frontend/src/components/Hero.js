@@ -106,16 +106,16 @@ const Hero = () => {
               </div>
               
               <div className="network-preview">
-                <div className="network-node main">AC</div>
+                <div className="network-node main">EC</div>
                 <div className="network-lines">
                   <div className="line"></div>
                   <div className="line"></div>
                   <div className="line"></div>
                 </div>
                 <div className="network-nodes">
-                  <div className="network-node">BC</div>
-                  <div className="network-node">DC</div>
-                  <div className="network-node">EC</div>
+                  <div className="network-node">RO</div>
+                  <div className="network-node">OT</div> {/* root@elliot */}
+                  <div className="network-node">EL</div>
                 </div>
               </div>
               
