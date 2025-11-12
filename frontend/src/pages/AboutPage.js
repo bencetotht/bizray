@@ -71,7 +71,7 @@ export default function AboutPage() {
 
      
         <section className="about-cta">
-          <a href="/search_page" className="btn btn-primary">Try a search</a>
+          <a href="/" className="btn btn-primary">Try a search</a>
           <a href="/pricing" className="btn btn-ghost">See pricing</a>
         </section>
       </div>
