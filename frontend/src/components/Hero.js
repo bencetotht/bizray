@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Shield, Network, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = () => {
     const q = searchQuery.trim();
-    if (!q) return;
+    if (!q) {
+      setError("Please enter a search term");
+      return;
+    }
+    if (q.length < 3) {
+      setError("Minimum search length is 3 characters");
+      return;
+    }
+    setError("");
     navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
@@ -34,15 +43,19 @@ const Hero = () => {
               open data.
             </p>
             
+            
             <div className="hero-search">
               <div className="search-box">
                 <Search className="search-icon" size={20} />
                 <input 
                   type="text" 
                   placeholder="Search by company name, address, or person..." 
-                  className="search-input"
+                  className={`search-input ${error ? "search-input-error" : ""}`}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (error) setError(""); // Clear error when user types
+                  }}
                   onKeyDown={handleKeyDown}
                   autoFocus
                 />
@@ -50,9 +63,13 @@ const Hero = () => {
                   <ArrowRight size={20} />
                 </button>
               </div>
-              <p className="search-hint">
-                Over 2TB of open company data available for free search
-              </p>
+              {error ? (
+                <p className="search-error">{error}</p>
+              ) : (
+                <p className="search-hint">
+                  Over 2TB of open company data available for free search
+                </p>
+              )}
             </div>
 
             <div className="hero-stats">
@@ -77,8 +94,9 @@ const Hero = () => {
                 <div className="company-info">
                   <div className="company-avatar">AC</div>
                   <div>
-                    <h3>Evil Corp Ltd.</h3> {/* Sometimes I dream of saving the world... */}
-                    <p>Budapest, Hungary</p>
+                    <h3>Evil Corp Ltd.</h3>
+
+                    <p>Vienna, Austria</p>
                   </div>
                 </div>
                 <div className="risk-indicator low">
@@ -88,16 +106,16 @@ const Hero = () => {
               </div>
               
               <div className="network-preview">
-                <div className="network-node main">AC</div>
+                <div className="network-node main">EC</div>
                 <div className="network-lines">
                   <div className="line"></div>
                   <div className="line"></div>
                   <div className="line"></div>
                 </div>
                 <div className="network-nodes">
-                  <div className="network-node">BC</div>
-                  <div className="network-node">DC</div>
-                  <div className="network-node">EC</div>
+                  <div className="network-node">RO</div>
+                  <div className="network-node">OT</div> {/* root@elliot */}
+                  <div className="network-node">EL</div>
                 </div>
               </div>
               
@@ -112,7 +130,7 @@ const Hero = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> 
         </div>
       </div>
     </section>

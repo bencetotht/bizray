@@ -70,3 +70,6 @@ htmlcov/
 .env
 .env.local
 .env.*.local
+
+# Output files
+output/

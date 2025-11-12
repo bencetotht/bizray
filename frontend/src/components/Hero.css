@@ -1,5 +1,4 @@
 .hero {
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
   padding: 120px 0 80px;
   min-height: 100vh;
   display: flex;
@@ -8,7 +7,7 @@
 
 .hero-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 60px;
   align-items: center;
 }
@@ -80,8 +79,20 @@
   text-align: center;
 }
 
+.search-error {
+  font-size: 0.9rem;
+  color: #e53e3e;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.search-input-error {
+  color: #e53e3e;
+}
+
 .hero-stats {
   display: flex;
+  justify-content: center;
   gap: 40px;
 }
 
@@ -267,8 +278,7 @@
   }
   
   .hero-stats {
-    justify-content: center;
-    gap: 30px;
+    gap: 20px;
   }
   
   .search-input {
@@ -282,8 +292,7 @@
   }
   
   .hero-stats {
-    flex-direction: column;
-    gap: 20px;
+    gap: 15px;
   }
   
   .visual-card {

@@ -1,68 +1,58 @@
 import React from 'react';
-import { Users, Network, Shield, Download, BarChart3, Eye } from 'lucide-react';
+import { Users, Network, Shield } from 'lucide-react';
+import BackgroundNetwork from './BackgroundNetwork';
 import './Features.css';
 
 const Features = () => {
   const features = [
     {
-      icon: <Users size={32} />,
+      icon: <Users size={36} />,
       title: "Company Details",
-      description: "Complete company profile: address, contact information, key people, and legal status information.",
-      highlight: "Full transparency"
+      description:
+        "Gain full transparency into any business — from legal form and address to ownership and management structure.",
+      highlight: "Full transparency",
     },
     {
-      icon: <Network size={32} />,
+      icon: <Network size={36} />,
       title: "Network Visualization",
-      description: "Interactive map of company relationships. Influence networks analyzed using PageRank algorithm.",
-      highlight: "Enterprise-scale graphs"
+      description:
+        "Explore corporate relationships through interactive network graphs. Visualize to learn",
+      highlight: "Enterprise-scale insights",
     },
     {
-      icon: <Shield size={32} />,
+      icon: <Shield size={36} />,
       title: "Risk Assessment",
-      description: "Individual and network risk indicators. Based on bankrupt connections and influence scores.",
-      highlight: "Real-time"
-    },
-    {
-      icon: <Download size={32} />,
-      title: "Custom Report Builder",
-      description: "Generate detailed, downloadable reports tailored to your business needs. Combine data, analytics, and visualizations in a single click.",
-      highlight: "One-click PDF/CSV"
-    },
-    {
-      icon: <BarChart3 size={32} />,
-      title: "Analytics Tools",
-      description: "Detailed reports and statistics. Research datasets and visualizations.",
-      highlight: "Professional"
-    },
-    {
-      icon: <Eye size={32} />,
-      title: "Transparency",
-      description: "Easy access and interpretation of open company data for everyone, not just investors.",
-      highlight: "EU HVD compatible"
+      description:
+        "Assess financial and structural risk using interconnected data from partners, subsidiaries, and bankrupt entities.",
+      highlight: "Real-time risk intelligence",
     },
   ];
 
   return (
-    <section id="features" className="section features">
-      <div className="container">
-        <div className="section-header">
-          <h2 className="section-title">Key Features</h2>
-          <p className="section-subtitle">
-            Everything you need to understand who you're doing business with. 
-            Transparent, reliable, and easy-to-use business intelligence.
+    <section id="features" className="features-section">
+
+      <div className="features-background">
+        <BackgroundNetwork />
+        
+      </div>
+
+      <div className="features-content">
+        <div className="features-header">
+          <h2 className="features-title">Core Capabilities</h2>
+          <p className="features-subtitle">
+            BizRay provides the essential tools for understanding companies, visualizing their networks,
+            and evaluating risk in real time.
           </p>
         </div>
 
         <div className="features-grid">
           {features.map((feature, index) => (
             <div key={index} className="feature-card">
-              <div className="feature-icon">
-                {feature.icon}
-              </div>
-              <div className="feature-content">
-                <h3 className="feature-title">{feature.title}</h3>
+              <div className="feature-icon">{feature.icon}</div>
+              <div className="feature-body">
+                <h3 className="feature-name">{feature.title}</h3>
                 <p className="feature-description">{feature.description}</p>
-                <div className="feature-highlight">{feature.highlight}</div>
+                <span className="feature-highlight">{feature.highlight}</span>
               </div>
             </div>
           ))}

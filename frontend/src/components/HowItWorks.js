@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Eye, Network, CheckCircle, ArrowRight } from 'lucide-react';
+import { Search, Eye, Network, CheckCircle } from 'lucide-react';
 import './HowItWorks.css';
 
 const HowItWorks = () => {
@@ -56,11 +56,6 @@ const HowItWorks = () => {
                 <p className="step-description">{step.description}</p>
                 <p className="step-details">{step.details}</p>
               </div>
-              {index < steps.length - 1 && (
-                <div className="step-arrow">
-                  <ArrowRight size={20} />
-                </div>
-              )}
             </div>
           ))}
         </div>
