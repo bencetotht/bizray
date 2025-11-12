@@ -30,6 +30,15 @@ export default function SearchResults() {
       return;
     }
 
+    if (q.length < 3) {
+      setLoading(false);
+      setError("Minimum search length is 3 characters");
+      setCompanies([]);
+      setHasSearched(false);
+      controller.abort();
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setCompanies([]);

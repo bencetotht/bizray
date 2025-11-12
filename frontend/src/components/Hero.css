@@ -79,6 +79,17 @@
   text-align: center;
 }
 
+.search-error {
+  font-size: 0.9rem;
+  color: #e53e3e;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.search-input-error {
+  color: #e53e3e;
+}
+
 .hero-stats {
   display: flex;
   justify-content: center;

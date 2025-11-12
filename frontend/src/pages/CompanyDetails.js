@@ -21,7 +21,7 @@ export default function CompanyDetails() {
   const [loading, setLoading] = useState(true);
   const [partnersExpanded, setPartnersExpanded] = useState(true);
   const [registryExpanded, setRegistryExpanded] = useState(true);
-  const [riskExpanded, setRiskExpanded] = useState(false);
+  const [riskExpanded, setRiskExpanded] = useState(true);
   const getRiskColor = (score) => {
     if (score === null || score === undefined) return { bg: "#e2e8f0", color: "#4a5568" };
     if (score >= 0.7) return { bg: "#fed7d7", color: "#c53030" };
