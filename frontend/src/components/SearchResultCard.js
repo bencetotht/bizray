@@ -58,7 +58,7 @@ export default function SearchResultCard({ company }) {
 
         {/* Footer with Risk Score */}
         <div className="search-result-footer">
-          <div
+          {/* <div
             className="search-result-risk"
             style={{
               background: riskStyle.bg,
@@ -67,7 +67,7 @@ export default function SearchResultCard({ company }) {
           >
             <Shield size={14} />
             <span>Risk Score: {riskScore ?? "N/A"}</span>
-          </div>
+          </div> */}
           <div className="search-result-link">
             <span>View Details</span>
             <ExternalLink size={14} />

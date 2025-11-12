@@ -5,11 +5,20 @@ import './Hero.css';
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSearch = () => {
     const q = searchQuery.trim();
-    if (!q) return;
+    if (!q) {
+      setError("Please enter a search term");
+      return;
+    }
+    if (q.length < 3) {
+      setError("Minimum search length is 3 characters");
+      return;
+    }
+    setError("");
     navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
@@ -41,9 +50,12 @@ const Hero = () => {
                 <input 
                   type="text" 
                   placeholder="Search by company name, address, or person..." 
-                  className="search-input"
+                  className={`search-input ${error ? "search-input-error" : ""}`}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (error) setError(""); // Clear error when user types
+                  }}
                   onKeyDown={handleKeyDown}
                   autoFocus
                 />
@@ -51,9 +63,13 @@ const Hero = () => {
                   <ArrowRight size={20} />
                 </button>
               </div>
-              <p className="search-hint">
-                Over 2TB of open company data available for free search
-              </p>
+              {error ? (
+                <p className="search-error">{error}</p>
+              ) : (
+                <p className="search-hint">
+                  Over 2TB of open company data available for free search
+                </p>
+              )}
             </div>
 
             <div className="hero-stats">

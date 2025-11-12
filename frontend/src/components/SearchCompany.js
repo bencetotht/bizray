@@ -9,14 +9,24 @@ import { useNavigate } from "react-router-dom";
 export default function SearchCompanies() {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
+    const [error, setError] = useState("");
     
     const updateQuery = (new_query) => {
-        setSearchQuery(new_query)
+        setSearchQuery(new_query);
+        if (error) setError(""); // Clear error when user types
     }
 
     const submitSearch = () => {
         const q = searchQuery.trim();
-        if (!q) return;
+        if (!q) {
+            setError("Please enter a search term");
+            return;
+        }
+        if (q.length < 3) {
+            setError("Minimum search length is 3 characters");
+            return;
+        }
+        setError("");
         navigate(`/search?q=${encodeURIComponent(q)}`);
     }
     
@@ -32,6 +42,8 @@ export default function SearchCompanies() {
                     }} 
                     variant="outlined"
                     fullWidth
+                    error={!!error}
+                    helperText={error}
                     InputProps={{
                         startAdornment: (
                             <InputAdornment position="start">
