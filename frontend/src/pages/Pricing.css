@@ -9,6 +9,13 @@
   background: transparent;
 }
 
+/* Ensure Pricing page uses the same font-family as the main site */
+.pricing-page {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
 .pricing-bg {
   position: absolute;
   inset: 0;

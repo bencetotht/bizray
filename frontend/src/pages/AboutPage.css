@@ -8,6 +8,13 @@
   padding: 56px 20px 80px;
 }
 
+/* Ensure About page uses the same font-family as the main site */
+.about-story {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
 .about-story__bg {
   position: absolute;
   inset: 0;
