@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
 from src.controller import search_companies, get_company_by_id
+from src.cache import get, set
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -24,18 +25,33 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
+    
+    cache_key = f"search:{q}:{page}:{page_size}"
+    
+    try:
+        cached_result = get(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
     try:
         companies = search_companies(q, page, page_size)
-        # controller.search_companies expected a dict like {"results": [...]}
-        # but the frontend expects `data.companies` to be an array fixed (maybe lol) to always
-        # return an array under the "companies" (chatgpt emoji here :))) ).
         if isinstance(companies, dict):
             results = companies.get("results") or companies.get("companies") or []
         elif isinstance(companies, list):
             results = companies
         else:
             results = []
-        return {"companies": results}
+        
+        response = {"companies": results}
+        
+        try:
+            set(cache_key, response, entity_type="api", ttl=3600)
+        except Exception:
+            pass
+        
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -46,10 +62,29 @@ async def get_company(company_id: str):
     Parameters:
     - company_id: firmenbuchnummer
     """
+    cache_key = f"company:{company_id}"
+    
+    try:
+        cached_result = get(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
     try:
         company = get_company_by_id(company_id)
         if not company:
             raise HTTPException(status_code=404, detail="Company not found")
-        return {"company": company}
+        
+        response = {"company": company}
+        
+        try:
+            set(cache_key, response, entity_type="api", ttl=7200)
+        except Exception:
+            pass
+        
+        return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
