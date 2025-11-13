@@ -235,3 +235,68 @@ def search_companies(
     finally:
         if owns_session:
             session.close()
+
+def get_search_suggestions(query: str, session: Optional[Session] = None, limit: int = 10) -> List[Dict[str, str]]:
+    """
+    Get search suggestions for companies matching the query.
+    Returns a list of dictionaries with 'firmenbuchnummer' (fnr) and 'name' only.
+    
+    Args:
+        query: Search query string (minimum 3 characters)
+        session: Optional database session
+        limit: Maximum number of suggestions to return (default: 10)
+    
+    Returns:
+        List of dictionaries with 'firmenbuchnummer' and 'name' keys
+    """
+    if len(query) < 3:
+        return []
+    
+    cache_key = f"db_search_suggestions:{query}:{limit}"
+    
+    try:
+        cached_result = get(cache_key, entity_type="db")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+    
+    try:
+        like = f"%{query}%"
+        filters = or_(
+            Company.name.ilike(like),
+            Company.firmenbuchnummer.ilike(like),
+        )
+        
+        stmt = (
+            select(Company.firmenbuchnummer, Company.name)
+            .where(filters)
+            .order_by(Company.name.asc())
+            .limit(limit)
+        )
+        
+        results = session.execute(stmt).all()
+        
+        suggestions = [
+            {
+                "firmenbuchnummer": row.firmenbuchnummer,
+                "name": row.name,
+            }
+            for row in results
+        ]
+        
+        try:
+            set(cache_key, suggestions, entity_type="db", ttl=3600)
+        except Exception:
+            pass
+        
+        return suggestions
+    finally:
+        if owns_session:
+            session.close()
+    
