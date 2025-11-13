@@ -80,6 +80,59 @@ Response:
 }
 ```
 
+## Search query suggestion
+Request: `GET /api/v1/search?q=search`
+
+Parameters:
+- `q`: search query (required)
+
+Response:
+```json
+{
+  "suggestions": [
+    {
+      "firmenbuchnummer": "544393d",
+      "name": "13PUNKT4-Büro für Digitalisierung e.U."
+    },
+    {
+      "firmenbuchnummer": "471530b",
+      "name": "1425 Siegl Immobilien GmbH"
+    },
+    {
+      "firmenbuchnummer": "511911k",
+      "name": "17 siebzehn GmbH in Liqu."
+    },
+    {
+      "firmenbuchnummer": "539261g",
+      "name": "2752 Siedlung Tirolerbach"
+    },
+    {
+      "firmenbuchnummer": "530232d",
+      "name": "27 siebenundzwanzig GmbH in Liqu."
+    },
+    {
+      "firmenbuchnummer": "610228w",
+      "name": "2B Architektur Visualisierung OG"
+    },
+    {
+      "firmenbuchnummer": "661319d",
+      "name": "2T Automatisierung GmbH"
+    },
+    {
+      "firmenbuchnummer": "428259v",
+      "name": "31sieben Marken- &"
+    },
+    {
+      "firmenbuchnummer": "566312m",
+      "name": "37 siebenunddreißig GmbH"
+    },
+    {
+      "firmenbuchnummer": "648356s",
+      "name": "387 drei-acht-sieben Alpine GmbH"
+    }
+  ]
+}
+```
 ## Data Strucutre
 ```json
 {

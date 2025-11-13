@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
-from src.controller import search_companies, get_company_by_id
+from src.controller import search_companies, get_company_by_id, get_search_suggestions
 from src.cache import get, set
 
 api_router = APIRouter(prefix="/api/v1")
@@ -25,6 +25,12 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
+    if len(q) < 3:
+        raise HTTPException(status_code=400, detail="Query parameter must be at least 3 characters long")
+    if page < 1:
+        page = 1
+    if page_size < 1 or page_size > 100:
+        page_size = 10
     
     cache_key = f"search:{q}:{page}:{page_size}"
     
@@ -86,5 +92,45 @@ async def get_company(company_id: str):
         return response
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/search")
+async def search_suggestions(q: Optional[str] = None):
+    """
+    Get search suggestions
+    Parameters:
+    - q: str - query string
+    """
+    if q is None:
+        raise HTTPException(status_code=400, detail="Query parameter is required")
+    if len(q) < 3:
+        raise HTTPException(status_code=400, detail="Query parameter must be at least 3 characters long")
+    
+    cache_key = f"search_suggestions:{q}"
+    try:
+        cached_result = get(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
+    try:
+        suggestions = get_search_suggestions(q)
+        if isinstance(suggestions, dict):
+            results = suggestions.get("results") or suggestions.get("suggestions") or []
+        elif isinstance(suggestions, list):
+            results = suggestions
+        else:
+            results = []
+        
+        response = {"suggestions": results}
+        
+        try:
+            set(cache_key, response, entity_type="api", ttl=3600)
+        except Exception:
+            pass
+        
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
