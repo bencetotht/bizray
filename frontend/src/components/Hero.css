@@ -39,11 +39,13 @@
   padding: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .search-icon {
   color: #a0aec0;
   margin: 0 12px;
+  flex-shrink: 0;
 }
 
 .search-input {
@@ -53,10 +55,14 @@
   padding: 16px 0;
   font-size: 16px;
   background: transparent;
+  min-width: 0;
+  width: 100%;
 }
 
 .search-input::placeholder {
   color: #a0aec0;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .search-btn {
@@ -67,6 +73,7 @@
   color: white;
   cursor: pointer;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .search-btn:hover {
@@ -77,17 +84,6 @@
   font-size: 0.9rem;
   color: #718096;
   text-align: center;
-}
-
-.search-error {
-  font-size: 0.9rem;
-  color: #e53e3e;
-  text-align: center;
-  margin-top: 8px;
-}
-
-.search-input-error {
-  color: #e53e3e;
 }
 
 .hero-stats {
@@ -281,8 +277,21 @@
     gap: 20px;
   }
   
+  .search-box {
+    padding: 3px;
+  }
+  
+  .search-icon {
+    margin: 0 8px;
+  }
+  
   .search-input {
     font-size: 14px;
+    padding: 14px 4px;
+  }
+  
+  .search-btn {
+    padding: 10px 12px;
   }
 }
 
@@ -297,5 +306,36 @@
   
   .visual-card {
     padding: 20px;
+  }
+  
+  .search-box {
+    padding: 2px;
+  }
+  
+  .search-icon {
+    margin: 0 6px;
+  }
+  
+  .search-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .search-input {
+    font-size: 13px;
+    padding: 12px 2px;
+  }
+  
+  .search-input::placeholder {
+    font-size: 13px;
+  }
+  
+  .search-btn {
+    padding: 10px;
+  }
+  
+  .search-btn svg {
+    width: 18px;
+    height: 18px;
   }
 }

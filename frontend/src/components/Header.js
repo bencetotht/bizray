@@ -7,20 +7,11 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState("");
   const closeMenu = () => setIsMenuOpen(false);
 
   const submitSearch = () => {
     const q = searchQuery.trim();
-    if (!q) {
-      setError("Please enter a search term");
-      return;
-    }
-    if (q.length < 3) {
-      setError("Minimum search length is 3 characters");
-      return;
-    }
-    setError("");
+    if (!q) return;
     navigate(`/search?q=${encodeURIComponent(q)}`);
  
     setIsMenuOpen(false);
@@ -45,31 +36,25 @@ const Header = () => {
 
           <div className="header-actions">
             <div className="search-container">
-              <div className="search-input-wrapper">
-                <Search className="search-icon" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search companies..."
-                  className={`search-input ${error ? "search-input-error" : ""}`}
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (error) setError(""); // Clear error when user types
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") submitSearch();
-                  }}
-                />
-                <button
-                  type="button"
-                  className="search-btn"
-                  onClick={submitSearch}
-                  aria-label="Search"
-                >
-                  Search
-                </button>
-              </div>
-              {error && <div className="search-error">{error}</div>}
+              <Search className="search-icon" size={20} />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                }}
+              />
+              <button
+                type="button"
+                className="search-btn"
+                onClick={submitSearch}
+                aria-label="Search"
+              >
+                Search
+              </button>
             </div>
 
             <div className="auth-buttons">
@@ -79,6 +64,64 @@ const Header = () => {
 
             <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={closeMenu}></div>
+      )}
+
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${isMenuOpen ? "mobile-menu-open" : ""}`}>
+        <div className="mobile-menu-content">
+          <nav className="mobile-nav">
+            <NavLink to="/features" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Features</span>
+            </NavLink>
+            <NavLink to="/about" className="mobile-nav-link" onClick={closeMenu}>
+              <span>About</span>
+            </NavLink>
+            <NavLink to="/pricing" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Pricing</span>
+            </NavLink>
+          </nav>
+
+          <div className="mobile-search-container">
+            <div className="mobile-search-wrapper">
+              <Search className="mobile-search-icon" size={20} />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="mobile-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              className="mobile-search-btn"
+              onClick={submitSearch}
+              aria-label="Search"
+            >
+              <Search size={18} />
+              Search
+            </button>
+          </div>
+
+          <div className="mobile-auth-buttons">
+            <button className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
+              <LogIn size={18} />
+              <span>Login</span>
+            </button>
+            <button className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
+              <User size={18} />
+              <span>Sign Up</span>
             </button>
           </div>
         </div>
