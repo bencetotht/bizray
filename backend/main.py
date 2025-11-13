@@ -1,8 +1,22 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import api_router
+from src.cache import init
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        init()
+        print("Redis cache initialized successfully")
+    except Exception as e:
+        print(f"Warning: Redis cache initialization failed: {e}. Continuing without cache.")
+    yield
+    pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

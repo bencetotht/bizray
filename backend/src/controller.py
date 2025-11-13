@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -7,6 +9,7 @@ from sqlalchemy import or_, select, func
 from sqlalchemy.orm import Session
 
 from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content
+from .cache import get, set
 
 from .db import (
     SessionLocal,
@@ -96,6 +99,15 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
     """
     Fetch a single company by its firmenbuchnummer and return it serialized to the schema.
     """
+    cache_key = f"db_company_by_id:{company_id}"
+    
+    try:
+        cached_result = get(cache_key, entity_type="db")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
     owns_session = False
     if session is None:
         session = SessionLocal()
@@ -119,10 +131,36 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
         if company_urkunde is not None:
             urkunde_doc = get_urkunde_content(company_urkunde[-1].KEY)
             if urkunde_doc is not None:
-                risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
+                urkunde_hash = hashlib.md5(
+                    json.dumps(urkunde_doc, sort_keys=True).encode('utf-8')
+                ).hexdigest()[:16]
+                risk_cache_key = f"risk_indicators:{company_id}:{urkunde_hash}"
+                
+                cached_risk = None
+                try:
+                    cached_risk = get(risk_cache_key, entity_type="risk")
+                except Exception:
+                    pass
+                
+                if cached_risk is not None:
+                    risk_data, risk_score = cached_risk
+                else:
+                    risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
+                    try:
+                        set(risk_cache_key, (risk_data, risk_score), entity_type="risk", ttl=86400)
+                    except Exception:
+                        pass
+                
                 result._risk_indicators_dict = {k: float(v) for k, v in risk_data.items() if v is not None}
                 result.risk_score = risk_score
-        return _serialize_company(result)
+        serialized_result = _serialize_company(result)
+        
+        try:
+            set(cache_key, serialized_result, entity_type="db", ttl=7200)
+        except Exception:
+            pass
+        
+        return serialized_result
     finally:
         if owns_session:
             session.close()
@@ -141,6 +179,15 @@ def search_companies(
         page = 1
     if page_size < 1:
         page_size = 10
+
+    cache_key = f"db_search_companies:{query}:{page}:{page_size}"
+    
+    try:
+        cached_result = get(cache_key, entity_type="db")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
 
     owns_session = False
     if session is None:
@@ -177,7 +224,14 @@ def search_companies(
 
         list_items = [_serialize_company_list_item(c) for c in results]
 
-        return {"results": list_items}
+        result = {"results": list_items}
+        
+        try:
+            set(cache_key, result, entity_type="db", ttl=3600)
+        except Exception:
+            pass
+        
+        return result
     finally:
         if owns_session:
             session.close()
