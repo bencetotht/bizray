@@ -83,6 +83,64 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="mobile-menu-overlay" onClick={closeMenu}></div>
+      )}
+
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${isMenuOpen ? "mobile-menu-open" : ""}`}>
+        <div className="mobile-menu-content">
+          <nav className="mobile-nav">
+            <NavLink to="/features" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Features</span>
+            </NavLink>
+            <NavLink to="/about" className="mobile-nav-link" onClick={closeMenu}>
+              <span>About</span>
+            </NavLink>
+            <NavLink to="/pricing" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Pricing</span>
+            </NavLink>
+          </nav>
+
+          <div className="mobile-search-container">
+            <div className="mobile-search-wrapper">
+              <Search className="mobile-search-icon" size={20} />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="mobile-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              className="mobile-search-btn"
+              onClick={submitSearch}
+              aria-label="Search"
+            >
+              <Search size={18} />
+              Search
+            </button>
+          </div>
+
+          <div className="mobile-auth-buttons">
+            <button className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
+              <LogIn size={18} />
+              <span>Login</span>
+            </button>
+            <button className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
+              <User size={18} />
+              <span>Sign Up</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </header>
   );
 };
