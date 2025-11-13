@@ -7,20 +7,11 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState("");
   const closeMenu = () => setIsMenuOpen(false);
 
   const submitSearch = () => {
     const q = searchQuery.trim();
-    if (!q) {
-      setError("Please enter a search term");
-      return;
-    }
-    if (q.length < 3) {
-      setError("Minimum search length is 3 characters");
-      return;
-    }
-    setError("");
+    if (!q) return;
     navigate(`/search?q=${encodeURIComponent(q)}`);
  
     setIsMenuOpen(false);
@@ -45,31 +36,25 @@ const Header = () => {
 
           <div className="header-actions">
             <div className="search-container">
-              <div className="search-input-wrapper">
-                <Search className="search-icon" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search companies..."
-                  className={`search-input ${error ? "search-input-error" : ""}`}
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (error) setError(""); // Clear error when user types
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") submitSearch();
-                  }}
-                />
-                <button
-                  type="button"
-                  className="search-btn"
-                  onClick={submitSearch}
-                  aria-label="Search"
-                >
-                  Search
-                </button>
-              </div>
-              {error && <div className="search-error">{error}</div>}
+              <Search className="search-icon" size={20} />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitSearch();
+                }}
+              />
+              <button
+                type="button"
+                className="search-btn"
+                onClick={submitSearch}
+                aria-label="Search"
+              >
+                Search
+              </button>
             </div>
 
             <div className="auth-buttons">

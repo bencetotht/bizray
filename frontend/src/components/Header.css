@@ -62,12 +62,6 @@
 
 .search-container {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.search-input-wrapper {
-  display: flex;
   align-items: center;
   gap: 8px;
 }
@@ -89,17 +83,6 @@
 .search-input:focus {
   outline: none;
   border-color: #667eea;
-}
-
-.search-input-error {
-  border-color: #e53e3e;
-}
-
-.search-error {
-  color: #e53e3e;
-  font-size: 12px;
-  margin-top: 4px;
-  margin-left: 28px;
 }
 
 .auth-buttons {
