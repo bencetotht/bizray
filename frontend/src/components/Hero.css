@@ -90,6 +90,7 @@
   display: flex;
   justify-content: center;
   gap: 40px;
+  flex-wrap: wrap;
 }
 
 .stat {
@@ -302,6 +303,11 @@
   
   .hero-stats {
     gap: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .stat {
+    min-width: 80px;
   }
   
   .visual-card {
