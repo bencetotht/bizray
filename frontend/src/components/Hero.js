@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
 import './Hero.css';
@@ -6,7 +6,36 @@ import './Hero.css';
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
+  const [metrics, setMetrics] = useState(null);
   const navigate = useNavigate();
+
+  // Format large numbers for display
+  const formatNumber = (num) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(0) + 'K';
+    }
+    return num.toString();
+  };
+
+  // Fetch metrics on component mount
+  useEffect(() => {
+    fetch('https://apibizray.bnbdevelopment.hu/api/v1/metrics')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch metrics');
+        return res.json();
+      })
+      .then((data) => {
+        if (data && data.metrics) {
+          setMetrics(data.metrics);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching metrics:', error);
+        // Keep metrics as null to show fallback stats
+      });
+  }, []);
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -73,18 +102,41 @@ const Hero = () => {
             </div>
 
             <div className="hero-stats">
-              <div className="stat">
-                <div className="stat-number">2TB+</div>
-                <div className="stat-label">Company Data</div>
-              </div>
-              <div className="stat">
-                <div className="stat-number">100%</div>
-                <div className="stat-label">Open Data</div>
-              </div>
-              <div className="stat">
-                <div className="stat-number">EU</div>
-                <div className="stat-label">HVD Compatible</div>
-              </div>
+              {metrics ? (
+                <>
+                  <div className="stat">
+                    <div className="stat-number">{formatNumber(metrics.companies)}</div>
+                    <div className="stat-label">Companies</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number">{formatNumber(metrics.addresses)}</div>
+                    <div className="stat-label">Addresses</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number">{formatNumber(metrics.partners)}</div>
+                    <div className="stat-label">Partners</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number">{formatNumber(metrics.registry_entries)}</div>
+                    <div className="stat-label">Registry Entries</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="stat">
+                    <div className="stat-number">2TB+</div>
+                    <div className="stat-label">Company Data</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number">100%</div>
+                    <div className="stat-label">Open Data</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number">EU</div>
+                    <div className="stat-label">HVD Compatible</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
