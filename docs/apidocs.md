@@ -133,6 +133,22 @@ Response:
   ]
 }
 ```
+
+## Metrics
+Request: `GET /api/v1/metrics`
+
+Response:
+```json
+{
+  "metrics": {
+    "companies": 635169,
+    "addresses": 336510,
+    "partners": 514871,
+    "registry_entries": 1383898,
+  }
+}
+```
+
 ## Data Strucutre
 ```json
 {
