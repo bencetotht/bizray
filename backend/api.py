@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
-from src.controller import search_companies, get_company_by_id, get_search_suggestions
+from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics
 from src.cache import get, set
 
 api_router = APIRouter(prefix="/api/v1")
@@ -128,6 +128,33 @@ async def search_suggestions(q: Optional[str] = None):
         
         try:
             set(cache_key, response, entity_type="api", ttl=3600)
+        except Exception:
+            pass
+        
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/metrics")
+async def get_metrics_endpoint():
+    """
+    Get metrics - counts of each entry type in the database
+    """
+    cache_key = "api_metrics"
+    
+    try:
+        cached_result = get(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
+    try:
+        metrics = get_metrics()
+        response = {"metrics": metrics}
+        
+        try:
+            set(cache_key, response, entity_type="api", ttl=43200)
         except Exception:
             pass
         

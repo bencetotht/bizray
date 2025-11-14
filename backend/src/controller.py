@@ -17,6 +17,7 @@ from .db import (
     Address,
     Partner,
     RegistryEntry,
+    RiskIndicator,
 )
 
 def _serialize_date(value: Optional[date]) -> Optional[str]:
@@ -296,6 +297,36 @@ def get_search_suggestions(query: str, session: Optional[Session] = None, limit:
             pass
         
         return suggestions
+    finally:
+        if owns_session:
+            session.close()
+    
+def get_metrics(session: Optional[Session] = None) -> Dict[str, int]:
+    """
+    Get counts of each entry type in the database.
+    Returns a dictionary with counts for companies, addresses, partners, registry_entries, and risk_indicators.
+    """
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+    
+    try:
+        companies_count = session.execute(select(func.count(Company.id))).scalar_one()
+        addresses_count = session.execute(select(func.count(Address.id))).scalar_one()
+        partners_count = session.execute(select(func.count(Partner.id))).scalar_one()
+        registry_entries_count = session.execute(select(func.count(RegistryEntry.id))).scalar_one()
+        risk_indicators_count = session.execute(select(func.count(RiskIndicator.id))).scalar_one()
+        
+        metrics = {
+            "companies": companies_count,
+            "addresses": addresses_count,
+            "partners": partners_count,
+            "registry_entries": registry_entries_count,
+            # "risk_indicators": risk_indicators_count,
+        }
+        
+        return metrics
     finally:
         if owns_session:
             session.close()
