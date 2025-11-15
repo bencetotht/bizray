@@ -34,6 +34,7 @@ const Header = () => {
             <NavLink to="/pricing" className="nav-link" onClick={closeMenu}>Pricing</NavLink>
           </nav>
 
+
           <div className="header-actions">
             <div className="search-container">
               <Search className="search-icon" size={20} />
@@ -58,8 +59,8 @@ const Header = () => {
             </div>
 
             <div className="auth-buttons">
-              <button className="btn btn-secondary"><LogIn size={16} />Login</button>
-              <button className="btn btn-primary"><User size={16} />Sign Up</button>
+              <NavLink to="/login" className="btn btn-secondary"><LogIn size={16} />Login</NavLink>
+              <NavLink to="/register" className="btn btn-primary"><User size={16} />Sign Up</NavLink>
             </div>
 
             <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
@@ -115,14 +116,14 @@ const Header = () => {
           </div>
 
           <div className="mobile-auth-buttons">
-            <button className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
+            <NavLink to="/login" className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
               <LogIn size={18} />
               <span>Login</span>
-            </button>
-            <button className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
+            </NavLink>
+            <NavLink to="/register" className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
               <User size={18} />
               <span>Sign Up</span>
-            </button>
+            </NavLink>
           </div>
         </div>
       </div>
@@ -132,72 +133,3 @@ const Header = () => {
 
 export default Header;
 
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useState } from 'react';
-// import { Search, Menu, X, User, LogIn } from 'lucide-react';
-// import './Header.css';
-
-// const Header = () => {
-//   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-//   return (
-//     <header className="header">
-//       <div className="container">
-//         <div className="header-content">
-//           <div className="logo">
-//             <span className="logo-text">BizRay</span>
-//             <span className="logo-tagline">X-Ray for Business</span>
-//           </div>
-
-//           <nav className={`nav ${isMenuOpen ? 'nav-open' : ''}`}>
-//             <a href="#features" className="nav-link">Features</a>
-//             <a href="#services" className="nav-link">Services</a>
-//             <a href="#pricing" className="nav-link">Pricing</a>
-//             <a href="#about" className="nav-link">About</a>
-//           </nav>
-
-//           <div className="header-actions">
-//             <div className="search-container">
-//               <Search className="search-icon" size={20} />
-//               <input 
-//                 type="text" 
-//                 placeholder="Search companies..." 
-//                 className="search-input"
-//               />
-//             </div>
-            
-//             <div className="auth-buttons">
-//               <button className="btn btn-secondary">
-//                 <LogIn size={16} />
-//                 Login
-//               </button>
-//               <button className="btn btn-primary">
-//                 <User size={16} />
-//                 Sign Up
-//               </button>
-//             </div>
-
-//             <button 
-//               className="menu-toggle"
-//               onClick={() => setIsMenuOpen(!isMenuOpen)}
-//             >
-//               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </header>
-//   );
-// };
-
-// export default Header;
