@@ -9,6 +9,10 @@ import Services from "./pages/Services";
 import SearchResults from "./pages/SearchResults";
 import SearchPage from "./pages/SearchPage"
 import SearchResponsePage from "./pages/SearchResponsePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import AccountPage from "./pages/AccountPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import "./index.css";
 
 
@@ -27,6 +31,10 @@ export default function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/company/:id" element={<CompanyDetails />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/account" element={<AccountPage />} />
 
          
           <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
@@ -36,50 +44,3 @@ export default function App() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-// import './App.css';
-// import Header from './components/Header';
-// import Hero from './components/Hero';
-// import Features from './components/Features';
-// import HowItWorks from './components/HowItWorks';
-// import Stats from './components/Stats';
-// import Footer from './components/Footer';
-
-// function App() {
-//   return (
-//     <div className="App">
-//       <Header />
-//       <Hero />
-//       <Features />
-//       <HowItWorks />
-//       <Stats />
-//       <Footer />
-//     </div>
-//   );
-// }
-
-// export default App;

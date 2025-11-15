@@ -94,7 +94,8 @@
 .auth-buttons .btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px; 
+  gap: 8px;
+  text-decoration: none;
 }
 
 .auth-buttons .btn svg {
@@ -351,6 +352,13 @@
   flex-direction: column;
   padding: 20px 24px 24px 24px;
   gap: 10px;
+}
+
+.mobile-auth-buttons .mobile-btn {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-btn {
