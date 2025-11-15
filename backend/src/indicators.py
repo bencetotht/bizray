@@ -129,3 +129,44 @@ def check_compliance_status(registry_entries: List[RegistryEntry], check_date: d
         return False
     else:
         return True
+
+
+def cash_ratio(cash_and_equivalents: float, total_liabilities: float) -> Optional[float]:
+    """
+    =  a liquidity metric showing a company's ability to cover its short-term debts (current liabilities)
+    using only its most liquid assets: cash and cash equivalents, without selling inventory or collecting accounts receivable
+    cash_and_equivalents = cash & assets that can immediately be converted to cash
+    total_liabilities = all the money a company owns (long-term and short-term)
+    """
+
+    if total_liabilities == 0:
+        return None
+
+    ratio = cash_and_equivalents / total_liabilities
+
+    return ratio
+
+
+def debt_to_assets_ratio(total_liabilities: float, total_assets: float) -> Optional[float]:
+    """
+    =  shows what percentage of a company's assets are financed by debt, indicating its financial leverage and stability
+    by dividing Total Liabilities by Total Assets
+    """
+
+    if total_assets <= 0:
+        return None
+
+    ratio = total_liabilities / total_assets
+
+    return ratio
+
+def equity_ratio(shareholders_equity: float, total_assets: float) -> Optional[float]:
+    """
+    = shows what percentage of a company's assets are funded by the owners' own capital.
+    higher ratio (over 50%) = greater financial stability, less reliance on debt
+    """
+    if total_assets <= 0:
+        return None
+
+    ratio = shareholders_equity / total_assets
+    return ratio

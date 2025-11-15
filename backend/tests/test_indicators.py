@@ -6,7 +6,10 @@ from src.indicators import (
     balance_sheet_volatility,
     check_for_irregular_fiscal_year,
     deferred_income_reliance,
-    check_compliance_status
+    check_compliance_status,
+    cash_ratio,
+    debt_to_assets_ratio,
+    equity_ratio
 )
 from src.db import RegistryEntry
 
@@ -127,6 +130,66 @@ def test_compliance_status_no_dates():
     filings_without_dates = [RegistryEntry(type="Angekündigt", registration_date=None)]
     assert check_compliance_status(filings_without_dates, check_date=date(2024, 1, 1)) is None
 
+
+
+#Test for Cash Ratio
+def test_cash_ratio_happy_path():
+    #Tests a scenario where the company has more cash than total debt.
+    #Scenario: 200M in cash, 100M in total liabilities -> ratio = 2.0 (very liquid)
+    assert cash_ratio(200_000_000.0, 100_000_000.0) == 2.0
+
+
+def test_cash_ratio_high_risk():
+    #Tests risky scenario where cash only cover a small portion of debt
+    #Scenario: 10M in cash, 100M in total liabilities -> ratio = 0.1 (very illiquid)
+    assert cash_ratio(10_000_000.0, 100_000_000.0) == 0.1
+
+
+def test_cash_ratio_edge_case():
+    #Tests the logical edge case where a company has zero liabilities.
+    #The ratio is undefined/infinite, so the function should return None.
+    assert cash_ratio(50_000_000.0, 0.0) is None
+
+
+
+
+#Test for Debt to Asset Ratio
+def test_debt_to_asset_ratio_happy_path():
+    #Tests a healthy scenario where debt is less than half of total assets
+    # Scenario: 100M in liabilities, 250M in assets -> ratio = 0.4 (or 40%)
+    assert debt_to_assets_ratio(100_000_000.0, 250_000_000.0) == 0.4
+
+
+def test_debt_to_asset_ratio_high_risk():
+    #Tests a risky scenario where debt is a large portion of assets.
+    # Scenario: 200M in liabilities, 250M in assets -> ratio = 0.8 (or 80%)
+    assert debt_to_assets_ratio(200_000_000.0, 250_000_000.0) == 0.8
+
+
+def test_debt_to_asset_ratio_edge_case():
+    # Tests the logical edge case of a company having zero assets.
+    # The ratio is undefined, so the function should return None.
+    assert debt_to_assets_ratio(100_000_000.0, 0.0) is None
+
+
+
+#Test for Equity Ratio
+def test_equity_ratio_happy_path_strong():
+    #Tests a financially strong company where equity is a large portion of assets.
+    # Scenario: 150M in equity, 200M in assets -> ratio = 0.75 (or 75%)
+    assert equity_ratio(150_000_000.0, 200_000_000.0) == 0.75
+
+
+def test_equity_ratio_weak():
+    #Tests a financially weak company with a low equity ratio.
+    # Scenario: 20M in equity, 200M in assets -> ratio = 0.1 (or 10%)
+    assert equity_ratio(20_000_000.0, 200_000_000.0) == 0.1
+
+
+def test_equity_ratio_edge():
+    # Tests the logical edge case of a company having zero assets.
+    # The ratio is undefined, so the function should return None.
+    assert equity_ratio(10_000_000.0, 0.0) is None
 
 
 
