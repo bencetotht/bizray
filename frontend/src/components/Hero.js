@@ -124,16 +124,20 @@ const Hero = () => {
               ) : (
                 <>
                   <div className="stat">
-                    <div className="stat-number">2TB+</div>
-                    <div className="stat-label">Company Data</div>
+                    <div className="stat-number stat-skeleton"></div>
+                    <div className="stat-label stat-label-skeleton"></div>
                   </div>
                   <div className="stat">
-                    <div className="stat-number">100%</div>
-                    <div className="stat-label">Open Data</div>
+                    <div className="stat-number stat-skeleton"></div>
+                    <div className="stat-label stat-label-skeleton"></div>
                   </div>
                   <div className="stat">
-                    <div className="stat-number">EU</div>
-                    <div className="stat-label">HVD Compatible</div>
+                    <div className="stat-number stat-skeleton"></div>
+                    <div className="stat-label stat-label-skeleton"></div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-number stat-skeleton"></div>
+                    <div className="stat-label stat-label-skeleton"></div>
                   </div>
                 </>
               )}
