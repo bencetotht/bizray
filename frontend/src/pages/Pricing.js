@@ -28,16 +28,17 @@ export default function Pricing() {
 
 
       <div className="container">
-        <div className="pricing-card-wrapper">
-          <div className="pricing-card">
-            <header className="pricing-header">
-              <h1>Pricing & Plans</h1>
-              <p className="subtitle">
-                Start free with basic search and company details. Upgrade for the network view.
-              </p>
-            </header>
+        <div className="pricing-content">
+          <div className="pricing-header">
+            <h1>Pricing & Plans</h1>
+            <p className="subtitle">
+              Start free with basic search and company details. Upgrade for the network view.
+            </p>
+          </div>
 
-            <table className="pricing-table" role="table">
+          <div className="pricing-card-wrapper">
+            <div className="pricing-table-wrapper">
+              <table className="pricing-table" role="table">
               <thead>
                 <tr>
                   <th scope="col">Privilege</th>
@@ -72,16 +73,17 @@ export default function Pricing() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
 
             <footer className="pricing-cta">
-              <Link className="btn btn-ghost" to="/register">Create free account</Link>
+              <Link className="btn btn-secondary" to="/register">Create free account</Link>
               <Link className="btn btn-primary" to="/account#billing">Get network view</Link>
             </footer>
 
             <div className="pricing-note">
               <p>
-                <strong>Note:</strong> “Limited” indicates reduced usage compared to Subscribers (e.g., lower daily request allowance). Exact limits may vary.
+                <strong>Note:</strong> "Limited" indicates reduced usage compared to Subscribers (e.g., lower daily request allowance). Exact limits may vary.
               </p>
             </div>
           </div>

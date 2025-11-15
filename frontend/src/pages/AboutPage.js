@@ -14,14 +14,14 @@ export default function AboutPage() {
 
 
       <div className="about-story__inner">
-   
-        <section className="about-card about-hero">
+        <div className="about-header">
           <h1 className="about-ttl">See Through the Company</h1>
           <p className="about-lead">
             BizRay started with a simple frustration: public data was public—just not usable.  
             We turned scattered registry facts into a clean lens you can look through.
           </p>
-        </section>
+        </div>
+   
 
     
         <section className="about-row">
@@ -72,7 +72,7 @@ export default function AboutPage() {
      
         <section className="about-cta">
           <a href="/" className="btn btn-primary">Try a search</a>
-          <a href="/pricing" className="btn btn-ghost">See pricing</a>
+          <a href="/pricing" className="btn btn-secondary">See pricing</a>
         </section>
       </div>
     </main>
