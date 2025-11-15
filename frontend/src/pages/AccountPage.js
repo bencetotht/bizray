@@ -1,12 +1,19 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { User, Mail, Settings, LogOut, Shield, CreditCard, Bell, Key, Trash2, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AccountPage.css";
 
 export default function AccountPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("profile");
+  
+  useEffect(() => {
+    if (location.hash === "#billing") {
+      setActiveTab("billing");
+    }
+  }, [location.hash]);
   const [formData, setFormData] = useState({
     name: "John Doe",
     email: "john.doe@example.com",
@@ -26,7 +33,6 @@ export default function AccountPage() {
       [name]: value,
     });
     
-    //clear error when the user starts typing
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -34,7 +40,6 @@ export default function AccountPage() {
       });
     }
     
-    // please fill this field message
     if (e.target.validity.valueMissing) {
       e.target.setCustomValidity("Please fill in this field.");
     } else {

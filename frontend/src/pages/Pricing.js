@@ -1,5 +1,6 @@
 import "./Pricing.css";
 import { Check, X, Minus } from "lucide-react";
+import { Link } from "react-router-dom";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 
 export default function Pricing() {
@@ -74,8 +75,8 @@ export default function Pricing() {
             </table>
 
             <footer className="pricing-cta">
-              <a className="btn btn-ghost" href="/signup">Create free account</a>
-              <a className="btn btn-primary" href="/pricing#subscribe">Get network view</a>
+              <Link className="btn btn-ghost" to="/register">Create free account</Link>
+              <Link className="btn btn-primary" to="/account#billing">Get network view</Link>
             </footer>
 
             <div className="pricing-note">
