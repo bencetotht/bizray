@@ -83,7 +83,7 @@ const Hero = () => {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    if (error) setError(""); // Clear error when user types
+                    if (error) setError(""); 
                   }}
                   onKeyDown={handleKeyDown}
                   autoFocus
@@ -163,11 +163,11 @@ const Hero = () => {
               
               <div className="network-preview">
                 <div className="network-node main">EC</div>
-                <div className="network-lines">
-                  <div className="line"></div>
-                  <div className="line"></div>
-                  <div className="line"></div>
-                </div>
+                <svg className="network-lines" viewBox="0 0 200 80" preserveAspectRatio="xMidYMid meet">
+                  <line x1="100" y1="0" x2="50" y2="30" stroke="#e2e8f0" strokeWidth="2" />
+                  <line x1="100" y1="0" x2="100" y2="30" stroke="#e2e8f0" strokeWidth="2" />
+                  <line x1="100" y1="0" x2="150" y2="30" stroke="#e2e8f0" strokeWidth="2" />
+                </svg>
                 <div className="network-nodes">
                   <div className="network-node">RO</div>
                   <div className="network-node">OT</div> {/* root@elliot */}
