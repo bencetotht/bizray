@@ -80,6 +80,60 @@ Response:
 }
 ```
 
+### Get network information about a company
+Request: `GET /api/v1/network/:id`
+
+Parameters:
+- `id`: firmenbuchnummer of the firm
+
+By default, the network graph is calculated with **2** hops.
+
+Response:
+```json
+{
+  "firmenbuchnummer": "661613k",
+  "nodes": [
+    {
+      "id": "661613k",
+      "type": "company",
+      "label": "Körpermanufaktur KG",
+    },
+    {
+      "id": "7402id",
+      "type": "person",
+      "label": "Richard Thomas Kranabetter",
+    },
+    {
+      "id": "765478k",
+      "type": "company",
+      "label": "Example Company",
+    },
+    {
+      "id": "8534lo",
+      "type": "location",
+      "label": "AUT, 6850 Dornbirn, Marktstraße 36",
+    },
+  ],
+  "edges": [
+    {
+      "source": "7402id",
+      "target": "661613k",
+      "label": "Person",
+    },
+    {
+      "source": "7402id",
+      "target": "765478k",
+      "label": "Person",
+    },
+    {
+      "source": "661613k",
+      "target": "8534lo",
+      "label": "Location",
+    },
+  ],
+}
+```
+
 ## Search query suggestion
 Request: `GET /api/v1/search?q=search`
 
