@@ -29,6 +29,7 @@ _redis_client: Optional[redis.Redis] = None
 # Key prefixes for different entity types
 KEY_PREFIX_API = "api:"
 KEY_PREFIX_DB = "db:"
+KEY_PREFIX_NETWORK = "network:"
 KEY_PREFIX_RISK = "risk:"
 
 def init(
@@ -71,7 +72,7 @@ def init(
     except redis.ConnectionError as e:
         raise ConnectionError(f"Failed to connect to Redis: {e}") from e
 
-def get(
+def get_cache(
     key: str,
     entity_type: str = "api",
 ) -> Optional[Any]:
@@ -80,7 +81,7 @@ def get(
     
     Args:
         key: The cache key (without prefix)
-        entity_type: Type of entity ('api', 'db', or 'risk')
+        entity_type: Type of entity ('api', 'db', 'network', or 'risk')
     
     Returns:
         The cached value if found, None otherwise.
@@ -94,6 +95,7 @@ def get(
     prefix_map = {
         "api": KEY_PREFIX_API,
         "db": KEY_PREFIX_DB,
+        "network": KEY_PREFIX_NETWORK,
         "risk": KEY_PREFIX_RISK,
     }
     
@@ -120,7 +122,7 @@ def get(
         print(f"Redis error during get: {e}")
         return None
 
-def set(
+def set_cache(
     key: str,
     value: Any,
     entity_type: str = "api",
@@ -132,7 +134,7 @@ def set(
     Args:
         key: The cache key (without prefix)
         value: The value to store
-        entity_type: Type of entity ('api', 'db', or 'risk')
+        entity_type: Type of entity ('api', 'db', 'network', or 'risk')
         ttl: Time to live in seconds (optional)
     
     Returns:
@@ -145,6 +147,7 @@ def set(
     prefix_map = {
         "api": KEY_PREFIX_API,
         "db": KEY_PREFIX_DB,
+        "network": KEY_PREFIX_NETWORK,
         "risk": KEY_PREFIX_RISK,
     }
     
@@ -153,7 +156,7 @@ def set(
     
     try:
         # For risk scores and complex objects, serialize to JSON
-        if entity_type.lower() == "risk" or isinstance(value, (dict, list)):
+        if entity_type.lower() in ["risk", "network"] or isinstance(value, (dict, list)):
             serialized_value = json.dumps(value)
         else:
             # For simple types, convert to string
@@ -165,7 +168,7 @@ def set(
             result = _redis_client.set(full_key, serialized_value)
         
         return bool(result)
-    
+
     except (redis.RedisError, TypeError, ValueError) as e:
         print(f"Redis error during set: {e}")
         return False

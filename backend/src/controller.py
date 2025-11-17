@@ -5,11 +5,11 @@ import json
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import or_, select, func
+from sqlalchemy import or_, and_, select, func
 from sqlalchemy.orm import Session
 
 from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content
-from .cache import get, set
+from .cache import get_cache, set_cache
 
 from .db import (
     SessionLocal,
@@ -103,7 +103,7 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
     cache_key = f"db_company_by_id:{company_id}"
     
     try:
-        cached_result = get(cache_key, entity_type="db")
+        cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -148,7 +148,7 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
                 else:
                     risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
                     try:
-                        set(risk_cache_key, (risk_data, risk_score), entity_type="risk", ttl=86400)
+                        set_cache(risk_cache_key, (risk_data, risk_score), entity_type="risk", ttl=86400)
                     except Exception:
                         pass
                 
@@ -157,7 +157,7 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
         serialized_result = _serialize_company(result)
         
         try:
-            set(cache_key, serialized_result, entity_type="db", ttl=7200)
+            set_cache(cache_key, serialized_result, entity_type="db", ttl=7200)
         except Exception:
             pass
         
@@ -184,7 +184,7 @@ def search_companies(
     cache_key = f"db_search_companies:{query}:{page}:{page_size}"
     
     try:
-        cached_result = get(cache_key, entity_type="db")
+        cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -228,7 +228,7 @@ def search_companies(
         result = {"results": list_items}
         
         try:
-            set(cache_key, result, entity_type="db", ttl=3600)
+            set_cache(cache_key, result, entity_type="db", ttl=3600)
         except Exception:
             pass
         
@@ -256,7 +256,7 @@ def get_search_suggestions(query: str, session: Optional[Session] = None, limit:
     cache_key = f"db_search_suggestions:{query}:{limit}"
     
     try:
-        cached_result = get(cache_key, entity_type="db")
+        cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -292,7 +292,7 @@ def get_search_suggestions(query: str, session: Optional[Session] = None, limit:
         ]
         
         try:
-            set(cache_key, suggestions, entity_type="db", ttl=3600)
+            set_cache(cache_key, suggestions, entity_type="db", ttl=3600)
         except Exception:
             pass
         
@@ -331,3 +331,189 @@ def get_metrics(session: Optional[Session] = None) -> Dict[str, int]:
         if owns_session:
             session.close()
     
+
+def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
+    """
+    Get the network graph for a specific company.
+    Returns nodes and edges in the format defined in apidocs.md
+    """
+    print(f"Getting network graph for company {company_id} with {hops} hops")
+    
+    session = SessionLocal()
+    try:
+        # get company
+        stmt = (
+            select(Company)
+            .where(Company.firmenbuchnummer == company_id)
+        )
+        company = session.execute(stmt).scalars().first()
+        
+        if company is None:
+            return None
+        
+        # load relationships
+        address = company.address
+        partners = list(company.partners or [])
+        
+        # initialize nodes and edges
+        nodes = []
+        edges = []
+        seen_node_ids = set()
+        
+        # add the main company node
+        company_node_id = company.firmenbuchnummer
+        if company_node_id not in seen_node_ids:
+            nodes.append({
+                "id": company_node_id,
+                "type": "company",
+                "label": company.name,
+            })
+            seen_node_ids.add(company_node_id)
+        
+        # add location node and edge if address exists
+        if address:
+            # create location ID from address components
+            location_parts = []
+            if address.country:
+                location_parts.append(address.country)
+            if address.postal_code:
+                location_parts.append(address.postal_code)
+            if address.city:
+                location_parts.append(address.city)
+            if address.street:
+                street_str = address.street
+                if address.house_number:
+                    street_str += f" {address.house_number}"
+                location_parts.append(street_str)
+            
+            location_label = ", ".join(location_parts) if location_parts else "Unknown Location"
+            location_id = hashlib.md5(location_label.encode('utf-8')).hexdigest()[:8]
+            
+            if location_id not in seen_node_ids:
+                nodes.append({
+                    "id": location_id,
+                    "type": "location",
+                    "label": location_label,
+                })
+                seen_node_ids.add(location_id)
+            
+            # add edge from company to location
+            edges.append({
+                "source": company_node_id,
+                "target": location_id,
+                "label": "Location",
+            })
+            
+            # find companies with the same location
+            location_filters = []
+            if address.postal_code:
+                location_filters.append(Address.postal_code == address.postal_code)
+            if address.city:
+                location_filters.append(Address.city == address.city)
+            if address.street:
+                location_filters.append(Address.street == address.street)
+            if address.house_number:
+                location_filters.append(Address.house_number == address.house_number)
+            
+            if location_filters:
+                connected_companies_stmt = (
+                    select(Company)
+                    .join(Address, Company.id == Address.company_id)
+                    .where(
+                        and_(*location_filters),
+                        Company.firmenbuchnummer != company_id
+                    )
+                )
+                connected_companies = session.execute(connected_companies_stmt).scalars().all()
+                
+                for connected_company in connected_companies:
+                    connected_company_id = connected_company.firmenbuchnummer
+                    if connected_company_id not in seen_node_ids:
+                        nodes.append({
+                            "id": connected_company_id,
+                            "type": "company",
+                            "label": connected_company.name,
+                        })
+                        seen_node_ids.add(connected_company_id)
+                    
+                    # add edge from connected company to location
+                    edges.append({
+                        "source": connected_company_id,
+                        "target": location_id,
+                        "label": "Location",
+                    })
+        
+        # add person nodes and find connected companies through partners
+        for partner in partners:
+            # create person ID from partner information
+            person_parts = []
+            if partner.name:
+                person_parts.append(partner.name)
+            elif partner.first_name and partner.last_name:
+                person_parts.append(f"{partner.first_name} {partner.last_name}")
+            elif partner.last_name:
+                person_parts.append(partner.last_name)
+            
+            person_label = " ".join(person_parts) if person_parts else "Unknown Person"
+            person_id = hashlib.md5(person_label.encode('utf-8')).hexdigest()[:8]
+            
+            if person_id not in seen_node_ids:
+                nodes.append({
+                    "id": person_id,
+                    "type": "person",
+                    "label": person_label,
+                })
+                seen_node_ids.add(person_id)
+            
+            # add edge from person to main company
+            edges.append({
+                "source": person_id,
+                "target": company_node_id,
+                "label": "Person",
+            })
+            
+            # find companies with the same partner
+            partner_filters = []
+            if partner.first_name:
+                partner_filters.append(Partner.first_name == partner.first_name)
+            if partner.last_name:
+                partner_filters.append(Partner.last_name == partner.last_name)
+            if partner.birth_date:
+                partner_filters.append(Partner.birth_date == partner.birth_date)
+            
+            if partner_filters:
+                # find other companies with this partner
+                connected_companies_stmt = (
+                    select(Company)
+                    .join(Partner, Company.id == Partner.company_id)
+                    .where(
+                        and_(*partner_filters),
+                        Company.firmenbuchnummer != company_id
+                    )
+                )
+                connected_companies = session.execute(connected_companies_stmt).scalars().all()
+                
+                for connected_company in connected_companies:
+                    connected_company_id = connected_company.firmenbuchnummer
+                    if connected_company_id not in seen_node_ids:
+                        nodes.append({
+                            "id": connected_company_id,
+                            "type": "company",
+                            "label": connected_company.name,
+                        })
+                        seen_node_ids.add(connected_company_id)
+                    
+                    # add edge from person to connected company
+                    edges.append({
+                        "source": person_id,
+                        "target": connected_company_id,
+                        "label": "Person",
+                    })
+        
+        return {
+            "firmenbuchnummer": company_id,
+            "nodes": nodes,
+            "edges": edges,
+        }
+    finally:
+        session.close()
