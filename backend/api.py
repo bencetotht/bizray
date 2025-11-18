@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
-from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics
-from src.cache import get, set
+from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network
+from src.cache import get_cache, set_cache
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -35,7 +35,7 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
     cache_key = f"search:{q}:{page}:{page_size}"
     
     try:
-        cached_result = get(cache_key, entity_type="api")
+        cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -53,7 +53,7 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
         response = {"companies": results}
         
         try:
-            set(cache_key, response, entity_type="api", ttl=3600)
+            set_cache(cache_key, response, entity_type="api", ttl=3600)
         except Exception:
             pass
         
@@ -71,7 +71,7 @@ async def get_company(company_id: str):
     cache_key = f"company:{company_id}"
     
     try:
-        cached_result = get(cache_key, entity_type="api")
+        cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -85,9 +85,44 @@ async def get_company(company_id: str):
         response = {"company": company}
         
         try:
-            set(cache_key, response, entity_type="api", ttl=7200)
+            set_cache(cache_key, response, entity_type="api", ttl=7200)
         except Exception:
             pass
+        
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/network/{company_id}")
+async def get_network_graph(company_id: str, hops: Optional[int] = 2):
+    """
+    Get the network graph for a specific company
+    Parameters:
+    - company_id: firmenbuchnummer
+    - hops: number of hops (optional, default: 2)
+    """
+    cache_key = f"network:{company_id}:{hops}"
+    
+    # try:
+    #     cached_result = get_cache(cache_key, entity_type="network")
+    #     if cached_result is not None:
+    #         return cached_result
+    # except Exception:
+    #     pass
+    
+    try:
+        company = get_company_network(company_id)
+        if not company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        response = {"company": company}
+        
+        # try:
+        #     set_cache(cache_key, response, entity_type="api", ttl=7200)
+        # except Exception:
+        #     pass
         
         return response
     except HTTPException:
@@ -109,7 +144,7 @@ async def search_suggestions(q: Optional[str] = None):
     
     cache_key = f"search_suggestions:{q}"
     try:
-        cached_result = get(cache_key, entity_type="api")
+        cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -127,7 +162,7 @@ async def search_suggestions(q: Optional[str] = None):
         response = {"suggestions": results}
         
         try:
-            set(cache_key, response, entity_type="api", ttl=3600)
+            set_cache(cache_key, response, entity_type="api", ttl=3600)
         except Exception:
             pass
         
@@ -143,7 +178,7 @@ async def get_metrics_endpoint():
     cache_key = "api_metrics"
     
     try:
-        cached_result = get(cache_key, entity_type="api")
+        cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
@@ -154,7 +189,7 @@ async def get_metrics_endpoint():
         response = {"metrics": metrics}
         
         try:
-            set(cache_key, response, entity_type="api", ttl=43200)
+            set_cache(cache_key, response, entity_type="api", ttl=43200)
         except Exception:
             pass
         
