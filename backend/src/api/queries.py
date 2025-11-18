@@ -49,11 +49,48 @@ def get_urkunde_content(key):
     client.close()
     return extracted_data
 
-def calculate_risk_indicators(extracted_data):
+def get_all_urkunde_contents(urkunde_list):
+    """
+    Get the content of all urkunde entries and return a list of extracted data
+    Args:
+        urkunde_list: list of urkunde objects with KEY attribute
+    Returns:
+        list of extracted_data: list of extracted data from all urkunde entries
+    """
+    if urkunde_list is None or len(urkunde_list) == 0:
+        return []
+    
+    all_extracted_data = []
+    client = ZeepClient(os.getenv("API_KEY"), os.getenv("WSDL_URL"))
+    
+    try:
+        for urkunde in urkunde_list:
+            key = urkunde.KEY
+            urkunde_content = client.get_urkunde(key)
+            if urkunde_content is None:
+                continue
+            
+            content = urkunde_content.DOKUMENT.CONTENT
+            if isinstance(content, bytes):
+                xml_content = content.decode('utf-8')
+            else:
+                xml_content = str(content)
+            
+            extracted_data = extract_bilanz_fields(xml_content)
+            if extracted_data is not None:
+                all_extracted_data.append(extracted_data)
+    finally:
+        client.close()
+    
+    return all_extracted_data
+
+def calculate_risk_indicators(extracted_data, historical_data=None, registry_entries=None):
     """
     Calculate the risk indicators from the extracted data
     Args:
-        extracted_data: the extracted data from the urkunde
+        extracted_data: the extracted data from the latest urkunde (used for most indicators)
+        historical_data: optional list of historical extracted data (for future use with indicators that need historical context)
+        registry_entries: optional list of RegistryEntry objects from the database (for compliance status)
     Returns:
         risk_indicators: the risk indicators from the extracted data
         risk_score: the risk score from the extracted data
@@ -104,7 +141,7 @@ def calculate_risk_indicators(extracted_data):
         'irregular_fiscal_year': check_for_irregular_fiscal_year(extracted_data.get('fiscal_year').get('start_date'), extracted_data.get('fiscal_year').get('end_date')),
         
         # Compliance Status
-        'compliance_status': None,
+        'compliance_status': check_compliance_status(registry_entries or []),
     }
     
     risk_score = np.mean([risk_indicator for risk_indicator in risk_indicators.values() if risk_indicator is not None and risk_indicator is not False])

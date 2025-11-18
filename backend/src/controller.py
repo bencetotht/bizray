@@ -130,23 +130,33 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
         # calculate risk indicators result
         company_urkunde = get_company_urkunde(company_id)
         if company_urkunde is not None:
-            urkunde_doc = get_urkunde_content(company_urkunde[-1].KEY)
-            if urkunde_doc is not None:
+            # Parse all urkunde entries
+            all_urkunde_docs = get_all_urkunde_contents(company_urkunde)
+            
+            if all_urkunde_docs and len(all_urkunde_docs) > 0:
+                # Use the latest entry (last in list) for risk indicators
+                latest_urkunde_doc = all_urkunde_docs[-1]
+                
                 urkunde_hash = hashlib.md5(
-                    json.dumps(urkunde_doc, sort_keys=True).encode('utf-8')
+                    json.dumps(latest_urkunde_doc, sort_keys=True).encode('utf-8')
                 ).hexdigest()[:16]
                 risk_cache_key = f"risk_indicators:{company_id}:{urkunde_hash}"
                 
                 cached_risk = None
                 try:
-                    cached_risk = get(risk_cache_key, entity_type="risk")
+                    cached_risk = get_cache(risk_cache_key, entity_type="risk")
                 except Exception:
                     pass
                 
                 if cached_risk is not None:
                     risk_data, risk_score = cached_risk
                 else:
-                    risk_data, risk_score = calculate_risk_indicators(urkunde_doc)
+                    # Pass latest entry for most indicators, historical data for future use, and registry entries for compliance
+                    risk_data, risk_score = calculate_risk_indicators(
+                        latest_urkunde_doc, 
+                        historical_data=all_urkunde_docs,
+                        registry_entries=list(result.registry_entries or [])
+                    )
                     try:
                         set_cache(risk_cache_key, (risk_data, risk_score), entity_type="risk", ttl=86400)
                     except Exception:
