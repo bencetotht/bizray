@@ -84,30 +84,63 @@
     - Not to implement: its calculation (Current Assets – Current Liabilities) requires specific line items from the balance sheet. Better to focus on Current Ratio because it provides a similar insight in a standardized, comparable format => better to build one good feature instead of multiple confusing ones
 - **Dept-to-Equity-Ratio: High Priority**
     - Simple terms: “How much of the company is funded by borrowed money vs. the owners’ own money?” = Long-Term Health
-    - Huge red flag for risk, classic warning sign -> tells users that the company relies heavily on loans to operate 
-    - You can calculate this ratio if the free government data gives the two numbers from a company’s balance sheet ( Total Liabilities = total dept, and Shareholders’ Equity = the owner’s stake)
-- **Leverage Ratios: Medium Priority?**
-    - Measures the same basic thing: How much a company relies on borrowed money
-    - However, the Dept-to-Equity-Ratio already covers that so we can keep it simple and not include more leverage ratios. Not including it would be clear and effective. If we include it’ll show 3 different “leverage ratios" with slightly different numbers which can confuse the user
-- **Liquidity Ratios: High Priority (But only if we have the data)**
-    - = short-term survival (checks if the company has enough cash (or things it can sell quickly) to pay employees, suppliers and rent for the next few months)
+    - Good (Green): 0.0 – 0.4
+    - Warning (Yellow): 0.41 – 0.6
+    - High Risk (Red): > 0.6
+    - If null: Display "N/A".  (it's just examples for better understanding)
+- **Cash Ratio (High Prioroty, Liquidity)**
+    - The company's short-term survival capability. A ratio showing if the company has enough immediate cash to cover its debts.
+    - Good (Green): > 1.0 (More cash than debt)
+    - Warning (Yellow): 0.5 – 1.0
+    - High Risk (Red): < 0.5 (Less than half the cash needed)
+    - If null: Display "N/A".
+ - **Debt to Assets**
+    - A simple leverage ratio showing what percentage of the company's total assets were financed by debt.
+    - What you receive: A number (float) representing the ratio (e.g., 0.45), or null
+    - Good (Green): < 0.4 (Less than 40%)
+    - Warning (Yellow): 0.4 – 0.6 (40% - 60%)
+    - High Risk (Red): > 0.6 (More than 60%)
+    - If null: Display "N/A".
+- **Equity Ratio**
+    - The inverse of the debt ratio; it shows what percentage of assets are funded by the owners' own capital. A high number is a strong sign of financial stability.
+    - Strong (Green): > 0.5 (More than 50%)
+    - Okay (No color): 0.3 – 0.5 (30% - 50%)
+    - Weak (Yellow): < 0.3 (Less than 30%)
+    - If null: Display "N/A".
+- **Concentration Risk**
+    - A special indicator that checks for "hidden" network risk within the balance sheet. It measures the percentage of a company's total assets that are just IOUs from its own related/affiliated companies.
+    - A higher number is a bigger risk.
+    - Low (No color): < 15
+    - Warning (Yellow): 15 – 30
+    - High Risk (Red): > 30 (If over 30% of assets are internal IOUs, display this prominently).
+    - If null: Display "N/A".
+- **Deferred Income Risk**
+    - A simple flag that turns true if the company is dangerously reliant on customer prepayments (money for work it hasn't done yet) for its funding.
+    - If true: it's a High Risk.
+    - If false or null: not a high risk, can be shown or not.
+
 
 ## 2. Trend Indicators
-- **Company Growth: High Priority**
-    - Checks if the company’s business is getting bigger or smaller
-    - Tracks the revenue over the last 3-5 years
-    - Depends on the historical data available
-- **Operational Result Over Time: High Priority**
-    - Checks if the company is getting better or worse at making profit
-    - Tracks the net profit (money left over after paying all the bills) over the last 3-5 years
-    - Depends on historical data available
+- **Compliance (check_compliance_status() High Prioroty)**
+    - A flag indicating if the company is up-to-date with its mandatory paperwork.
+    - If true: is compliant, safe.
+    - If false: red flag, not compliant.
+    - If null: unkown.
+- **Irregular Year (High Priority)**
+    - A flag for a "short fiscal year," which signals a major, disruptive event (merger, acquisition, etc.).
+    - True: It's an irregular fiscal year, red flag
+    - False: normal fiscal year, safe
+- **Balance Sheet Volatility Score (High Prioroty)**
+    - A risk score from 0.0 to 1.0 that flags extreme, rapid changes in the company's size in one year.
+    - A value > 0.8 should be considered a warning, indicating very high growth/shrinkage that warrants attention.
+    - If null: Display "N/A".
+    - This indicator depends on receiving previous year data from the API. If that data is missing, the value will be null
+- **Blocked Trend Indicators**
+    - Company Growth (Revenue) and Operational Result (Profit): These are planned but currently blocked until the backend can access multi-year historical data from the API. Do not build UI for these yet.
 
-## 3. Compliance Indicators
-- **High Priority**
-- It’s about behavior and discipline
-- Checks if the company is submitting the mandatory reports on time
 
-## 4. Network Risk
+
+## 3. Network Risk
 - **High Priority**
 - Checks the connections the company has
 - Core idea, a company can look perfectly healthy, but if its network of partners companies is collapsing, it’s a high risk of being dragged down with them
