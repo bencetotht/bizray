@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import or_, and_, select, func
 from sqlalchemy.orm import Session
 
-from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content
+from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content, get_all_urkunde_contents
 from .cache import get_cache, set_cache
 
 from .db import (
