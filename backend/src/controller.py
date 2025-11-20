@@ -490,10 +490,10 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                         })
                         seen_node_ids.add(connected_company_id)
                     
-                    # add edge from connected company to location
+                    # add edge from main company to connected company (they share a location)
                     edges.append({
-                        "source": connected_company_id,
-                        "target": location_id,
+                        "source": company_node_id,
+                        "target": connected_company_id,
                         "label": "Location",
                     })
         
@@ -519,10 +519,10 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 })
                 seen_node_ids.add(person_id)
             
-            # add edge from person to main company
+            # add edge from main company to person
             edges.append({
-                "source": person_id,
-                "target": company_node_id,
+                "source": company_node_id,
+                "target": person_id,
                 "label": "Person",
             })
             
@@ -557,9 +557,9 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                         })
                         seen_node_ids.add(connected_company_id)
                     
-                    # add edge from person to connected company
+                    # add edge from main company to connected company (they share a person)
                     edges.append({
-                        "source": person_id,
+                        "source": company_node_id,
                         "target": connected_company_id,
                         "label": "Person",
                     })
