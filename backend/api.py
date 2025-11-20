@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 
-from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network
+from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount
 from src.cache import get_cache, set_cache
 
 api_router = APIRouter(prefix="/api/v1")
@@ -15,24 +15,24 @@ async def health_check():
     return {"status": "healthy"}
 
 @api_router.get("/company")
-async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_size: Optional[int] = 10):
+async def get_companies(q: Optional[str] = None, p: Optional[int] = 1, l: Optional[int] = 10):
     """
     Company search
     Parameters:
     - q: str - query string
-    - page: int - page number
-    - page_size: int - page size
+    - p: int - page number
+    - l: int - page size
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
     if len(q) < 3:
         raise HTTPException(status_code=400, detail="Query parameter must be at least 3 characters long")
-    if page < 1:
-        page = 1
-    if page_size < 1 or page_size > 100:
-        page_size = 10
+    if p < 1:
+        p = 1
+    if l < 1 or l > 100:
+        l = 10
     
-    cache_key = f"search:{q}:{page}:{page_size}"
+    cache_key = f"search:{q}:{p}:{l}"
     
     try:
         cached_result = get_cache(cache_key, entity_type="api")
@@ -42,7 +42,8 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
         pass
     
     try:
-        companies = search_companies(q, page, page_size)
+        total_companies = search_companies_amount(q)
+        companies = search_companies(q, p, l)
         if isinstance(companies, dict):
             results = companies.get("results") or companies.get("companies") or []
         elif isinstance(companies, list):
@@ -50,7 +51,7 @@ async def get_companies(q: Optional[str] = None, page: Optional[int] = 1, page_s
         else:
             results = []
         
-        response = {"companies": results}
+        response = {"companies": results, "total": total_companies}
         
         try:
             set_cache(cache_key, response, entity_type="api", ttl=3600)

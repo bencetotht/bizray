@@ -247,6 +247,50 @@ def search_companies(
         if owns_session:
             session.close()
 
+def search_companies_amount(query: str, session: Optional[Session] = None) -> int:
+    """
+    Get the number of companies matching the query.
+    Uses the same search filters as search_companies for consistency.
+    """
+    if len(query) < 3:
+        return 0
+    
+    cache_key = f"db_search_companies_amount:{query}"
+    
+    try:
+        cached_result = get_cache(cache_key, entity_type="db")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+    
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+    
+    try:
+        like = f"%{query}%"
+        filters = or_(
+            Company.name.ilike(like),
+            Company.firmenbuchnummer.ilike(like),
+            Company.seat.ilike(like),
+            Company.business_purpose.ilike(like),
+        )
+        
+        total = session.execute(select(func.count()).select_from(select(Company.id).where(filters).subquery())).scalar_one()
+        
+        try:
+            set_cache(cache_key, total, entity_type="db", ttl=3600)
+        except Exception:
+            pass
+        
+        return total
+    finally:
+        if owns_session:
+            session.close()
+
+
 def get_search_suggestions(query: str, session: Optional[Session] = None, limit: int = 10) -> List[Dict[str, str]]:
     """
     Get search suggestions for companies matching the query.
