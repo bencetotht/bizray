@@ -56,8 +56,15 @@ code {
 
 .btn-secondary {
   background: transparent;
-  color: #667eea;
+  color: #3858e7;
   border: 2px solid #667eea;
+}
+
+.t {
+  color: #764ba2;
+  color: #3858e7;
+  
+  color: #2b43ae;
 }
 
 .btn-secondary:hover {

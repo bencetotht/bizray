@@ -3,9 +3,10 @@ import React from "react";
 import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink, Triangle } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import CompanySummaryCard from "../components/CompanySummaryCard";
 import NetworkGraph from "../components/NetworkGraph";
+
 
 const displayValue = (value) => {
   if (value === null || value === undefined) {
@@ -452,6 +453,14 @@ export default function CompanyDetails() {
                 and explore. This will later render real graph data from the API.
               </p>
               <NetworkGraph company={company} />
+                <Link
+      to={`/graph/${id}`}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+    >
+      Open full network view
+      <ExternalLink size={16} />
+    </Link>  
+
             </div>
           </div>
         </div>
