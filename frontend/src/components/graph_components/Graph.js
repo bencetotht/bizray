@@ -16,7 +16,12 @@ import FaceIcon from '@mui/icons-material/Face';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
+import SettingsButton from "./GraphSettings";
+import StoreIcon from '@mui/icons-material/Store';
 
 
 
@@ -153,7 +158,7 @@ function MainCompanyDisplay({ data, selected }) {
     return (
         <>
             <div className={`
-${selected ? 'bg-purple-500/40' : 'bg-purple-500/30'}
+${selected ? 'bg-gradient-to-br from-indigo-400 to-purple-500' : 'bg-gradient-to-br from-indigo-300 to-purple-400'}
 h-20 w-60 
 flex
 p-2
@@ -187,9 +192,11 @@ relative
 }
 
 function DefaultCompanyDisplay({ id, selected, data }) {
+    const navigate = useNavigate();
+
     return (
         <div className={`
-${selected ? 'bg-blue-500/20' : 'bg-blue-400/15'}
+${selected ? 'bg-blue-500/20 shadow-xl shadow-black/20' : 'bg-blue-400/15 '}
 h-32
 w-45
 rounded
@@ -238,6 +245,19 @@ relative
                     className="bg-white p-2 w-8 h-8 flex justify-center items-center rounded hover:bg-gray-200">
                     <CloseFullscreenIcon className="!text-[25px]" />
                 </div>
+                {/* Navigate to /graph/:id */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();        // don't let React Flow steal the click
+            navigate(`/graph/${id}`);   // tell React Router to change route
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+        >
+          <span className="flex items-center gap-2">
+            Network
+            <ExternalLink size={16} />
+          </span>
+        </button>
 
 
             </div>
@@ -246,9 +266,34 @@ relative
     );
 }
 
+
+
+function DetailedCompanyDisplay({}){
+
+}
+
+function MinimalCompanyDisplay({id, selected, data}){
+    return (
+        <>
+            <div className="h-15 w-15 bg-white rounded-full flex justify-center items-center shadow-xl shadow-black/20">
+                <StoreIcon className="!text-[35px]"/>
+                <Handle type="source" position="bottom" />
+            <Handle type="target" position="top" />
+            </div>
+        </>
+    )
+}
+
+
+
+
+
+
+
 const nodeTypes = {
     default_company_display: DefaultCompanyDisplay,
     main_company_display: MainCompanyDisplay,
+    minimal_company_display: MinimalCompanyDisplay
 }
 
 
@@ -322,11 +367,19 @@ const edgeTypes = {
 export default function Graph({ id_that_was_passed }) {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [defaultCompanyDisplayType, setDefaultCompanyDisplayType] = useState("default_company_display")
 
 
     const [visibleNodeIds, setVisibleNodeIds] = useState(() => new Set());
     const [childrenByParent, setChildrenByParent] = useState({});
     const [rootId, setRootId] = useState(null);
+
+
+
+    function change_company_display_default(set_to_this_type){
+        console.log("Changed the display to: ", set_to_this_type)
+        setDefaultCompanyDisplayType(set_to_this_type);
+    }
 
 
 
@@ -394,7 +447,7 @@ export default function Graph({ id_that_was_passed }) {
             return {
                 id: node.id,
 
-                type: existing?.type ?? (isMain ? "main_company_display" : "default_company_display"),
+                type: existing?.type ?? (isMain ? "main_company_display" : defaultCompanyDisplayType),
 
                 position: existing?.position ?? { x: 0, y: 0 },
 
@@ -460,13 +513,34 @@ export default function Graph({ id_that_was_passed }) {
 
 
 
+useEffect(() => {
+  setNodes((prevNodes) =>
+    prevNodes.map((node) => {
+      // keep main display as-is
+      if (node.type === "main_company_display") return node;
+
+      // only change company nodes
+      if (
+        node.type === "default_company_display" ||
+        node.type === "minimal_company_display"
+      ) {
+        return {
+          ...node,
+          type: defaultCompanyDisplayType,
+        };
+      }
+
+      return node;
+    })
+  );
+}, [defaultCompanyDisplayType]);
 
 
     useEffect(() => {
         fetchCompany(id_that_was_passed);
         //304173p
         //563319k
-    }, []);
+    }, [id_that_was_passed]);
 
     const selectedNodeIds = useMemo(
         () => nodes.filter((n) => n.selected).map((n) => n.id),
@@ -578,11 +652,13 @@ export default function Graph({ id_that_was_passed }) {
 
     return (
         <>
-            <div className="w-full h-[100vh] bg-blue-300 py-15">
+            <div className="w-full h-[100vh] bg-blue-300 py-15 relative">
+                
+                <SettingsButton open={false} changing_default_company_display_tape_f={change_company_display_default}/>
                 <div className="bg-blue-200 px-10 h-full w-full">
-                    <div className="h-full w-full bg-white">
+                    <div className="h-full w-full ">
                         <ReactFlow
-                            style={{ backgroundColor: '#f3f5feff' }}
+                            style={{ backgroundColor: '#f3f5feff'}}
                             nodes={renderNodes}
                             edges={displayEdges}
                             onNodesChange={onNodesChange}
@@ -590,6 +666,8 @@ export default function Graph({ id_that_was_passed }) {
                             nodeTypes={nodeTypes}
                             edgeTypes={edgeTypes}
                             fitView
+                            fitViewOptions={{ padding: 0.3 }} 
+                            
                             minZoom={0.05}
                             maxZoom={4}
                             zoomOnScroll

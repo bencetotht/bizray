@@ -60,11 +60,25 @@ code {
   border: 2px solid #667eea;
 }
 
+
+#graph_link {
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+}
+
+#graph_link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
 .t {
   color: #764ba2;
   color: #3858e7;
   
-  color: #2b43ae;
+  color: #372449;
+  color: #100812;
 }
 
 .btn-secondary:hover {

@@ -1,14 +1,17 @@
 // Graph_4_Wrapper.jsx
 import { ReactFlowProvider } from "reactflow";
 import { useParams } from "react-router-dom";
-import Graph from "../../components/Graph";
+import Graph from "./Graph";
 
 export default function Graph_4_Wrapper() {
-  const { id } = useParams(); // kommt aus /graph/:id
+  const { id } = useParams(); // from /graph/:id
 
   return (
     <ReactFlowProvider>
-      <Graph id_that_was_passed={id} />
+      <Graph
+        key={id}                 // 👈 this forces a fresh Graph when id changes
+        id_that_was_passed={id}
+      />
     </ReactFlowProvider>
   );
 }

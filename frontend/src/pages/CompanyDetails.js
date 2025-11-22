@@ -452,14 +452,20 @@ export default function CompanyDetails() {
                 Preview of relationships to partner firms and holdings. Zoom, pan,
                 and explore. This will later render real graph data from the API.
               </p>
+              <Link
+                to={`/graph/${id}`}
+                id="graph_link"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <div className="  bg-blue flex justify-center items-center items-center">
+                  Open full network view
+                  <ExternalLink size={16} />
+                </div>
+
+              </Link>
               <NetworkGraph company={company} />
-                <Link
-      to={`/graph/${id}`}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-    >
-      Open full network view
-      <ExternalLink size={16} />
-    </Link>  
+              
+              
 
             </div>
           </div>
