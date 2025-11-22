@@ -23,7 +23,7 @@ def debt_to_equity_ratio(shareholders_equity: float, total_liabilities: float) -
     # Convert ratio to risk score: lower ratio = higher risk
     # Using inverse relationship: risk = 1 / (1 + ratio)
     risk_score = 1 / (1 + ratio)
-    
+
     return min(1.0, max(0.0, risk_score))
 
 
@@ -73,7 +73,7 @@ def balance_sheet_volatility(current_value: float, previous_value: float) -> Opt
     # Using 50% change as the threshold for maximum risk
     volatility_threshold = 50.0
     risk_score = min(1.0, abs(growth_percentage) / volatility_threshold)
-    
+
     return risk_score
 
 def check_for_irregular_fiscal_year(start_date: str, end_date: str) -> bool:
@@ -170,3 +170,38 @@ def equity_ratio(shareholders_equity: float, total_assets: float) -> Optional[fl
 
     ratio = shareholders_equity / total_assets
     return ratio
+
+
+def growth_revenue(current_revenue: float, previous_revenue: float) -> Optional[float]:
+    """
+    Calculates the year over year revenue growth percentage (measures how much the company's revenue increased/decreased
+    compared to the previous period
+    Parameters:
+    - current_revenue: float (The revenue for the latest period)
+    - previous_revenue: float (The revenue for the previous period)
+    Returns:
+    - growth_percentage: float (e.g., 15.5 for 15.5% growth), or None if data is invalid
+    """
+    if previous_revenue == 0:
+        if current_revenue == 0:
+            return 0.0
+        return None
+    #can't calculate percentage change if the previous value was 0, unless the current value is also 0
+
+    growth_percentage = ((current_revenue - previous_revenue) / previous_revenue)
+    return growth_percentage
+
+def operational_result_profit(current_profit: float, previous_profit:float) -> Optional[float]:
+    """
+    Calculates the year over year profit growth rate as a decimal.
+    measures the change in a company's net income or operational profit from one period to the next , indicating efficiency and market success
+    """
+    if previous_profit == 0:
+        if current_profit == 0:
+            return 0.0
+        return None
+    profit_growth = ((current_profit - previous_profit) / previous_profit)
+    return profit_growth
+
+
+

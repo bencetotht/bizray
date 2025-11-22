@@ -9,7 +9,9 @@ from src.indicators import (
     check_compliance_status,
     cash_ratio,
     debt_to_assets_ratio,
-    equity_ratio
+    equity_ratio,
+    growth_revenue,
+    operational_result_profit
 )
 from src.db import RegistryEntry
 
@@ -192,11 +194,76 @@ def test_equity_ratio_edge():
     assert equity_ratio(10_000_000.0, 0.0) is None
 
 
+#I defined a small tolerance for floating point comparisons
+#The tolerance tells the test to pass if the actual result is "close enough" (within
+# 0.0001) to the expected result, preventing tests from failing due to rounding errors,
+# which are mathematical storage issues
+TOLERANCE = 0.0001
+
+#Test for growth reb=venue
+def test_growth_revenue_positive():
+    #Test 20% growth: (120-100) / 100 = 0.2
+    result = growth_revenue(120.0, 100.0)
+    assert abs(result - 0.2) < TOLERANCE
+
+def test_revenue_growth_negative():
+    #Test 20% decline: (80-100) / 100 = -0.2
+    result = growth_revenue(80.0, 100.0)
+    assert abs(result - (-0.2)) < TOLERANCE
+
+def test_revenue_growth_no_change():
+    #Test 0% growth (100-100) / 100 = 0.0
+    result = growth_revenue(100.0, 100.0)
+    assert result == 0.0
+
+def test_revenue_growth_previous_zero_current_non_zero():
+    #Tests division by zero when the company had no previous revenue
+    result = growth_revenue(100.0, 0.0)
+    assert result is None
+
+def test_revenue_both_zero():
+    #Tests the edge case where both revenues are 0
+    result = growth_revenue(0.0, 0.0)
+    assert result == 0.0
+
+def test_revenue_massive_growth():
+    #tests high growth
+    result = growth_revenue(10_000_000.0, 1_000_000.0)
+    assert abs(result - 9.0) < TOLERANCE
 
 
+# Test for Operational result profit
+def test_profit_positive():
+    #Tests 50% profit growth: (150-100) / 100 = 0.5
+    result = operational_result_profit(150.0, 100.0)
+    assert abs(result - 0.5) < TOLERANCE
 
+def test_profit_negative():
+    #Tests 50% profit decline: (50 - 100) / 100 = -0.5
+    result = operational_result_profit(150.0, 100.0)
+    assert abs(result - 0.5) < TOLERANCE
 
+def test_profit_growth_no_change():
+    #Tests 0% profit change: (100 - 100) / 100 = 0.0
+    result = operational_result_profit(100.0, 100.0)
+    assert result == 0.0
 
+def test_profit_growth_previous_zero_current_non_zero():
+    #Tests division by zero when the previous period had no profit
+    result = operational_result_profit(100.0, 0.0)
+    assert result is None
+
+def test_profit_growth_both_zero():
+   #tests the edge case where both periods had zero profit
+    result = operational_result_profit(0.0, 0.0)
+    assert result == 0.0
+
+def test_profit_growth_loss_to_smaller_loss():
+    #Tests 'growth' when a large loss shrinks to a small loss
+    # Loss shrinks from -100 to -50: (-50 - (-100)) / -100 = 50 / -100 = -0.5
+    # Mathematically, this is a negative growth rate, though financially it's an improvement.
+    result = operational_result_profit((-50.0), (-100.0))
+    assert abs(result - (-0.5)) < TOLERANCE
 
 
 
