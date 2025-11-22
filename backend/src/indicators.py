@@ -23,7 +23,7 @@ def debt_to_equity_ratio(shareholders_equity: float, total_liabilities: float) -
     # Convert ratio to risk score: lower ratio = higher risk
     # Using inverse relationship: risk = 1 / (1 + ratio)
     risk_score = 1 / (1 + ratio)
-    
+
     return min(1.0, max(0.0, risk_score))
 
 
@@ -73,7 +73,7 @@ def balance_sheet_volatility(current_value: float, previous_value: float) -> Opt
     # Using 50% change as the threshold for maximum risk
     volatility_threshold = 50.0
     risk_score = min(1.0, abs(growth_percentage) / volatility_threshold)
-    
+
     return risk_score
 
 def check_for_irregular_fiscal_year(start_date: str, end_date: str) -> bool:
@@ -129,3 +129,79 @@ def check_compliance_status(registry_entries: List[RegistryEntry], check_date: d
         return False
     else:
         return True
+
+
+def cash_ratio(cash_and_equivalents: float, total_liabilities: float) -> Optional[float]:
+    """
+    =  a liquidity metric showing a company's ability to cover its short-term debts (current liabilities)
+    using only its most liquid assets: cash and cash equivalents, without selling inventory or collecting accounts receivable
+    cash_and_equivalents = cash & assets that can immediately be converted to cash
+    total_liabilities = all the money a company owns (long-term and short-term)
+    """
+
+    if total_liabilities == 0:
+        return None
+
+    ratio = cash_and_equivalents / total_liabilities
+
+    return ratio
+
+
+def debt_to_assets_ratio(total_liabilities: float, total_assets: float) -> Optional[float]:
+    """
+    =  shows what percentage of a company's assets are financed by debt, indicating its financial leverage and stability
+    by dividing Total Liabilities by Total Assets
+    """
+
+    if total_assets <= 0:
+        return None
+
+    ratio = total_liabilities / total_assets
+
+    return ratio
+
+def equity_ratio(shareholders_equity: float, total_assets: float) -> Optional[float]:
+    """
+    = shows what percentage of a company's assets are funded by the owners' own capital.
+    higher ratio (over 50%) = greater financial stability, less reliance on debt
+    """
+    if total_assets <= 0:
+        return None
+
+    ratio = shareholders_equity / total_assets
+    return ratio
+
+
+def growth_revenue(current_revenue: float, previous_revenue: float) -> Optional[float]:
+    """
+    Calculates the year over year revenue growth percentage (measures how much the company's revenue increased/decreased
+    compared to the previous period
+    Parameters:
+    - current_revenue: float (The revenue for the latest period)
+    - previous_revenue: float (The revenue for the previous period)
+    Returns:
+    - growth_percentage: float (e.g., 15.5 for 15.5% growth), or None if data is invalid
+    """
+    if previous_revenue == 0:
+        if current_revenue == 0:
+            return 0.0
+        return None
+    #can't calculate percentage change if the previous value was 0, unless the current value is also 0
+
+    growth_percentage = ((current_revenue - previous_revenue) / previous_revenue)
+    return growth_percentage
+
+def operational_result_profit(current_profit: float, previous_profit:float) -> Optional[float]:
+    """
+    Calculates the year over year profit growth rate as a decimal.
+    measures the change in a company's net income or operational profit from one period to the next , indicating efficiency and market success
+    """
+    if previous_profit == 0:
+        if current_profit == 0:
+            return 0.0
+        return None
+    profit_growth = ((current_profit - previous_profit) / previous_profit)
+    return profit_growth
+
+
+
