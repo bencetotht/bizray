@@ -370,60 +370,67 @@ export default function CompanyDetails() {
               </h3>
               {/* Table */}
               <div className={`section-content ${riskExpanded ? "expanded" : "collapsed"}`}>
-                <div className="risk-bars">
-                  {Object.entries(riskIndicators)
-                    .filter(([_, v]) => {
-                      if (v === null || v === undefined) return false;
-                      if (typeof v === "number" && isNaN(v)) return false;
-                      return true;
-                    })
+                {Object.keys(riskIndicators).length === 0 ? (
+                  <div className="no-data-message">
+                    <AlertCircle size={20} />
+                    <p>No risk indicators available for this company.</p>
+                  </div>
+                ) : (
+                  <div className="risk-bars">
+                    {Object.entries(riskIndicators)
+                      .filter(([_, v]) => {
+                        if (v === null || v === undefined) return false;
+                        if (typeof v === "number" && isNaN(v)) return false;
+                        return true;
+                      })
 
-                    .map(([key, raw]) => {
-                      const isBoolean =
-                        raw === 0 || raw === 1 || raw === true || raw === false;
+                      .map(([key, raw]) => {
+                        const isBoolean =
+                          raw === 0 || raw === 1 || raw === true || raw === false;
 
-                      let v = typeof raw === "boolean" ? Number(raw) : raw;
-                      if (v > 1) v = 1;
+                        let v = typeof raw === "boolean" ? Number(raw) : raw;
+                        if (v > 1) v = 1;
 
-                      const label = key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase());
+                        const label = key
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (c) => c.toUpperCase());
 
-                      return (
-                        <div key={key} className="risk-bar-row">
-                          <div className="risk-bar-label">
-                            {label}
-                            <span className="risk-info-tooltip">?
-                              <span className="risk-info-tooltip-text">What does this category stand for?</span>
-                            </span>
-                          </div>
-                          <div className="risk-bar-track">
-                            <div
-                              className="risk-bar-fill"
-                              style={{ width: `${v * 100}%` }}
-                            />
-                            {/* Pointer */}
-                            <div
-                              className={`risk-bar-pointer ${v > 0.85 ? "flip-tooltip" : ""}`}
-                              style={{ left: `${v * 100}%` }}
-                            >
-                              <div className="risk-pointer-hitbox"><Triangle size={12} fill="currentColor" /></div>
-                              <span
-                                className="risk-arrow-tooltip"
-                                style={{
-                                  background: getZoneColor(v).bg,
-                                  border: `1px solid ${getZoneColor(v).border}`,
-                                  color: "#1e293b"
-                                }}
-                              >
-                                {isBoolean ? (raw === 1 ? "Yes" : "No") : v.toFixed(2)}
+                        return (
+                          <div key={key} className="risk-bar-row">
+                            <div className="risk-bar-label">
+                              {label}
+                              <span className="risk-info-tooltip">?
+                                <span className="risk-info-tooltip-text">What does this category stand for?</span>
                               </span>
                             </div>
+                            <div className="risk-bar-track">
+                              <div
+                                className="risk-bar-fill"
+                                style={{ width: `${v * 100}%` }}
+                              />
+                              {/* Pointer */}
+                              <div
+                                className={`risk-bar-pointer ${v > 0.85 ? "flip-tooltip" : ""}`}
+                                style={{ left: `${v * 100}%` }}
+                              >
+                                <div className="risk-pointer-hitbox"><Triangle size={12} fill="currentColor" /></div>
+                                <span
+                                  className="risk-arrow-tooltip"
+                                  style={{
+                                    background: getZoneColor(v).bg,
+                                    border: `1px solid ${getZoneColor(v).border}`,
+                                    color: "#1e293b"
+                                  }}
+                                >
+                                  {isBoolean ? (raw === 1 ? "Yes" : "No") : v.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -662,3 +662,27 @@
   transform: translateX(-50%) translateY(-4px);
 }
 
+/* No data message */
+.no-data-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #718096;
+  margin-left: 26px;
+}
+
+.no-data-message svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.no-data-message p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
