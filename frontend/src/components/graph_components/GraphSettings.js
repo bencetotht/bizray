@@ -165,7 +165,7 @@ bg-white/50
 export default function SettingsButton({ open, changing_default_company_display_tape_f }) {
   const [openFlag, setOpenFlag] = useState(open)
 
-  console.log("IN THE OPEN FLAG", openFlag)
+  // console.log("IN THE OPEN FLAG", openFlag)
 
   return (
     <>

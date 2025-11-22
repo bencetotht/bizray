@@ -14,14 +14,10 @@ import 'reactflow/dist/style.css';
 
 import FaceIcon from '@mui/icons-material/Face';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
 
 import SettingsButton from "./GraphSettings";
-import StoreIcon from '@mui/icons-material/Store';
+
 import { companyNodeTypes } from "./CompanyNodeTypes";
 
 
@@ -159,20 +155,6 @@ function starLayout(nodes, mainNodeId) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function DetailedEdge(props) {
     const [edgePath, labelX, labelY] = getStraightPath(props);
 
@@ -248,6 +230,7 @@ export default function Graph({ id_that_was_passed }) {
 
     const [visibleNodeIds, setVisibleNodeIds] = useState(() => new Set());
     const [childrenByParent, setChildrenByParent] = useState({});
+    
     const [rootId, setRootId] = useState(null);
 
 
@@ -261,22 +244,45 @@ export default function Graph({ id_that_was_passed }) {
             )
         );
     }
-
-
-
-
-
-
-
-    function change_company_display_default(set_to_this_type){
-        console.log("Changed the display to: ", set_to_this_type)
+    function change_company_display_default(set_to_this_type) {
+        // console.log("Changed the display to: ", set_to_this_type)
         setDefaultCompanyDisplayType(set_to_this_type);
     }
 
+    
+    useEffect(() => {
+        setNodes((prevNodes) =>
+            prevNodes.map((node) => {
+                if (node.type === "main_company_display" || node.selected) return node;
+
+                if (
+                    node.type === "default_company_display" ||
+                    node.type === "minimal_company_display"
+                ) {
+                    return {
+                        ...node,
+                        type: defaultCompanyDisplayType,
+                    };
+                }
+
+                return node;
+            })
+        );
+    }, [defaultCompanyDisplayType]);
 
 
 
 
+
+
+    //____________________________________________________________
+    //___________Fetching Company Data & Updating View____________
+    //____________________________________________________________
+
+
+    //This Function removes the duplicate Nodes and edges that come when fetching a target node
+    //So if company A -> B and you fetch B, that you dont get the node B -> A
+    //It just stays A -> B
     const updateGraphData = (newNodes = [], newEdges = []) => {
 
         setNodes((prevNodes) => {
@@ -308,30 +314,37 @@ export default function Graph({ id_that_was_passed }) {
         });
     };
 
-
-
+    
     async function fetchCompany(id) {
-        const response = await fetch(`https://apibizray.bnbdevelopment.hu/api/v1/network/${id}`);
 
+        //Fetching the Company from Api via the id
+        const response = await fetch(`https://apibizray.bnbdevelopment.hu/api/v1/network/${id}`);
         if (!response.ok) {
             throw new Error("Failed to fetch company data");
         }
         const data = await response.json();
-
         const company = data.company;
         const mainId = company.firmenbuchnummer;
 
 
+
+        //The company fetched on the mount will stay the rootId forever
         if (!rootId) {
             setRootId(mainId);
         }
 
 
+        //The Parent Id will later be important for recursively collapsing all child nodes if you collapse this one
         const parentId = id;
 
 
+
+        //Gives ALL node ids that are currently displayed
         const existingById = new Map(nodes.map((n) => [n.id, n]));
 
+
+
+        //Creates First Node Instances, only the Root Node is treated differently
         const rawNodes = company.nodes.map((node) => {
             const existing = existingById.get(node.id);
             const isMain = node.id === (rootId ?? mainId);
@@ -350,6 +363,9 @@ export default function Graph({ id_that_was_passed }) {
             };
         });
 
+
+
+        //Creates raw edges - nothing special
         const rawEdges = company.edges.map((edge) => {
             const createdEdge = {
                 id: `${edge.source}-${edge.target}`,
@@ -364,16 +380,34 @@ export default function Graph({ id_that_was_passed }) {
         });
 
 
+
+        //Creates Layout and Position of Nodes with two rules: 
+        //IF ROOT NODE -> Make a circle with all nodes around it
+        //IF NOT ROOT NODE -> Takes angle of parent and makes a half circle for the childs
         const positionedNodes = starLayout(rawNodes, parentId);
 
+
+
+        //Should remove duplicate Edges (so A->B = B->A, so not necessary) !!!!MAYBE NOT WOKRING FOR CHILDS THO
         updateGraphData(positionedNodes, rawEdges);
 
 
+
+
+        //On Inital Mount - All Nodes are new, you can ignore
+        //If you expand a Child, it checks, which Connection Nodes (Companies) are already displayed, then follows two rules: 
+        //IF they are displayed - just leave them like that
+        //IF NOT -> These are now added to newChildIds (will later be important for collapsing all childs and child of childs recursively)
         const newChildIds = positionedNodes
             .map((n) => n.id)
             .filter((nid) => nid !== parentId && !visibleNodeIds.has(nid));
 
 
+
+
+        //Creates a Objects to reconstruct the path of who calls him for expanding
+        //The Parent - is the one who calls the expansion: 
+        //All Nodes that are not expanded till then will be added as their Child Nodes 
         setChildrenByParent((prev) => {
             const prevChildrenSet = prev[parentId] ?? new Set();
             const updatedChildrenSet = new Set(prevChildrenSet);
@@ -389,6 +423,16 @@ export default function Graph({ id_that_was_passed }) {
         });
 
 
+
+        
+
+
+
+
+
+
+
+        //Updates all the Nodes that are now displayed!
         setVisibleNodeIds((prev) => {
             const next = new Set(prev);
             positionedNodes.forEach((n) => next.add(n.id));
@@ -397,72 +441,185 @@ export default function Graph({ id_that_was_passed }) {
     }
 
 
+    function getPathToRoot(nodeId) {
+    if (!rootId) return [];
+
+    const path = [nodeId];
+    let current = nodeId;
+    const seen = new Set([nodeId]); // safety against cycles
+
+    while (current !== rootId) {
+        const parent = parentByChild[current];
+
+        if (!parent || seen.has(parent)) {
+            // no parent known or broken / cyclic structure
+            break;
+        }
+
+        path.push(parent);
+        seen.add(parent);
+        current = parent;
+    }
+
+    // currently: [selected, ..., root]
+    // return as: [root, ..., selected]
+    return path.reverse();
+}
+
+
+function findParentOf(childId, childrenByParent) {
+  for (const [parentId, childrenSet] of Object.entries(childrenByParent)) {
+    if (childrenSet.has(childId)) {
+      return parentId;
+    }
+  }
+  return null;
+}
+
+  function getPathToRoot(nodeId) {
+  if (!rootId) return [];
+
+  const path = [nodeId];
+  let current = nodeId;
+  const seen = new Set([nodeId]); 
+
+  while (current !== rootId) {
+    const parent = findParentOf(current, childrenByParent);
+
+    if (!parent || seen.has(parent)) {
+
+      break;
+    }
+
+    path.push(parent);
+    seen.add(parent);
+    current = parent;
+  }
+
+
+  return path.reverse();
+}
+  
+
+const pathEdgeSet = useMemo(() => {
+  const set = new Set();
+
+  if (!rootId) return set;
+
+
+  const selectedNode = nodes.find((n) => n.selected);
+  if (!selectedNode) return set;
+
+  const path = getPathToRoot(selectedNode.id);
+  if (path.length < 2) return set;
+
+
+  for (let i = 0; i < path.length - 1; i++) {
+    const from = path[i];
+    const to = path[i + 1];
+    set.add(`${from}->${to}`); 
+  }
+
+  return set;
+}, [nodes, rootId, childrenByParent]);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     useEffect(() => {
-        console.log("VISIBLE NODE IDS (effect):", visibleNodeIds);
-        console.log("CHILDREN BY PARENT (effect):", childrenByParent);
+    if (!rootId) return;
+
+
+    const selectedNode = nodes.find((n) => n.selected);
+    if (!selectedNode) return;
+
+    const path = getPathToRoot(selectedNode.id);
+    console.log("PATH root → ... → selected:", path);
+
+
+}, [nodes, rootId]);
+
+
+
+    useEffect(() => {
+        //DEBUG
+        // console.log("VISIBLE NODE IDS (effect):", visibleNodeIds);
+        // console.log("CHILDREN BY PARENT (effect):", childrenByParent);
     }, [visibleNodeIds, childrenByParent]);
 
 
 
-useEffect(() => {
-  setNodes((prevNodes) =>
-    prevNodes.map((node) => {
-      if (node.type === "main_company_display" || node.selected) return node;
-
-      if (
-        node.type === "default_company_display" ||
-        node.type === "minimal_company_display"
-      ) {
-        return {
-          ...node,
-          type: defaultCompanyDisplayType,
-        };
-      }
-
-      return node;
-    })
-  );
-}, [defaultCompanyDisplayType]);
 
 
     useEffect(() => {
+        //This fetches the actual company at first Mount, never called again later
         fetchCompany(id_that_was_passed);
         //304173p
         //563319k
-    }, [id_that_was_passed]);
+    }, []);
+
+
+
 
     const selectedNodeIds = useMemo(
+        //Checks which notes are currently selected for the edges later on (Selected! So multiple are possible although i didnt implement it yet)
         () => nodes.filter((n) => n.selected).map((n) => n.id),
         [nodes]
     );
-
     const displayEdges = useMemo(
-        () =>
-            edges.map((edge) => {
-                const isConnected =
-                    selectedNodeIds.includes(edge.source) ||
-                    selectedNodeIds.includes(edge.target);
+  () =>
+    edges.map((edge) => {
+      const isConnected =
+        selectedNodeIds.includes(edge.source) ||
+        selectedNodeIds.includes(edge.target);
 
-                return {
-                    ...edge,
-                    type: isConnected ? 'detailed_edge' : 'straight',
-                };
-            }),
-        [edges, selectedNodeIds]
-    );
+      const isOnPath = pathEdgeSet.has(`${edge.source}->${edge.target}`);
+
+      return {
+        ...edge,
+        type: isConnected || isOnPath ? "detailed_edge" : "straight",
+      };
+    }),
+  [edges, selectedNodeIds, pathEdgeSet]
+);
 
 
 
 
-    const collectSubtreeIds = (parentId, childrenMap) => {
+   
+    //This gives ALL Children that the company expanded
+    //So children -> grandchildren -> grandgrandchildren ... 
+    //It recursively calls itself to collect all
+    const collect_subtree_debug = true;
+    const collectSubtreeIds = (parentId, childrenMap, depth = 0) => {
+        const indent = "    ".repeat(depth); 
+
         const result = new Set();
         const directChildren = childrenMap[parentId];
-        if (!directChildren) return result;
+
+        //DEBUG
+        if (collect_subtree_debug) {
+        // console.log(indent, "PARENT: ", parentId)
+        // console.log(indent, "DIRECT CHILDREN: ", directChildren)
+        }
+        
+        if (!directChildren) {
+            return result;
+        }
 
         for (const childId of directChildren) {
             result.add(childId);
-            const sub = collectSubtreeIds(childId, childrenMap);
+            const sub = collectSubtreeIds(childId, childrenMap, depth + 1);
             for (const id of sub) {
                 result.add(id);
             }
@@ -472,41 +629,53 @@ useEffect(() => {
     };
 
 
+    //This simply receives all children, grandchildren etc. of parentId and removes them from display
     const collapseCompany = (parentId) => {
         const toRemove = collectSubtreeIds(parentId, childrenByParent);
+
+
+        //Filters out all nodes that are being collapsed - This is plain
+        setNodes((prev) => prev.filter((n) => !toRemove.has(n.id)));
+
+
+        
+        setEdges((prev) => {
+            const edge_filter = prev.filter(
+                (e) => 
+                    
+                    !toRemove.has(e.source) &&
+                    !toRemove.has(e.target) &&
+                    e.source !== parentId 
+
+                )
+            console.log(edge_filter)
+            return edge_filter
+            }
+        );
+
 
         if (toRemove.size === 0) {
             return;
         }
 
-
-        setNodes((prev) => prev.filter((n) => !toRemove.has(n.id)));
-
-
-        setEdges((prev) =>
-            prev.filter(
-                (e) =>
-                    !toRemove.has(e.source) &&
-                    !toRemove.has(e.target) &&
-                    e.source !== parentId
-            )
-        );
+        
 
 
+        //Removes the Nodes the the currently visible set
         setVisibleNodeIds((prev) => {
             const next = new Set(prev);
             toRemove.forEach((id) => next.delete(id));
             return next;
         });
 
+        
+        //Updates the Children-Parent Map
         setChildrenByParent((prev) => {
             const updated = { ...prev };
-
 
             toRemove.forEach((id) => {
                 delete updated[id];
             });
-
 
             Object.keys(updated).forEach((parent) => {
                 const set = updated[parent];
@@ -544,12 +713,12 @@ useEffect(() => {
     return (
         <>
             <div className="w-full h-[100vh] bg-blue-300 py-15 relative">
-                
-                <SettingsButton open={false} changing_default_company_display_tape_f={change_company_display_default}/>
+
+                <SettingsButton open={false} changing_default_company_display_tape_f={change_company_display_default} />
                 <div className="bg-blue-200 px-10 h-full w-full">
                     <div className="h-full w-full ">
                         <ReactFlow
-                            style={{ backgroundColor: '#f3f5feff'}}
+                            style={{ backgroundColor: '#f3f5feff' }}
                             nodes={renderNodes}
                             edges={displayEdges}
                             onNodesChange={onNodesChange}
@@ -557,8 +726,8 @@ useEffect(() => {
                             nodeTypes={companyNodeTypes}
                             edgeTypes={edgeTypes}
                             fitView
-                            fitViewOptions={{ padding: 0.3 }} 
-                            
+                            fitViewOptions={{ padding: 0.3 }}
+
                             minZoom={0.05}
                             maxZoom={4}
                             zoomOnScroll

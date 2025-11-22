@@ -86,7 +86,7 @@ relative
                 <div
                     onClick={(e) => {
                         e.stopPropagation();
-                        console.log("Expand triggered, i am : ", id)
+                        // console.log("Expand triggered, i am : ", id)
                         data.fetchCompany(id)
 
                     }}
@@ -98,7 +98,7 @@ relative
                     onClick={(e) => {
                         e.stopPropagation();
 
-                        console.log("Collapse triggered, i am : ", id)
+                        // console.log("Collapse triggered, i am : ", id)
                         data.collapseCompany(id);
                     }}
                     className="bg-white p-2 w-8 h-8 flex justify-center items-center rounded hover:bg-gray-200">
