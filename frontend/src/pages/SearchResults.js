@@ -150,7 +150,7 @@ export default function SearchResults() {
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 
-    const pages = [];
+    // const pages = [];
     const maxVisiblePages = 5;
     let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -234,7 +234,7 @@ export default function SearchResults() {
         </div>
 
         {renderPagination()}
-      </div>
+        </div>
     </section>
   );
 }

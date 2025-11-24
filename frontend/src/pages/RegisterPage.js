@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./RegisterPage.css";
@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const calculatePasswordStrength = (password) => {
     if (!password) return { strength: 0, label: "", color: "" };

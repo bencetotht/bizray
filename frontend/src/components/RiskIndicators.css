@@ -1,0 +1,483 @@
+:root {
+ --green: #6CB78D;
+ --yellow: #D7C26E;
+ --red: #D97979;
+ --neutral: #9BA4B5;
+}
+
+.risk-row {
+  display: grid;
+  grid-template-columns: 300px auto;
+  column-gap: 12px;
+  min-height: 48px;
+  padding: 6px 0;
+  align-items: center;
+}
+
+.risk-label {
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.risk-pie {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 350px; 
+  margin: 0 auto;
+}
+
+.risk-pie-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.risk-pie-center-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.risk-pie-center-label {
+  margin-top: -4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.risk-pie-percent {
+  font-size: 38px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+.risk-pie-caption {
+  margin-top: 14px;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: #111827;
+}
+
+.risk-pie-chart.full {
+  position: relative;
+  height: 260px;
+  width: 260px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.risk-pie-chart.full canvas {
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.03);
+  filter:
+    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15))
+    drop-shadow(0 8px 20px rgba(0, 0, 0, 0.10));
+
+}
+
+.risk-pie-chart.full::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(0,0,0,0.10) 0%,
+    rgba(0,0,0,0) 70%
+  );
+  z-index: -2;
+}
+
+.risk-pie-chart.full::after {
+  content: "";
+  position: absolute;
+  inset: 35px;
+  border-radius: 50%;
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.risk-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.risk-columns::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #6b5de5, #8c46db);
+  opacity: 0.65;
+}
+
+.risk-ui {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  align-items: center;
+  justify-content: center;
+  column-gap: 120px;
+  width: 100%;
+}
+
+.risk-label-tooltip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  background: #edf2f7;
+  border: 2px solid #cbd5e0;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.risk-label-tooltip:hover {
+  border-color: #6b5de5;
+  background: #e2e8f0;
+}
+
+.risk-label-tooltip-text {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translate(-50%, -8px);
+  width: 280px;
+  background: white;
+  color: #1e293b;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  text-align: left;
+  letter-spacing: 0;
+  text-transform: none;
+  border: 2px solid transparent;
+  background: 
+    linear-gradient(white, white) padding-box,
+    linear-gradient(135deg, #6b5de5, #8c46db) border-box;
+}
+
+.risk-label .risk-label-tooltip {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.risk-label-tooltip:hover .risk-label-tooltip-text {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.risk-label-tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 8px 0 8px;
+  border-color: white transparent transparent transparent;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.risk-label-tooltip-text::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6b5de5, #8c46db);
+  border-radius: 0 0 8px 8px;
+}
+
+@media (max-width: 900px) {
+  .risk-ui {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.pill {
+  position: relative;
+  width: 200px;
+  height: 32px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(#ffffff,#ffffff) padding-box,
+    linear-gradient(90deg,#6b5de5,#8c46db) border-box;
+  border: 3px solid transparent;
+}
+
+.pill-track {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  z-index: 3;
+}
+.pill-segment {
+  position: relative;
+}
+
+.pill-segment:last-child::after {
+  display: none;
+}
+
+.pill-segment::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.18);
+  z-index: 10;  
+  display: none;
+}
+
+.pill-fill {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: white;
+  z-index: 2;
+  border-radius: 0 999px 999px 0;
+  transition: width 0.25s ease;
+}
+
+.pill-label {
+  position: relative;
+  z-index: 4;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 15px;
+  text-align: center;
+  width: 100%;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.pill-na .pill-fill {
+  display: none;
+}
+
+.pill-na .pill-label {
+  color: #c7ccd7 !important;
+}
+
+.pill-gradient-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    #6CB78D 0%,      
+    #B8C77C 33%,     
+    #D7C26E 50%,     
+    #D8A073 66%,     
+    #D97979 100%     
+  );
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.pill-na .pill-gradient-bg {
+  background: #dfe3e6 !important;
+}
+
+.pill-boolean {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(90deg, #6b5de5, #8c46db) border-box;
+  border: 3px solid transparent;
+}
+
+.pill-boolean-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.pill-label-boolean {
+  position: relative;
+  z-index: 4;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pill-boolean.pill-na .pill-boolean-fill {
+  background: #dfe3e6 !important;
+}
+
+.pill-boolean.pill-na .pill-label-boolean {
+  color: #c7ccd7 !important;
+}
+
+@media (max-width: 768px) {
+  .risk-ui {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 32px;
+  }
+
+  .risk-pie {
+    max-width: 280px;
+  }
+
+  .risk-pie-chart.full {
+    height: 220px;
+    width: 220px;
+  }
+
+  .risk-pie-percent {
+    font-size: 32px;
+  }
+
+  .risk-pie-caption {
+    font-size: 18px;
+  }
+
+  .risk-columns::before {
+    display: none;
+  }
+
+  .risk-row {
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .risk-label {
+    font-size: 0.95rem;
+  }
+
+  .pill {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .pill-boolean {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .risk-label-tooltip-text {
+    width: 220px;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .risk-pie {
+    max-width: 240px;
+  }
+
+  .risk-pie-chart.full {
+    height: 180px;
+    width: 180px;
+  }
+
+  .risk-pie-percent {
+    font-size: 28px;
+  }
+
+  .risk-pie-center-label {
+    font-size: 11px;
+  }
+
+  .risk-pie-caption {
+    font-size: 16px;
+  }
+
+  .risk-row {
+    padding: 10px 0;
+  }
+
+  .risk-label {
+    font-size: 0.9rem;
+  }
+
+  .pill {
+    width: 100%;
+    max-width: 240px;
+    height: 28px;
+  }
+
+  .pill-boolean {
+    width: 100%;
+    max-width: 240px;
+    height: 28px;
+  }
+
+  .pill-label {
+    font-size: 13px;
+  }
+
+  .pill-label-boolean {
+    font-size: 11px;
+  }
+
+  .risk-label-tooltip {
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+  }
+
+  .risk-label-tooltip-text {
+    width: 200px;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+}
