@@ -175,7 +175,7 @@ export default function CompanyDetails() {
                 <span className="overall-risk-value">
                   {company.riskScore === null || company.riskScore === undefined
                     ? ""
-                    : Number(company.riskScore).toFixed(2)}
+                    : `${(Number(company.riskScore) * 100).toFixed(1)}%`}
                 </span>
               </div>
             </div>

@@ -37,19 +37,18 @@ const riskConfig = {
     color: (v) => (v > 0.3 ? "var(--red)" : v >= 0.15 ? "var(--yellow)" : "var(--neutral)"),
     tooltip: "Reveals hidden risk from deals with related companies. If this is high (above 30%), it means a large portion of assets are IOUs from affiliated companies, which could be risky if those companies fail.",
   },
-  deferred_income_risk: {
+  deferred_income_reliance: {
     label: "Deferred Income Reliance",
     type: "boolean",
     color: (v) => (v ? "var(--red)" : "var(--green)"),
     text: (v) => (v ? "High Risk" : "Not High Risk"),
     tooltip: "Flags if the company is overly dependent on customer prepayments for products or services not yet delivered. High reliance can be risky if the company can't fulfill these obligations.",
   },
-  compliance_status: {
-    label: "Compliance Status",
-    type: "boolean",
-    color: (v) => (v ? "var(--green)" : "var(--red)"),
-    text: (v) => (v ? "Compliant" : "Not Compliant"),
-    tooltip: "Shows whether the company has filed all required financial reports and regulatory paperwork on time. Missing filings can indicate organizational problems or attempts to hide information.",
+  balance_sheet_volatility: {
+    label: "Balance Sheet Volatility",
+    type: "numeric",
+    color: (v) => (v > 0.8 ? "var(--red)" : v > 0.5 ? "var(--yellow)" : "var(--green)"),
+    tooltip: "Detects extreme changes in company size over one year. Scores above 0.8 indicate dramatic growth or shrinkage, which may signal instability, aggressive expansion, or financial distress requiring closer examination.",
   },
   irregular_fiscal_year: {
     label: "Irregular Fiscal Year",
@@ -58,11 +57,24 @@ const riskConfig = {
     text: (v) => (v ? "Irregular" : "Normal"),
     tooltip: "A shortened or unusual fiscal year often signals major changes like mergers, acquisitions, bankruptcies, or restructuring. These events can significantly impact the company's financial stability.",
   },
-  balance_sheet_volatility_score: {
-    label: "Balance Sheet Volatility Score",
+  compliance_status: {
+    label: "Compliance Status",
+    type: "boolean",
+    color: (v) => (v ? "var(--green)" : "var(--red)"),
+    text: (v) => (v ? "Compliant" : "Not Compliant"),
+    tooltip: "Shows whether the company has filed all required financial reports and regulatory paperwork on time. Missing filings can indicate organizational problems or attempts to hide information.",
+  },
+  growth_revenue: {
+    label: "Revenue Growth",
     type: "numeric",
-    color: (v) => (v > 0.8 ? "var(--red)" : v > 0.5 ? "var(--yellow)" : "var(--green)"),
-    tooltip: "Detects extreme changes in company size over one year. Scores above 0.8 indicate dramatic growth or shrinkage, which may signal instability, aggressive expansion, or financial distress requiring closer examination.",
+    color: (v) => (v < 0 ? "var(--red)" : v < 0.05 ? "var(--yellow)" : "var(--green)"),
+    tooltip: "Measures year-over-year revenue growth. Positive growth indicates business expansion, while negative growth may signal declining market share or operational challenges. Consistent growth above 5% is generally healthy.",
+  },
+  operational_profit: {
+    label: "Operational Profit Margin",
+    type: "numeric",
+    color: (v) => (v < 0 ? "var(--red)" : v < 0.10 ? "var(--yellow)" : "var(--green)"),
+    tooltip: "Shows how much profit the company makes from its core operations before interest and taxes. Higher margins indicate efficient operations and strong competitive positioning. Negative margins suggest operational losses.",
   },
 };
 
@@ -197,10 +209,12 @@ const RISK_KEYS = [
   "debt_to_assets",
   "equity_ratio",
   "concentration_risk",
-  "deferred_income_risk",
-  "compliance_status",
+  "deferred_income_reliance",
+  "balance_sheet_volatility",
   "irregular_fiscal_year",
-  "balance_sheet_volatility_score",
+  "compliance_status",
+  "growth_revenue",
+  "operational_profit",
 ];
 
 
@@ -230,7 +244,11 @@ export default function RiskIndicators({ indicators, riskScore }) {
                 </button>
               </span>
               {value === null || value === undefined ? (
-                <NumericPill value={null} colorFn={() => "#dfe3e6"} />
+                cfg.type === "numeric" ? (
+                  <NumericPill value={null} colorFn={() => "#dfe3e6"} />
+                ) : (
+                  <BooleanPill value={null} colorFn={() => "#dfe3e6"} textFn={() => "N/A"} />
+                )
               ) : cfg.type === "numeric" ? (
                 <NumericPill value={value} colorFn={cfg.color} />
               ) : (

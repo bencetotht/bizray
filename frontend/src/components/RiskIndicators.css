@@ -361,7 +361,6 @@
   color: #c7ccd7 !important;
 }
 
-/* Mobile Responsiveness for Risk Indicators */
 @media (max-width: 768px) {
   .risk-ui {
     grid-template-columns: 1fr;
