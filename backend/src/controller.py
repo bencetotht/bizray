@@ -162,7 +162,7 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
                     except Exception:
                         pass
                 
-                result._risk_indicators_dict = {k: float(v) for k, v in risk_data.items() if v is not None}
+                result._risk_indicators_dict = {k: float(v) if v is not None else None for k, v in risk_data.items()}
                 result.risk_score = risk_score
         serialized_result = _serialize_company(result)
         

@@ -100,17 +100,34 @@ def calculate_risk_indicators(extracted_data, historical_data=None, registry_ent
 
     assets = extracted_data.get('assets', {})
     liabilities_equity = extracted_data.get('liabilities_equity', {})
-    
+    income_statement = extracted_data.get('income_statement', {})
+
     # Extract values with safe defaults
     equity = liabilities_equity.get('equity')
     total_liabilities = liabilities_equity.get('liabilities')
     total_assets = assets.get('total_assets')
     deferred_income = liabilities_equity.get('deferred_income')
     receivables_and_other_assets = assets.get('receivables_and_other_assets')
-    
+    cash_and_equivalents = assets.get('cash_and_cash_equivalents')
+
+    # Extract income statement values
+    current_revenue = income_statement.get('revenue')
+    current_profit = income_statement.get('net_income')
+
     total_funding = None
     if equity is not None and total_liabilities is not None:
         total_funding = equity + total_liabilities
+
+    # Extract historical data if available
+    previous_revenue = None
+    previous_profit = None
+    previous_total_assets = None
+    if historical_data and len(historical_data) > 0:
+        historical_income = historical_data[0].get('income_statement', {})
+        previous_revenue = historical_income.get('revenue')
+        previous_profit = historical_income.get('net_income')
+        historical_assets = historical_data[0].get('assets', {})
+        previous_total_assets = historical_assets.get('total_assets')
     
     risk_indicators = {
         # Debt to Equity Ratio
@@ -134,14 +151,53 @@ def calculate_risk_indicators(extracted_data, historical_data=None, registry_ent
             total_funding
         ) if deferred_income is not None and total_funding is not None and total_funding > 0 else None,
         
-        # Balance Sheet Volatility: Medium Priority
-        'balance_sheet_volatility': None,
-        
+        # Balance Sheet Volatility
+        # Measures extreme changes in balance sheet values
+        'balance_sheet_volatility': balance_sheet_volatility(
+            total_assets,
+            previous_total_assets
+        ) if total_assets is not None and previous_total_assets is not None else None,
+
         # Irregular Fiscal Year
         'irregular_fiscal_year': check_for_irregular_fiscal_year(extracted_data.get('fiscal_year').get('start_date'), extracted_data.get('fiscal_year').get('end_date')),
-        
+
         # Compliance Status
         'compliance_status': check_compliance_status(registry_entries or []),
+
+        # Cash Ratio
+        # Liquidity metric showing ability to cover short-term debts with cash
+        'cash_ratio': cash_ratio(
+            cash_and_equivalents or 0.0,
+            total_liabilities
+        ) if cash_and_equivalents is not None and total_liabilities is not None else None,
+
+        # Debt to Assets Ratio
+        # Shows what percentage of assets are financed by debt
+        'debt_to_assets_ratio': debt_to_assets_ratio(
+            total_liabilities,
+            total_assets
+        ) if total_liabilities is not None and total_assets is not None else None,
+
+        # Equity Ratio
+        # Shows what percentage of assets are funded by owners' capital
+        'equity_ratio': equity_ratio(
+            equity,
+            total_assets
+        ) if equity is not None and total_assets is not None else None,
+
+        # Growth Revenue
+        # Year-over-year revenue growth percentage
+        'growth_revenue': growth_revenue(
+            current_revenue,
+            previous_revenue
+        ) if current_revenue is not None and previous_revenue is not None else None,
+
+        # Operational Result Profit
+        # Year-over-year profit growth rate
+        'operational_result_profit': operational_result_profit(
+            current_profit,
+            previous_profit
+        ) if current_profit is not None and previous_profit is not None else None,
     }
     
     risk_score = np.mean([risk_indicator for risk_indicator in risk_indicators.values() if risk_indicator is not None and risk_indicator is not False])
