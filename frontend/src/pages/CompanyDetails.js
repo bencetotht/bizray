@@ -1,6 +1,6 @@
 // src/pages/CompanyDetails.js
 import React from "react";
-import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink, Triangle } from "lucide-react";
+import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -232,6 +232,53 @@ export default function CompanyDetails() {
               </div>
             </div>
 
+            {/* Risk Indicators Section */}
+            <div className="info-section">
+              <h3 className="section-title" 
+              onClick={() => Object.keys(riskIndicators).length > 0 && setRiskExpanded((v) => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <AlertCircle size={18} />
+                Risk Indicators
+                <button 
+                  className="section-tooltip" 
+                  type="button"
+                  aria-label="Risk indicators explanation"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  ?
+                  <span className="section-tooltip-text" role="tooltip">
+                    Financial and operational metrics that assess company stability. 
+                    These indicators flag potential issues in debt management, liquidity, 
+                    compliance, and business operations.
+                  </span>
+                </button>
+                {Object.keys(riskIndicators).length > 0 && (
+                  <button
+                    type="button"
+                    className={`toggle-btn ${riskExpanded ? "open" : ""}`}
+                    aria-expanded={riskExpanded}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRiskExpanded((v) => !v);
+                    }}
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                )}
+              </h3>
+              <div className={`section-content ${riskExpanded ? "expanded" : "collapsed"}`}>
+                {Object.keys(riskIndicators).length === 0 ? (
+                  <div className="no-data-message">
+                    <AlertCircle size={20} />
+                    <p>No risk indicators available for this company.</p>
+                  </div>
+                ) : (
+                  <RiskIndicators indicators={riskIndicators} riskScore={company.riskScore} />
+                )}
+              </div>
+            </div>
+
             {/* Partners Section */}
             <div className="info-section">
               <h3 
@@ -336,53 +383,6 @@ export default function CompanyDetails() {
                     ))}
                   </div>
                 ) : null}
-              </div>
-            </div>
-
-            {/* Risk Indicators Section */}
-            <div className="info-section">
-              <h3 className="section-title" 
-              onClick={() => Object.keys(riskIndicators).length > 0 && setRiskExpanded((v) => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <AlertCircle size={18} />
-                Risk Indicators
-                <button 
-                  className="section-tooltip" 
-                  type="button"
-                  aria-label="Risk indicators explanation"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  ?
-                  <span className="section-tooltip-text" role="tooltip">
-                    Financial and operational metrics that assess company stability. 
-                    These indicators flag potential issues in debt management, liquidity, 
-                    compliance, and business operations.
-                  </span>
-                </button>
-                {Object.keys(riskIndicators).length > 0 && (
-                  <button
-                    type="button"
-                    className={`toggle-btn ${riskExpanded ? "open" : ""}`}
-                    aria-expanded={riskExpanded}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRiskExpanded((v) => !v);
-                    }}
-                  >
-                    <ChevronDown size={16} />
-                  </button>
-                )}
-              </h3>
-              <div className={`section-content ${riskExpanded ? "expanded" : "collapsed"}`}>
-                {Object.keys(riskIndicators).length === 0 ? (
-                  <div className="no-data-message">
-                    <AlertCircle size={20} />
-                    <p>No risk indicators available for this company.</p>
-                  </div>
-                ) : (
-                  <RiskIndicators indicators={riskIndicators} riskScore={company.riskScore} />
-                )}
               </div>
             </div>
 

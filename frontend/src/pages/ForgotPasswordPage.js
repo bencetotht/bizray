@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./ForgotPasswordPage.css";
@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setEmail(e.target.value);
