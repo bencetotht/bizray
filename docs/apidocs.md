@@ -99,36 +99,23 @@ Response:
       "label": "Körpermanufaktur KG",
     },
     {
-      "id": "7402id",
-      "type": "person",
-      "label": "Richard Thomas Kranabetter",
-    },
-    {
       "id": "765478k",
       "type": "company",
       "label": "Example Company",
     },
-    {
-      "id": "8534lo",
-      "type": "location",
-      "label": "AUT, 6850 Dornbirn, Marktstraße 36",
-    },
   ],
   "edges": [
     {
-      "source": "7402id",
+      "source": "765478k",
       "target": "661613k",
       "label": "Person",
-    },
-    {
-      "source": "7402id",
-      "target": "765478k",
-      "label": "Person",
+      "value": "Richard Thomas Kranabetter",
     },
     {
       "source": "661613k",
-      "target": "8534lo",
+      "target": "765478k",
       "label": "Location",
+      "value": "AUT, 6850 Dornbirn, Marktstraße 36",
     },
   ],
 }
