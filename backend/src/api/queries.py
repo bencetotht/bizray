@@ -41,7 +41,7 @@ def get_urkunde_content(key):
     # Extract XML content from the response object
     content = urkunde_content.DOKUMENT.CONTENT
     if isinstance(content, bytes):
-        xml_content = content.decode('utf-8')
+        xml_content = content.decode('utf-8', errors='replace')
     else:
         xml_content = str(content)
     
@@ -72,7 +72,7 @@ def get_all_urkunde_contents(urkunde_list):
             
             content = urkunde_content.DOKUMENT.CONTENT
             if isinstance(content, bytes):
-                xml_content = content.decode('utf-8')
+                xml_content = content.decode('utf-8', errors='replace')
             else:
                 xml_content = str(content)
             

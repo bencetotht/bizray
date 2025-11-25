@@ -17,7 +17,7 @@ latest_urkunde = urkunde_response_xmls[-1].KEY
 urkunde_content = client.get_urkunde('563319_0070752553502_000___000_30_36887434_XML')
 content = urkunde_content.DOKUMENT.CONTENT
 if isinstance(content, bytes):
-    xml_content = content.decode('utf-8')
+    xml_content = content.decode('utf-8', errors='replace')
 else:
     xml_content = str(content)
 # with open(f'urkunde_1.xml', 'w', encoding='utf-8') as f:
