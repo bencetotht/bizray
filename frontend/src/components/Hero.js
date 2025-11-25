@@ -100,7 +100,7 @@ const Hero = () => {
   const handleSuggestionClick = (suggestion) => {
     setSearchQuery(suggestion.name);
     setShowSuggestions(false);
-    window.open(`/company/${suggestion.firmenbuchnummer}`, '_blank');
+    navigate(`/company/${suggestion.firmenbuchnummer}`);
     setSearchQuery('');
   };
 
