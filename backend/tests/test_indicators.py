@@ -6,7 +6,12 @@ from src.indicators import (
     balance_sheet_volatility,
     check_for_irregular_fiscal_year,
     deferred_income_reliance,
-    check_compliance_status
+    check_compliance_status,
+    cash_ratio,
+    debt_to_assets_ratio,
+    equity_ratio,
+    growth_revenue,
+    operational_result_profit
 )
 from src.db import RegistryEntry
 
@@ -129,11 +134,136 @@ def test_compliance_status_no_dates():
 
 
 
+#Test for Cash Ratio
+def test_cash_ratio_happy_path():
+    #Tests a scenario where the company has more cash than total debt.
+    #Scenario: 200M in cash, 100M in total liabilities -> ratio = 2.0 (very liquid)
+    assert cash_ratio(200_000_000.0, 100_000_000.0) == 2.0
+
+
+def test_cash_ratio_high_risk():
+    #Tests risky scenario where cash only cover a small portion of debt
+    #Scenario: 10M in cash, 100M in total liabilities -> ratio = 0.1 (very illiquid)
+    assert cash_ratio(10_000_000.0, 100_000_000.0) == 0.1
+
+
+def test_cash_ratio_edge_case():
+    #Tests the logical edge case where a company has zero liabilities.
+    #The ratio is undefined/infinite, so the function should return None.
+    assert cash_ratio(50_000_000.0, 0.0) is None
 
 
 
 
+#Test for Debt to Asset Ratio
+def test_debt_to_asset_ratio_happy_path():
+    #Tests a healthy scenario where debt is less than half of total assets
+    # Scenario: 100M in liabilities, 250M in assets -> ratio = 0.4 (or 40%)
+    assert debt_to_assets_ratio(100_000_000.0, 250_000_000.0) == 0.4
 
+
+def test_debt_to_asset_ratio_high_risk():
+    #Tests a risky scenario where debt is a large portion of assets.
+    # Scenario: 200M in liabilities, 250M in assets -> ratio = 0.8 (or 80%)
+    assert debt_to_assets_ratio(200_000_000.0, 250_000_000.0) == 0.8
+
+
+def test_debt_to_asset_ratio_edge_case():
+    # Tests the logical edge case of a company having zero assets.
+    # The ratio is undefined, so the function should return None.
+    assert debt_to_assets_ratio(100_000_000.0, 0.0) is None
+
+
+
+#Test for Equity Ratio
+def test_equity_ratio_happy_path_strong():
+    #Tests a financially strong company where equity is a large portion of assets.
+    # Scenario: 150M in equity, 200M in assets -> ratio = 0.75 (or 75%)
+    assert equity_ratio(150_000_000.0, 200_000_000.0) == 0.75
+
+
+def test_equity_ratio_weak():
+    #Tests a financially weak company with a low equity ratio.
+    # Scenario: 20M in equity, 200M in assets -> ratio = 0.1 (or 10%)
+    assert equity_ratio(20_000_000.0, 200_000_000.0) == 0.1
+
+
+def test_equity_ratio_edge():
+    # Tests the logical edge case of a company having zero assets.
+    # The ratio is undefined, so the function should return None.
+    assert equity_ratio(10_000_000.0, 0.0) is None
+
+
+#I defined a small tolerance for floating point comparisons
+#The tolerance tells the test to pass if the actual result is "close enough" (within
+# 0.0001) to the expected result, preventing tests from failing due to rounding errors,
+# which are mathematical storage issues
+TOLERANCE = 0.0001
+
+#Test for growth reb=venue
+def test_growth_revenue_positive():
+    #Test 20% growth: (120-100) / 100 = 0.2
+    result = growth_revenue(120.0, 100.0)
+    assert abs(result - 0.2) < TOLERANCE
+
+def test_revenue_growth_negative():
+    #Test 20% decline: (80-100) / 100 = -0.2
+    result = growth_revenue(80.0, 100.0)
+    assert abs(result - (-0.2)) < TOLERANCE
+
+def test_revenue_growth_no_change():
+    #Test 0% growth (100-100) / 100 = 0.0
+    result = growth_revenue(100.0, 100.0)
+    assert result == 0.0
+
+def test_revenue_growth_previous_zero_current_non_zero():
+    #Tests division by zero when the company had no previous revenue
+    result = growth_revenue(100.0, 0.0)
+    assert result is None
+
+def test_revenue_both_zero():
+    #Tests the edge case where both revenues are 0
+    result = growth_revenue(0.0, 0.0)
+    assert result == 0.0
+
+def test_revenue_massive_growth():
+    #tests high growth
+    result = growth_revenue(10_000_000.0, 1_000_000.0)
+    assert abs(result - 9.0) < TOLERANCE
+
+
+# Test for Operational result profit
+def test_profit_positive():
+    #Tests 50% profit growth: (150-100) / 100 = 0.5
+    result = operational_result_profit(150.0, 100.0)
+    assert abs(result - 0.5) < TOLERANCE
+
+def test_profit_negative():
+    #Tests 50% profit decline: (50 - 100) / 100 = -0.5
+    result = operational_result_profit(150.0, 100.0)
+    assert abs(result - 0.5) < TOLERANCE
+
+def test_profit_growth_no_change():
+    #Tests 0% profit change: (100 - 100) / 100 = 0.0
+    result = operational_result_profit(100.0, 100.0)
+    assert result == 0.0
+
+def test_profit_growth_previous_zero_current_non_zero():
+    #Tests division by zero when the previous period had no profit
+    result = operational_result_profit(100.0, 0.0)
+    assert result is None
+
+def test_profit_growth_both_zero():
+   #tests the edge case where both periods had zero profit
+    result = operational_result_profit(0.0, 0.0)
+    assert result == 0.0
+
+def test_profit_growth_loss_to_smaller_loss():
+    #Tests 'growth' when a large loss shrinks to a small loss
+    # Loss shrinks from -100 to -50: (-50 - (-100)) / -100 = 50 / -100 = -0.5
+    # Mathematically, this is a negative growth rate, though financially it's an improvement.
+    result = operational_result_profit((-50.0), (-100.0))
+    assert abs(result - (-0.5)) < TOLERANCE
 
 
 

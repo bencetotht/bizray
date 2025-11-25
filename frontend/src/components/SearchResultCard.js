@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Building2, Shield, ExternalLink } from "lucide-react";
+import { MapPin, Building2, ExternalLink } from "lucide-react";
 import "./SearchResultCard.css";
 
 export default function SearchResultCard({ company }) {
-  const { firmenbuchnummer, name, seat, legal_form, riskScore } = company;
+  const { firmenbuchnummer, name, seat, legal_form } = company;
 
   // Generate avatar initials
   const initials = name
@@ -15,14 +15,14 @@ export default function SearchResultCard({ company }) {
     .toUpperCase();
 
   // Determine risk score color
-  const getRiskColor = (score) => {
-    if (!score) return { bg: "#e2e8f0", color: "#4a5568" };
-    if (score >= .7) return { bg: "#fed7d7", color: "#c53030" };
-    if (score >= .4) return { bg: "#feebc8", color: "#d69e2e" };
-    return { bg: "#c6f6d5", color: "#22543d" };
-  };
+  // const getRiskColor = (score) => {
+  //   if (!score) return { bg: "#e2e8f0", color: "#4a5568" };
+  //   if (score >= .7) return { bg: "#fed7d7", color: "#c53030" };
+  //   if (score >= .4) return { bg: "#feebc8", color: "#d69e2e" };
+  //   return { bg: "#c6f6d5", color: "#22543d" };
+  // };
 
-  const riskStyle = getRiskColor(riskScore);
+  // const riskStyle = getRiskColor(riskScore);
 
   return (
     <Link

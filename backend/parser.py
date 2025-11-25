@@ -154,7 +154,7 @@ def load_into_db(data):
 
 def parse_file(file_path):
     try:
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             xml_string = f.read()
             root = ET.fromstring(xml_string)
             data = parse_entry(root)

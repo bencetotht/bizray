@@ -162,7 +162,7 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
                     except Exception:
                         pass
                 
-                result._risk_indicators_dict = {k: float(v) for k, v in risk_data.items() if v is not None}
+                result._risk_indicators_dict = {k: float(v) if v is not None else None for k, v in risk_data.items()}
                 result.risk_score = risk_score
         serialized_result = _serialize_company(result)
         
@@ -385,14 +385,17 @@ def get_metrics(session: Optional[Session] = None) -> Dict[str, int]:
         if owns_session:
             session.close()
     
-
 def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
     """
     Get the network graph for a specific company.
     Returns nodes and edges in the format defined in apidocs.md
+    Only company nodes are returned. Edges contain connection type and value.
+    Maximum of 50 nodes will be returned.
     """
     print(f"Getting network graph for company {company_id} with {hops} hops")
-    
+
+    MAX_NODES = 50
+
     session = SessionLocal()
     try:
         # get company
@@ -401,19 +404,19 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
             .where(Company.firmenbuchnummer == company_id)
         )
         company = session.execute(stmt).scalars().first()
-        
+
         if company is None:
             return None
-        
+
         # load relationships
         address = company.address
         partners = list(company.partners or [])
-        
+
         # initialize nodes and edges
         nodes = []
         edges = []
         seen_node_ids = set()
-        
+
         # add the main company node
         company_node_id = company.firmenbuchnummer
         if company_node_id not in seen_node_ids:
@@ -423,10 +426,10 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 "label": company.name,
             })
             seen_node_ids.add(company_node_id)
-        
-        # add location node and edge if address exists
+
+        # find companies with the same location
         if address:
-            # create location ID from address components
+            # create location label from address components
             location_parts = []
             if address.country:
                 location_parts.append(address.country)
@@ -439,25 +442,9 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 if address.house_number:
                     street_str += f" {address.house_number}"
                 location_parts.append(street_str)
-            
+
             location_label = ", ".join(location_parts) if location_parts else "Unknown Location"
-            location_id = hashlib.md5(location_label.encode('utf-8')).hexdigest()[:8]
-            
-            if location_id not in seen_node_ids:
-                nodes.append({
-                    "id": location_id,
-                    "type": "location",
-                    "label": location_label,
-                })
-                seen_node_ids.add(location_id)
-            
-            # add edge from company to location
-            edges.append({
-                "source": company_node_id,
-                "target": location_id,
-                "label": "Location",
-            })
-            
+
             # find companies with the same location
             location_filters = []
             if address.postal_code:
@@ -468,7 +455,7 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 location_filters.append(Address.street == address.street)
             if address.house_number:
                 location_filters.append(Address.house_number == address.house_number)
-            
+
             if location_filters:
                 connected_companies_stmt = (
                     select(Company)
@@ -479,8 +466,12 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                     )
                 )
                 connected_companies = session.execute(connected_companies_stmt).scalars().all()
-                
+
                 for connected_company in connected_companies:
+                    # Stop if we've reached the maximum number of nodes
+                    if len(nodes) >= MAX_NODES:
+                        break
+
                     connected_company_id = connected_company.firmenbuchnummer
                     if connected_company_id not in seen_node_ids:
                         nodes.append({
@@ -489,17 +480,18 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                             "label": connected_company.name,
                         })
                         seen_node_ids.add(connected_company_id)
-                    
-                    # add edge from main company to connected company (they share a location)
+
+                    # add edge from main company to connected company with location value
                     edges.append({
                         "source": company_node_id,
                         "target": connected_company_id,
                         "label": "Location",
+                        "value": location_label,
                     })
-        
-        # add person nodes and find connected companies through partners
+
+        # find connected companies through partners
         for partner in partners:
-            # create person ID from partner information
+            # create person label from partner information
             person_parts = []
             if partner.name:
                 person_parts.append(partner.name)
@@ -507,25 +499,9 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 person_parts.append(f"{partner.first_name} {partner.last_name}")
             elif partner.last_name:
                 person_parts.append(partner.last_name)
-            
+
             person_label = " ".join(person_parts) if person_parts else "Unknown Person"
-            person_id = hashlib.md5(person_label.encode('utf-8')).hexdigest()[:8]
-            
-            if person_id not in seen_node_ids:
-                nodes.append({
-                    "id": person_id,
-                    "type": "person",
-                    "label": person_label,
-                })
-                seen_node_ids.add(person_id)
-            
-            # add edge from main company to person
-            edges.append({
-                "source": company_node_id,
-                "target": person_id,
-                "label": "Person",
-            })
-            
+
             # find companies with the same partner
             partner_filters = []
             if partner.first_name:
@@ -534,7 +510,7 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                 partner_filters.append(Partner.last_name == partner.last_name)
             if partner.birth_date:
                 partner_filters.append(Partner.birth_date == partner.birth_date)
-            
+
             if partner_filters:
                 # find other companies with this partner
                 connected_companies_stmt = (
@@ -546,8 +522,12 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                     )
                 )
                 connected_companies = session.execute(connected_companies_stmt).scalars().all()
-                
+
                 for connected_company in connected_companies:
+                    # Stop if we've reached the maximum number of nodes
+                    if len(nodes) >= MAX_NODES:
+                        break
+
                     connected_company_id = connected_company.firmenbuchnummer
                     if connected_company_id not in seen_node_ids:
                         nodes.append({
@@ -556,14 +536,15 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
                             "label": connected_company.name,
                         })
                         seen_node_ids.add(connected_company_id)
-                    
-                    # add edge from main company to connected company (they share a person)
+
+                    # add edge from main company to connected company with person value
                     edges.append({
                         "source": company_node_id,
                         "target": connected_company_id,
                         "label": "Person",
+                        "value": person_label,
                     })
-        
+
         return {
             "firmenbuchnummer": company_id,
             "nodes": nodes,

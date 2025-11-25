@@ -1,6 +1,6 @@
 // src/pages/CompanyDetails.js
 import React from "react";
-import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink, Triangle } from "lucide-react";
+import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
@@ -8,6 +8,7 @@ import CompanySummaryCard from "../components/CompanySummaryCard";
 import NetworkGraph from "../components/NetworkGraph";
 import GraphWrapper from "../components/graph_components/GraphWrapper"
 
+import RiskIndicators from "../components/RiskIndicators";
 
 const displayValue = (value) => {
   if (value === null || value === undefined) {
@@ -30,11 +31,6 @@ export default function CompanyDetails() {
     if (score >= 0.4) return { bg: "#feebc8", color: "#d69e2e" };
     return { bg: "#c6f6d5", color: "#22543d" };
 
-  };
-  const getZoneColor = (v) => {
-  if (v >= 0.7) return { bg: "#fed7d7", border: "#c53030" }; 
-  if (v >= 0.4) return { bg: "#feebc8", border: "#d69e2e" };  
-  return { bg: "#c6f6d5", border: "#22543d" };                
   };
 
 
@@ -165,8 +161,10 @@ export default function CompanyDetails() {
                   background: getRiskColor(company.riskScore).bg,
                   color: getRiskColor(company.riskScore).color,
                 }}
+                role="status"
+                aria-label={`Risk level: ${company.riskScore === null || company.riskScore === undefined ? "N/A" : company.riskScore >= 0.7 ? "High" : company.riskScore >= 0.4 ? "Medium" : "Low"}`}
               >
-                <Shield size={16} />
+                <Shield size={16} aria-hidden="true" />
                 <span className="overall-risk-text">
                   {company.riskScore === null || company.riskScore === undefined
                     ? "N/A"
@@ -178,8 +176,8 @@ export default function CompanyDetails() {
                 </span>
                 <span className="overall-risk-value">
                   {company.riskScore === null || company.riskScore === undefined
-                    ? "N/A"
-                    : Number(company.riskScore).toFixed(2)}
+                    ? ""
+                    : `${(Number(company.riskScore) * 100).toFixed(1)}%`}
                 </span>
               </div>
             </div>
@@ -233,6 +231,53 @@ export default function CompanyDetails() {
                     </div>
                   </div>
                 ) : null}
+              </div>
+            </div>
+
+            {/* Risk Indicators Section */}
+            <div className="info-section">
+              <h3 className="section-title" 
+              onClick={() => Object.keys(riskIndicators).length > 0 && setRiskExpanded((v) => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <AlertCircle size={18} />
+                Risk Indicators
+                <button 
+                  className="section-tooltip" 
+                  type="button"
+                  aria-label="Risk indicators explanation"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  ?
+                  <span className="section-tooltip-text" role="tooltip">
+                    Financial and operational metrics that assess company stability. 
+                    These indicators flag potential issues in debt management, liquidity, 
+                    compliance, and business operations.
+                  </span>
+                </button>
+                {Object.keys(riskIndicators).length > 0 && (
+                  <button
+                    type="button"
+                    className={`toggle-btn ${riskExpanded ? "open" : ""}`}
+                    aria-expanded={riskExpanded}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRiskExpanded((v) => !v);
+                    }}
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                )}
+              </h3>
+              <div className={`section-content ${riskExpanded ? "expanded" : "collapsed"}`}>
+                {Object.keys(riskIndicators).length === 0 ? (
+                  <div className="no-data-message">
+                    <AlertCircle size={20} />
+                    <p>No risk indicators available for this company.</p>
+                  </div>
+                ) : (
+                  <RiskIndicators indicators={riskIndicators} riskScore={company.riskScore} />
+                )}
               </div>
             </div>
 
@@ -340,92 +385,6 @@ export default function CompanyDetails() {
                     ))}
                   </div>
                 ) : null}
-              </div>
-            </div>
-
-            {/* Risk Indicators Section */}
-            <div className="info-section">
-              <h3 className="section-title" 
-              onClick={() => Object.keys(riskIndicators).length > 0 && setRiskExpanded((v) => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <AlertCircle size={18} />
-                Risk Indicators
-                <span className="tooltip">?
-                  <span className="tooltip-text">
-                    Risk indicators are normalized metrics reflecting financial, legal, and operational factors that may increase the company’s exposure to instability or compliance issues.
-                  </span>
-                </span>
-                {Object.keys(riskIndicators).length > 0 && (
-                  <button
-                    type="button"
-                    className={`toggle-btn ${riskExpanded ? "open" : ""}`}
-                    aria-expanded={riskExpanded}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRiskExpanded((v) => !v);
-                    }}
-                  >
-                    <ChevronDown size={16} />
-                  </button>
-                )}
-              </h3>
-              {/* Table */}
-              <div className={`section-content ${riskExpanded ? "expanded" : "collapsed"}`}>
-                <div className="risk-bars">
-                  {Object.entries(riskIndicators)
-                    .filter(([_, v]) => {
-                      if (v === null || v === undefined) return false;
-                      if (typeof v === "number" && isNaN(v)) return false;
-                      return true;
-                    })
-
-                    .map(([key, raw]) => {
-                      const isBoolean =
-                        raw === 0 || raw === 1 || raw === true || raw === false;
-
-                      let v = typeof raw === "boolean" ? Number(raw) : raw;
-                      if (v > 1) v = 1;
-
-                      const label = key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (c) => c.toUpperCase());
-
-                      return (
-                        <div key={key} className="risk-bar-row">
-                          <div className="risk-bar-label">
-                            {label}
-                            <span className="risk-info-tooltip">?
-                              <span className="risk-info-tooltip-text">What does this category stand for?</span>
-                            </span>
-                          </div>
-                          <div className="risk-bar-track">
-                            <div
-                              className="risk-bar-fill"
-                              style={{ width: `${v * 100}%` }}
-                            />
-                            {/* Pointer */}
-                            <div
-                              className={`risk-bar-pointer ${v > 0.85 ? "flip-tooltip" : ""}`}
-                              style={{ left: `${v * 100}%` }}
-                            >
-                              <div className="risk-pointer-hitbox"><Triangle size={12} fill="currentColor" /></div>
-                              <span
-                                className="risk-arrow-tooltip"
-                                style={{
-                                  background: getZoneColor(v).bg,
-                                  border: `1px solid ${getZoneColor(v).border}`,
-                                  color: "#1e293b"
-                                }}
-                              >
-                                {isBoolean ? (raw === 1 ? "Yes" : "No") : v.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
               </div>
             </div>
 
