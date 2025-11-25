@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
 import './Hero.css';
@@ -7,6 +7,12 @@ const Hero = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState('');
   const [metrics, setMetrics] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const suggestionsRef = useRef(null);
+  const debounceTimer = useRef(null);
   const navigate = useNavigate();
 
   // Format large numbers for display
@@ -37,6 +43,45 @@ const Hero = () => {
       });
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchSuggestions = async (query) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`https://apibizray.bnbdevelopment.hu/api/v1/search?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (data.suggestions && data.suggestions.length > 0) {
+        setSuggestions(data.suggestions);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSearch = () => {
     const q = searchQuery.trim();
     if (!q) {
@@ -48,13 +93,66 @@ const Hero = () => {
       return;
     }
     setError("");
+    setShowSuggestions(false);
     navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion.name);
+    setShowSuggestions(false);
+    window.open(`/company/${suggestion.firmenbuchnummer}`, '_blank');
+    setSearchQuery('');
+  };
+
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === "Enter") {
+        handleSearch();
+      }
+      return;
     }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          handleSuggestionClick(suggestions[selectedIndex]);
+        } else {
+          handleSearch();
+        }
+        break;
+      case "Escape":
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setSelectedIndex(-1);
+    if (error) setError("");
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 150);
   };
 
   return (
@@ -74,24 +172,53 @@ const Hero = () => {
             
             
             <div className="hero-search">
-              <div className="search-box">
-                <Search className="search-icon" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Search by company name, address, or person..." 
-                  className={`search-input ${error ? "search-input-error" : ""}`}
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (error) setError(""); 
-                  }}
-                  onKeyDown={handleKeyDown}
-                  autoFocus
-                />
-                <button className="search-btn" onClick={handleSearch} aria-label="Search">
-                  <ArrowRight size={20} />
-                </button>
+              <div className="hero-search-container" ref={suggestionsRef}>
+                <div className="search-box">
+                  <Search className="search-icon" size={20} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by company name, address, or person..." 
+                    className={`search-input ${error ? "search-input-error" : ""}`}
+                    value={searchQuery}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                  <button className="search-btn" onClick={handleSearch} aria-label="Search">
+                    <ArrowRight size={20} />
+                  </button>
+                </div>
+
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="hero-suggestions-dropdown">
+                    {isLoading && (
+                      <div className="hero-suggestion-item loading">
+                        Loading suggestions...
+                      </div>
+                    )}
+                    {!isLoading && suggestions.map((suggestion, index) => (
+                      <div
+                        key={suggestion.firmenbuchnummer}
+                        className={`hero-suggestion-item ${index === selectedIndex ? 'selected' : ''}`}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        <div className="hero-suggestion-name">{suggestion.name}</div>
+                        <div className="hero-suggestion-id">{suggestion.firmenbuchnummer}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showSuggestions && suggestions.length === 0 && !isLoading && searchQuery.length >= 3 && (
+                  <div className="hero-suggestions-dropdown">
+                    <div className="hero-suggestion-item no-results">
+                      No companies found
+                    </div>
+                  </div>
+                )}
               </div>
+
               {error ? (
                 <p className="search-error">{error}</p>
               ) : (
@@ -170,7 +297,7 @@ const Hero = () => {
                 </svg>
                 <div className="network-nodes">
                   <div className="network-node">RO</div>
-                  <div className="network-node">OT</div> {/* root@elliot */}
+                  <div className="network-node">OT</div>
                   <div className="network-node">EL</div>
                 </div>
               </div>
