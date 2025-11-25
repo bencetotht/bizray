@@ -3,9 +3,11 @@ import React from "react";
 import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import CompanySummaryCard from "../components/CompanySummaryCard";
 import NetworkGraph from "../components/NetworkGraph";
+import GraphWrapper from "../components/graph_components/GraphWrapper"
+
 import RiskIndicators from "../components/RiskIndicators";
 
 const displayValue = (value) => {
@@ -404,13 +406,35 @@ export default function CompanyDetails() {
             <div className="info-section">
               <h3 className="section-title">
                 <Building2 size={18} />
-                Company Network (prototype)
+                Company Network 
               </h3>
               <p className="network-description">
-                Preview of relationships to partner firms and holdings. Zoom, pan,
-                and explore. This will later render real graph data from the API.
+                Preview of relationships to partner firms and holdings. 
               </p>
-              <NetworkGraph company={company} />
+
+              <div className="flex !my-4">
+                    <Link
+                to={`/graph/${id}`}
+                id="graph_link"
+                className="inline-flex  items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <div className=" gap-3 bg-blue flex justify-center items-center items-center">
+                  Open full network view
+                  <ExternalLink size={16} />
+                </div>
+
+              </Link>
+              </div>
+              <div className="">
+                   <GraphWrapper/>
+              
+
+              </div>
+              
+             
+              
+              
+
             </div>
           </div>
         </div>

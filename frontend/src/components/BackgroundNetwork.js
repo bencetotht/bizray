@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim"; 
 
+
 export default function BackgroundNetwork() {
   const [ready, setReady] = useState(false);
 
@@ -32,7 +33,7 @@ export default function BackgroundNetwork() {
   if (!ready) return null; 
 
   return (
-  <div id="background-network-wrapper" className="relative">
+  <div id="background-network-wrapper" className="relative h-[100vh]">
     <Particles
       id="tsparticles"
       className="absolute inset-0 -z-10"

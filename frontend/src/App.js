@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AccountPage from "./pages/AccountPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import GraphWrapper from "./components/graph_components/GraphWrapper"
 import "./index.css";
 
 
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/graph/:id" element={<GraphWrapper/>}/>
 
          
           <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
