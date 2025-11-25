@@ -4,28 +4,32 @@ import { ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
+import { useState } from "react";
 
 
 
 
-function MainCompanyDisplay({ data, selected }) {
+function MainCompanyDisplay({ id, data, selected }) {
+    const navigate = useNavigate();
+
     return (
         <>
             <div className={`
 ${selected ? 'bg-gradient-to-br from-indigo-400 to-purple-500' : 'bg-gradient-to-br from-indigo-300 to-purple-400'}
-h-20 w-60 
-flex
-p-2
+
+
+min-w-50
 rounded
 shadow-xl
 
-
+gap-3
 
 
 !p-2
 flex
 justify-center
 items-center
+flex-col
 text-xl
 relative
   rounded-2xl 
@@ -33,19 +37,32 @@ relative
   backdrop-blur-xl 
   border border-white/30 
   shadow-xl
-  p-6
+  !py-6
 
 
             `}>
                 <h1 className="m-2 ">{data.label}</h1>
                 <Handle type="source" position="bottom" />
                 <Handle type="target" position="top" />
+                <button
+          onClick={(e) => {
+            e.stopPropagation();       
+            navigate(`/company/${id}`);   
+          }}
+          className="bg-white !p-1   flex gap-3 justify-center items-center rounded hover:bg-blue-200 "
+        > Detail Page
+          <ExternalLink size={20} />
+        </button>
             </div>
         </>
     )
 }
 
 function DefaultCompanyDisplay({ id, selected, data }) {
+    const [expanded, setExpanded] = useState(false)
+
+    console.log("Expanded state for: ", id, expanded)
+
     const navigate = useNavigate();
 
     return (
@@ -83,38 +100,46 @@ relative
             <Handle type="source" position="bottom" />
             <Handle type="target" position="top" />
             <div className="flex gap-2 justify-center">
+
+
+                {!expanded ? 
                 <div
                     onClick={(e) => {
                         e.stopPropagation();
                         // console.log("Expand triggered, i am : ", id)
+                        setExpanded(true)
                         data.fetchCompany(id)
 
                     }}
                     className="bg-white p-2 w-8 h-8 flex justify-center items-center rounded hover:bg-gray-200">
 
                     <OpenInFullIcon className="!text-[25px]" />
-                </div>
+                </div> :
                 <div
                     onClick={(e) => {
                         e.stopPropagation();
-
+                        setExpanded(false)
                         // console.log("Collapse triggered, i am : ", id)
                         data.collapseCompany(id);
                     }}
                     className="bg-white p-2 w-8 h-8 flex justify-center items-center rounded hover:bg-gray-200">
                     <CloseFullscreenIcon className="!text-[25px]" />
                 </div>
+            
+            }
+                
+                
                 {/* Navigate to /graph/:id */}
         <button
           onClick={(e) => {
             e.stopPropagation();       
             navigate(`/graph/${id}`);   
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          className="bg-white p-2 w-8 h-8 flex justify-center items-center rounded hover:bg-gray-200 "
         >
           <span className="flex items-center gap-2">
-            Network
-            <ExternalLink size={16} />
+            
+            <ExternalLink size={22} />
           </span>
         </button>
 
