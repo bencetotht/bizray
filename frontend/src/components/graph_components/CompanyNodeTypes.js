@@ -150,13 +150,8 @@ relative
     );
 }
 
-
-
-function DetailedCompanyDisplay({}){
-
-}
-
-function MinimalCompanyDisplay({id, selected, data}){
+function MinimalCompanyDisplay(props){
+    const { id, selected, data } = props;
     return (
         <>
             <div 
@@ -167,9 +162,7 @@ function MinimalCompanyDisplay({id, selected, data}){
             className="h-15 w-15 bg-white rounded-full flex justify-center items-center shadow-xl shadow-black/20">
                 <StoreIcon className="!text-[35px]"/>
                 <Handle type="source" position="bottom" />
-                <Handle type="target" position="top" />
-                
-               
+                <Handle type="target" position="top" />       
             </div>
         </>
     )

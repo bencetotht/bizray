@@ -5,7 +5,6 @@ import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import CompanySummaryCard from "../components/CompanySummaryCard";
-import NetworkGraph from "../components/NetworkGraph";
 import GraphWrapper from "../components/graph_components/GraphWrapper"
 
 import RiskIndicators from "../components/RiskIndicators";

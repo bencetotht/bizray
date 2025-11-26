@@ -69,7 +69,7 @@ export default function NetworkGraph({ company }) {
     return { nodesInit: [main, a, b, c], edgesInit: edges };
   }, [company]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(nodesInit);
+  const [nodes, , onNodesChange] = useNodesState(nodesInit);
   const [edges, setEdges, onEdgesChange] = useEdgesState(edgesInit);
 
   const onConnect = useCallback(
