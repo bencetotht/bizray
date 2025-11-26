@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import ReactFlow, {
     useEdgesState,
     useNodesState,
-    Handle,
     getStraightPath,
     BaseEdge,
     EdgeLabelRenderer,
