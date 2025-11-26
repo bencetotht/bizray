@@ -137,14 +137,16 @@ def test_compliance_status_no_dates():
 #Test for Cash Ratio
 def test_cash_ratio_happy_path():
     #Tests a scenario where the company has more cash than total debt.
-    #Scenario: 200M in cash, 100M in total liabilities -> ratio = 2.0 (very liquid)
-    assert cash_ratio(200_000_000.0, 100_000_000.0) == 2.0
+    #Scenario: 200M in cash, 100M in total liabilities -> ratio = 2.0 -> risk_score = 1/(1+2.0) = 0.333...
+    result = cash_ratio(200_000_000.0, 100_000_000.0)
+    assert abs(result - 0.3333333333333333) < TOLERANCE
 
 
 def test_cash_ratio_high_risk():
     #Tests risky scenario where cash only cover a small portion of debt
-    #Scenario: 10M in cash, 100M in total liabilities -> ratio = 0.1 (very illiquid)
-    assert cash_ratio(10_000_000.0, 100_000_000.0) == 0.1
+    #Scenario: 10M in cash, 100M in total liabilities -> ratio = 0.1 -> risk_score = 1/(1+0.1) = 0.909...
+    result = cash_ratio(10_000_000.0, 100_000_000.0)
+    assert abs(result - 0.9090909090909091) < TOLERANCE
 
 
 def test_cash_ratio_edge_case():
@@ -178,14 +180,16 @@ def test_debt_to_asset_ratio_edge_case():
 #Test for Equity Ratio
 def test_equity_ratio_happy_path_strong():
     #Tests a financially strong company where equity is a large portion of assets.
-    # Scenario: 150M in equity, 200M in assets -> ratio = 0.75 (or 75%)
-    assert equity_ratio(150_000_000.0, 200_000_000.0) == 0.75
+    # Scenario: 150M in equity, 200M in assets -> ratio = 0.75 -> risk_score = 1 - 0.75 = 0.25
+    result = equity_ratio(150_000_000.0, 200_000_000.0)
+    assert abs(result - 0.25) < TOLERANCE
 
 
 def test_equity_ratio_weak():
     #Tests a financially weak company with a low equity ratio.
-    # Scenario: 20M in equity, 200M in assets -> ratio = 0.1 (or 10%)
-    assert equity_ratio(20_000_000.0, 200_000_000.0) == 0.1
+    # Scenario: 20M in equity, 200M in assets -> ratio = 0.1 -> risk_score = 1 - 0.1 = 0.9
+    result = equity_ratio(20_000_000.0, 200_000_000.0)
+    assert abs(result - 0.9) < TOLERANCE
 
 
 def test_equity_ratio_edge():
@@ -200,19 +204,19 @@ def test_equity_ratio_edge():
 # which are mathematical storage issues
 TOLERANCE = 0.0001
 
-#Test for growth reb=venue
+#Test for growth revenue
 def test_growth_revenue_positive():
-    #Test 20% growth: (120-100) / 100 = 0.2
+    #Test 20% growth: (120-100) / 100 = 0.2 -> risk_score = 0.0 (positive growth = no risk)
     result = growth_revenue(120.0, 100.0)
-    assert abs(result - 0.2) < TOLERANCE
+    assert result == 0.0
 
 def test_revenue_growth_negative():
-    #Test 20% decline: (80-100) / 100 = -0.2
+    #Test 20% decline: (80-100) / 100 = -0.2 -> risk_score = min(1.0, abs(-0.2)/0.5) = 0.4
     result = growth_revenue(80.0, 100.0)
-    assert abs(result - (-0.2)) < TOLERANCE
+    assert abs(result - 0.4) < TOLERANCE
 
 def test_revenue_growth_no_change():
-    #Test 0% growth (100-100) / 100 = 0.0
+    #Test 0% growth (100-100) / 100 = 0.0 -> risk_score = 0.0
     result = growth_revenue(100.0, 100.0)
     assert result == 0.0
 
@@ -227,24 +231,24 @@ def test_revenue_both_zero():
     assert result == 0.0
 
 def test_revenue_massive_growth():
-    #tests high growth
+    #tests high growth: (10M-1M) / 1M = 9.0 -> risk_score = 0.0 (positive growth = no risk)
     result = growth_revenue(10_000_000.0, 1_000_000.0)
-    assert abs(result - 9.0) < TOLERANCE
+    assert result == 0.0
 
 
 # Test for Operational result profit
 def test_profit_positive():
-    #Tests 50% profit growth: (150-100) / 100 = 0.5
+    #Tests 50% profit growth: (150-100) / 100 = 0.5 -> risk_score = 0.0 (positive growth = no risk)
     result = operational_result_profit(150.0, 100.0)
-    assert abs(result - 0.5) < TOLERANCE
+    assert result == 0.0
 
 def test_profit_negative():
-    #Tests 50% profit decline: (50 - 100) / 100 = -0.5
-    result = operational_result_profit(150.0, 100.0)
-    assert abs(result - 0.5) < TOLERANCE
+    #Tests 50% profit decline: (50 - 100) / 100 = -0.5 -> risk_score = min(1.0, abs(-0.5)/0.5) = 1.0
+    result = operational_result_profit(50.0, 100.0)
+    assert abs(result - 1.0) < TOLERANCE
 
 def test_profit_growth_no_change():
-    #Tests 0% profit change: (100 - 100) / 100 = 0.0
+    #Tests 0% profit change: (100 - 100) / 100 = 0.0 -> risk_score = 0.0
     result = operational_result_profit(100.0, 100.0)
     assert result == 0.0
 
@@ -261,9 +265,9 @@ def test_profit_growth_both_zero():
 def test_profit_growth_loss_to_smaller_loss():
     #Tests 'growth' when a large loss shrinks to a small loss
     # Loss shrinks from -100 to -50: (-50 - (-100)) / -100 = 50 / -100 = -0.5
-    # Mathematically, this is a negative growth rate, though financially it's an improvement.
+    # This is negative growth (decline), so risk_score = min(1.0, abs(-0.5)/0.5) = 1.0
     result = operational_result_profit((-50.0), (-100.0))
-    assert abs(result - (-0.5)) < TOLERANCE
+    assert abs(result - 1.0) < TOLERANCE
 
 
 

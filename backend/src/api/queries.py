@@ -190,14 +190,14 @@ def calculate_risk_indicators(extracted_data, historical_data=None, registry_ent
         'growth_revenue': growth_revenue(
             current_revenue,
             previous_revenue
-        ) if current_revenue is not None and previous_revenue is not None else None,
+        ) if current_revenue is not None and previous_revenue is not None and previous_revenue != 0 else None,
 
         # Operational Result Profit
         # Year-over-year profit growth rate
         'operational_result_profit': operational_result_profit(
             current_profit,
             previous_profit
-        ) if current_profit is not None and previous_profit is not None else None,
+        ) if current_profit is not None and previous_profit is not None and previous_profit != 0 else None,
     }
     
     # Calculate risk score using only numeric indicators (0-1 range)
