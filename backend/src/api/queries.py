@@ -200,5 +200,25 @@ def calculate_risk_indicators(extracted_data, historical_data=None, registry_ent
         ) if current_profit is not None and previous_profit is not None else None,
     }
     
-    risk_score = np.mean([risk_indicator for risk_indicator in risk_indicators.values() if risk_indicator is not None and risk_indicator is not False])
+    # Calculate risk score using only numeric indicators (0-1 range)
+    # Exclude boolean indicators (irregular_fiscal_year, compliance_status, deferred_income_reliance)
+    numeric_indicators = [
+        risk_indicators['debt_to_equity_ratio'],
+        risk_indicators['concentration_risk'],
+        risk_indicators['balance_sheet_volatility'],
+        risk_indicators['cash_ratio'],
+        risk_indicators['debt_to_assets_ratio'],
+        risk_indicators['equity_ratio'],
+        risk_indicators['growth_revenue'],
+        risk_indicators['operational_result_profit'],
+    ]
+
+    # Filter out None values and calculate mean
+    valid_numeric_indicators = [val for val in numeric_indicators if val is not None]
+
+    if len(valid_numeric_indicators) > 0:
+        risk_score = np.mean(valid_numeric_indicators)
+    else:
+        risk_score = None
+
     return risk_indicators, risk_score

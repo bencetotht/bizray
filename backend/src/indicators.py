@@ -26,7 +26,6 @@ def debt_to_equity_ratio(shareholders_equity: float, total_liabilities: float) -
 
     return min(1.0, max(0.0, risk_score))
 
-
 def concentration_risk(receivables_from_affiliates: float, total_assets: float) -> Optional[float]:
     """
     Calculates the concentration risk as a decimal (0.0-1.0).
@@ -45,7 +44,6 @@ def concentration_risk(receivables_from_affiliates: float, total_assets: float) 
 
     risk_score = receivables_from_affiliates / total_assets
     return min(1.0, max(0.0, risk_score))
-
 
 def balance_sheet_volatility(current_value: float, previous_value: float) -> Optional[float]:
     """
@@ -130,27 +128,45 @@ def check_compliance_status(registry_entries: List[RegistryEntry], check_date: d
     else:
         return True
 
-
 def cash_ratio(cash_and_equivalents: float, total_liabilities: float) -> Optional[float]:
     """
-    =  a liquidity metric showing a company's ability to cover its short-term debts (current liabilities)
-    using only its most liquid assets: cash and cash equivalents, without selling inventory or collecting accounts receivable
-    cash_and_equivalents = cash & assets that can immediately be converted to cash
-    total_liabilities = all the money a company owns (long-term and short-term)
+    Calculates the cash ratio risk score as a decimal (0.0-1.0).
+    Lower cash reserves relative to liabilities = higher risk score.
+    Formula: risk_score = 1 / (1 + ratio)
+    - 0.0 risk: Very high cash ratio (strong liquidity position)
+    - 0.5 risk: Cash equals liabilities (ratio = 1)
+    - 1.0 risk: No cash, all debt (ratio = 0)
+
+    Parameters:
+    - cash_and_equivalents: cash & assets that can immediately be converted to cash
+    - total_liabilities: all the money a company owes (long-term and short-term)
+    Returns:
+    - risk score (0.0-1.0): float, or None if data is invalid
     """
 
     if total_liabilities == 0:
         return None
 
     ratio = cash_and_equivalents / total_liabilities
+    # Convert ratio to risk score: lower ratio = higher risk
+    risk_score = 1 / (1 + ratio)
 
-    return ratio
-
+    return min(1.0, max(0.0, risk_score))
 
 def debt_to_assets_ratio(total_liabilities: float, total_assets: float) -> Optional[float]:
     """
-    =  shows what percentage of a company's assets are financed by debt, indicating its financial leverage and stability
-    by dividing Total Liabilities by Total Assets
+    Calculates the debt-to-assets risk score as a decimal (0.0-1.0).
+    Higher proportion of assets financed by debt = higher risk.
+    The ratio itself IS the risk score since it's already 0-1 range.
+    - 0.0 risk: No debt (all assets financed by equity)
+    - 0.5 risk: Half of assets financed by debt
+    - 1.0 risk: All assets financed by debt
+
+    Parameters:
+    - total_liabilities: all the money a company owes
+    - total_assets: total value of company assets
+    Returns:
+    - risk score (0.0-1.0): float, or None if data is invalid
     """
 
     if total_assets <= 0:
@@ -158,50 +174,93 @@ def debt_to_assets_ratio(total_liabilities: float, total_assets: float) -> Optio
 
     ratio = total_liabilities / total_assets
 
-    return ratio
+    return min(1.0, max(0.0, ratio))
 
 def equity_ratio(shareholders_equity: float, total_assets: float) -> Optional[float]:
     """
-    = shows what percentage of a company's assets are funded by the owners' own capital.
-    higher ratio (over 50%) = greater financial stability, less reliance on debt
+    Calculates the equity ratio risk score as a decimal (0.0-1.0).
+    Lower proportion of assets funded by equity = higher risk.
+    Formula: risk_score = 1 - (equity / assets)
+    - 0.0 risk: All assets funded by equity (ratio = 1, very stable)
+    - 0.5 risk: Half equity, half debt (ratio = 0.5)
+    - 1.0 risk: No equity, all debt (ratio = 0)
+
+    Parameters:
+    - shareholders_equity: owners' capital
+    - total_assets: total value of company assets
+    Returns:
+    - risk score (0.0-1.0): float, or None if data is invalid
     """
     if total_assets <= 0:
         return None
 
     ratio = shareholders_equity / total_assets
-    return ratio
+    # Invert since higher equity = lower risk
+    risk_score = 1 - ratio
+    return min(1.0, max(0.0, risk_score))
 
 
 def growth_revenue(current_revenue: float, previous_revenue: float) -> Optional[float]:
     """
-    Calculates the year over year revenue growth percentage (measures how much the company's revenue increased/decreased
-    compared to the previous period
+    Calculates revenue growth risk score as a decimal (0.0-1.0).
+    Negative growth (revenue decline) = higher risk.
+    Formula: For negative growth, risk_score = min(1.0, abs(growth) / 0.5)
+             For positive growth, risk_score = 0.0 (no risk from growth)
+    - 0.0 risk: Revenue stayed same or grew
+    - 0.5 risk: Revenue declined by 25%
+    - 1.0 risk: Revenue declined by 50% or more
+
     Parameters:
-    - current_revenue: float (The revenue for the latest period)
-    - previous_revenue: float (The revenue for the previous period)
+    - current_revenue: The revenue for the latest period
+    - previous_revenue: The revenue for the previous period
     Returns:
-    - growth_percentage: float (e.g., 15.5 for 15.5% growth), or None if data is invalid
+    - risk score (0.0-1.0): float, or None if data is invalid
     """
     if previous_revenue == 0:
         if current_revenue == 0:
             return 0.0
         return None
-    #can't calculate percentage change if the previous value was 0, unless the current value is also 0
 
     growth_percentage = ((current_revenue - previous_revenue) / previous_revenue)
-    return growth_percentage
+
+    # Only negative growth is considered risk
+    if growth_percentage >= 0:
+        return 0.0
+
+    # Convert negative growth to risk score (50% decline = max risk)
+    risk_score = min(1.0, abs(growth_percentage) / 0.5)
+    return risk_score
 
 def operational_result_profit(current_profit: float, previous_profit:float) -> Optional[float]:
     """
-    Calculates the year over year profit growth rate as a decimal.
-    measures the change in a company's net income or operational profit from one period to the next , indicating efficiency and market success
+    Calculates profit growth risk score as a decimal (0.0-1.0).
+    Negative profit growth (declining or negative profit) = higher risk.
+    Formula: For negative growth, risk_score = min(1.0, abs(growth) / 0.5)
+             For positive growth, risk_score = 0.0 (no risk from growth)
+    - 0.0 risk: Profit stayed same or grew
+    - 0.5 risk: Profit declined by 25%
+    - 1.0 risk: Profit declined by 50% or more
+
+    Parameters:
+    - current_profit: The profit for the latest period
+    - previous_profit: The profit for the previous period
+    Returns:
+    - risk score (0.0-1.0): float, or None if data is invalid
     """
     if previous_profit == 0:
         if current_profit == 0:
             return 0.0
         return None
+
     profit_growth = ((current_profit - previous_profit) / previous_profit)
-    return profit_growth
+
+    # Only negative growth is considered risk
+    if profit_growth >= 0:
+        return 0.0
+
+    # Convert negative growth to risk score (50% decline = max risk)
+    risk_score = min(1.0, abs(profit_growth) / 0.5)
+    return risk_score
 
 
 
