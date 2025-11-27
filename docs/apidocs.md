@@ -1,5 +1,123 @@
 # API Documentation
 
+## Authentication
+
+### Register a new user
+Request: `POST /api/v1/auth/register`
+
+Body:
+```json
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+Parameters:
+- `username`: Username (3-128 characters, required)
+- `email`: Valid email address (unique, required)
+- `password`: Password (minimum 8 characters, required)
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "role": "registered",
+    "registered_at": "2025-01-15T10:30:00"
+  }
+}
+```
+
+### Login
+Request: `POST /api/v1/auth/login`
+
+Body:
+```json
+{
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+Parameters:
+- `email`: User email (required)
+- `password`: User password (required)
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "role": "registered",
+    "registered_at": "2025-01-15T10:30:00"
+  }
+}
+```
+
+### Get current user information
+Request: `GET /api/v1/auth/me`
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+Response:
+```json
+{
+  "id": 1,
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "john_doe",
+  "email": "john@example.com",
+  "role": "registered",
+  "registered_at": "2025-01-15T10:30:00",
+  "company_history_data": null
+}
+```
+
+### Change password
+Request: `PUT /api/v1/auth/password`
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+Body:
+```json
+{
+  "current_password": "oldpassword123",
+  "new_password": "newsecurepassword456"
+}
+```
+
+Parameters:
+- `current_password`: Current password for verification (required)
+- `new_password`: New password (minimum 8 characters, must be different from current, required)
+
+Response:
+```json
+{
+  "message": "Password changed successfully",
+  "user": {
+    "id": 1,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "john@example.com"
+  }
+}
+```
+
+Error Responses:
+- `401 Unauthorized`: Current password is incorrect
+- `400 Bad Request`: New password must be different from current password
+- `404 Not Found`: User not found
+
 ## Company information
 ### Search for companies
 Request: `GET /api/v1/company?q=search`
