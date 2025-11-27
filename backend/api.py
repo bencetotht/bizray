@@ -1,10 +1,38 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Security
+from fastapi.security import HTTPAuthorizationCredentials
 from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field
+from uuid import uuid4
 
 from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount
 from src.cache import get_cache, set_cache
+from src.auth import hash_password, verify_password, create_jwt_token, get_current_user
+from src.db import get_session, User
 
 api_router = APIRouter(prefix="/api/v1")
+
+
+# Pydantic models for request/response validation
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=128)
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=256)
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class AuthResponse(BaseModel):
+    token: str
+    user: dict
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=256)
+
 
 @api_router.get("/")
 async def root():
@@ -13,6 +41,194 @@ async def root():
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@api_router.post("/auth/register", response_model=AuthResponse)
+async def register(request: RegisterRequest):
+    """
+    Register a new user
+    Parameters:
+    - username: str - username (3-128 characters)
+    - email: str - valid email address (unique)
+    - password: str - password (min 8 characters)
+    """
+    session = get_session()
+    try:
+        # Check if email already exists
+        existing_user = session.query(User).filter(User.email == request.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+        # Hash the password
+        password_hash = hash_password(request.password)
+
+        # Create new user
+        new_user = User(
+            uuid=str(uuid4()),
+            username=request.username,
+            email=request.email,
+            password_hash=password_hash,
+            user_role="registered"
+        )
+
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+
+        # Create JWT token
+        token = create_jwt_token(
+            user_id=new_user.id,
+            user_uuid=new_user.uuid,
+            email=new_user.email,
+            user_role=new_user.user_role
+        )
+
+        return AuthResponse(
+            token=token,
+            user={
+                "id": new_user.id,
+                "uuid": new_user.uuid,
+                "username": new_user.username,
+                "email": new_user.email,
+                "role": new_user.user_role,
+                "registered_at": new_user.registered_at.isoformat()
+            }
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@api_router.post("/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest):
+    """
+    Login a user
+    Parameters:
+    - email: str - user email
+    - password: str - user password
+    """
+    session = get_session()
+    try:
+        # Find user by email
+        user = session.query(User).filter(User.email == request.email).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # Verify password
+        if not verify_password(request.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # Create JWT token
+        token = create_jwt_token(
+            user_id=user.id,
+            user_uuid=user.uuid,
+            email=user.email,
+            user_role=user.user_role
+        )
+
+        return AuthResponse(
+            token=token,
+            user={
+                "id": user.id,
+                "uuid": user.uuid,
+                "username": user.username,
+                "email": user.email,
+                "role": user.user_role,
+                "registered_at": user.registered_at.isoformat()
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@api_router.get("/auth/me")
+async def get_me(current_user: dict = Security(get_current_user)):
+    """
+    Get current user information from JWT token
+    Requires: Bearer token in Authorization header
+    """
+    session = get_session()
+    try:
+        user = session.query(User).filter(User.id == current_user["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "id": user.id,
+            "uuid": user.uuid,
+            "username": user.username,
+            "email": user.email,
+            "role": user.user_role,
+            "registered_at": user.registered_at.isoformat(),
+            "company_history_data": user.company_history_data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@api_router.put("/auth/password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: dict = Security(get_current_user)
+):
+    """
+    Change user password
+    Requires: Bearer token in Authorization header
+    Parameters:
+    - current_password: Current password for verification
+    - new_password: New password (min 8 characters)
+    """
+    session = get_session()
+    try:
+        # Get user from database based on JWT token
+        user = session.query(User).filter(User.id == current_user["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Verify current password
+        if not verify_password(request.current_password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+        # Check that new password is different from current password
+        if request.current_password == request.new_password:
+            raise HTTPException(status_code=400, detail="New password must be different from current password")
+
+        # Hash and update the new password
+        new_password_hash = hash_password(request.new_password)
+        user.password_hash = new_password_hash
+
+        session.commit()
+
+        return {
+            "message": "Password changed successfully",
+            "user": {
+                "id": user.id,
+                "uuid": user.uuid,
+                "email": user.email
+            }
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
 
 @api_router.get("/company")
 async def get_companies(q: Optional[str] = None, p: Optional[int] = 1, l: Optional[int] = 10):

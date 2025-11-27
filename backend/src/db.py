@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import date, datetime
+from uuid import uuid4
 
 from sqlalchemy import (
     String,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     Index,
+    Text,
     create_engine,
 )
 from sqlalchemy.orm import (
@@ -24,6 +26,18 @@ from sqlalchemy.orm import (
 
 class Base(DeclarativeBase):
     pass
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    uuid: Mapped[str] = mapped_column(String(36), unique=True, nullable=False, default=lambda: str(uuid4()), index=True)
+    username: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(256), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    company_history_data: Mapped[str | None] = mapped_column(Text)
+    user_role: Mapped[str] = mapped_column(String(64), nullable=False, default="registered")
+    registered_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
 class Company(Base):
     __tablename__ = "companies"
