@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Security
+from fastapi import APIRouter, HTTPException, Security, Response
 from fastapi.security import HTTPAuthorizationCredentials
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
@@ -8,6 +8,8 @@ from src.controller import search_companies, get_company_by_id, get_search_sugge
 from src.cache import get_cache, set_cache
 from src.auth import hash_password, verify_password, create_jwt_token, get_current_user
 from src.db import get_session, User
+from src.pdf_generator import create_company_pdf
+from src.api.queries import get_company_urkunde, get_all_urkunde_contents, calculate_risk_indicators
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -413,3 +415,34 @@ async def get_metrics_endpoint():
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/company/{company_id}/export")
+async def export_company_summary(company_id: str):
+    """
+    Fetches all company data and returns a downloadable summary report in PDF format
+    """
+    company_data = get_company_by_id(company_id)
+    if not company_data:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    company_urkunde_list = get_company_urkunde(company_id)
+
+    risk_data_for_pdf = {}
+    if company_urkunde_list:
+        all_docs = get_all_urkunde_contents(company_urkunde_list)
+        if all_docs:
+            risk_indicators_dict, _ = calculate_risk_indicators(
+                latest_urkunde_doc=all_docs[-1],
+                historical_data=all_docs,
+                registry_entries=company_data.get("registry_entries", [])
+            )
+
+            risk_data_for_pdf = {"indicators": risk_indicators_dict}
+
+    pdf_bytes = create_company_pdf(company_data, risk_data_for_pdf)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={company_id}_summary.pdf"}
+    )
