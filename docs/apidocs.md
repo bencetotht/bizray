@@ -1,5 +1,25 @@
 # API Documentation
 
+## Overview
+
+BizRay API provides access to Austrian company registry data with different access levels based on user roles.
+
+**User Roles:**
+- `registered` - Default users with basic access
+- `subscriber` - Premium users with access to network graphs
+- `admin` - Administrators with full system access
+
+For detailed information about roles and privileges, see [USER_ROLES.md](USER_ROLES.md).
+
+**Base URL**: `/api/v1`
+
+**Authentication**: Most endpoints require a Bearer token in the Authorization header:
+```
+Authorization: Bearer <jwt_token>
+```
+
+---
+
 ## Authentication
 
 ### Register a new user
@@ -198,11 +218,17 @@ Response:
 }
 ```
 
-### Get network information about a company
+### Get network information about a company (Premium Feature)
 Request: `GET /api/v1/network/:id`
 
 Parameters:
 - `id`: firmenbuchnummer of the firm
+- `hops`: number of hops (optional, default: 2)
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+**Required Roles**: `subscriber` or `admin`
 
 By default, the network graph is calculated with **2** hops.
 
@@ -238,6 +264,11 @@ Response:
   ],
 }
 ```
+
+Error Responses:
+- `401 Unauthorized`: No valid authentication token provided
+- `403 Forbidden`: User role is not `subscriber` or `admin`
+- `404 Not Found`: Company not found
 
 ## Search query suggestion
 Request: `GET /api/v1/search?q=search`

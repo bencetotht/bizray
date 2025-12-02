@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount
 from src.cache import get_cache, set_cache
-from src.auth import hash_password, verify_password, create_jwt_token, get_current_user
+from src.auth import hash_password, verify_password, create_jwt_token, get_current_user, require_any_role
 from src.db import get_session, User
 
 api_router = APIRouter(prefix="/api/v1")
@@ -313,34 +313,41 @@ async def get_company(company_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/network/{company_id}")
-async def get_network_graph(company_id: str, hops: Optional[int] = 2):
+async def get_network_graph(
+    company_id: str,
+    hops: Optional[int] = 2,
+    current_user: dict = Security(require_any_role("subscriber", "admin"))
+):
     """
-    Get the network graph for a specific company
+    Get the network graph for a specific company (Premium feature)
+
     Parameters:
     - company_id: firmenbuchnummer
     - hops: number of hops (optional, default: 2)
+
+    Requires: Bearer token with subscriber or admin role in Authorization header
     """
     cache_key = f"network:{company_id}:{hops}"
-    
+
     # try:
     #     cached_result = get_cache(cache_key, entity_type="network")
     #     if cached_result is not None:
     #         return cached_result
     # except Exception:
     #     pass
-    
+
     try:
         company = get_company_network(company_id)
         if not company:
             raise HTTPException(status_code=404, detail="Company not found")
-        
+
         response = {"company": company}
-        
+
         # try:
         #     set_cache(cache_key, response, entity_type="api", ttl=7200)
         # except Exception:
         #     pass
-        
+
         return response
     except HTTPException:
         raise

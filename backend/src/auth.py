@@ -75,3 +75,17 @@ def require_role(required_role: str):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return user
     return role_checker
+
+
+def require_any_role(*allowed_roles: str):
+    """Decorator to require any of the specified roles for an endpoint."""
+    def role_checker(credentials: HTTPAuthorizationCredentials = Security(security)) -> dict:
+        user = get_current_user(credentials)
+        user_role = user.get("role")
+        if user_role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Insufficient permissions. Required roles: {', '.join(allowed_roles)}"
+            )
+        return user
+    return role_checker
