@@ -2,23 +2,68 @@ from fpdf import FPDF
 from datetime import date
 import os
 from pathlib import Path
+import tempfile
 
 #defined the brand color, the logo
 BRAND_COLOR = (106, 112, 215)
 
-#logo path
-LOGO_PATH = Path(__file__).parent / 'logo.svg'
+#logo path - check for PNG/JPG first, try to convert SVG if available
+LOGO_PATH_PNG = Path(__file__).parent / 'logo.png'
+LOGO_PATH_JPG = Path(__file__).parent / 'logo.jpg'
+LOGO_PATH_SVG = Path(__file__).parent / 'logo.svg'
+
+def get_logo_path():
+    """Get a usable logo path, converting SVG to PNG if necessary"""
+    # Check for PNG first
+    if LOGO_PATH_PNG.exists():
+        return str(LOGO_PATH_PNG)
+    # Check for JPG
+    if LOGO_PATH_JPG.exists():
+        return str(LOGO_PATH_JPG)
+    # Try to convert SVG to PNG if cairosvg is available
+    if LOGO_PATH_SVG.exists():
+        try:
+            import cairosvg
+            # Create a temporary PNG file
+            temp_png = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            cairosvg.svg2png(url=str(LOGO_PATH_SVG), write_to=temp_png.name, output_width=200)
+            return temp_png.name
+        except ImportError:
+            # cairosvg not available, will fall back to text
+            pass
+        except Exception:
+            # Conversion failed, will fall back to text
+            pass
+    return None
+
+LOGO_PATH = get_logo_path()
 
 class BrandedPDF(FPDF):
     """
     Custom pdf class for the header and footer of the pdf
     """
     def header(self):
-        self.image(LOGO_PATH, 10, 8, 33, link='https://bizray.bnbdevelopment.hu')
+        # Only add logo if a valid image format is available
+        if LOGO_PATH:
+            try:
+                self.image(LOGO_PATH, 10, 8, 33, link='https://bizray.bnbdevelopment.hu')
+            except Exception:
+                # If image loading fails, fall back to text
+                self._add_text_logo()
+        else:
+            # Add text-based branding if no logo available
+            self._add_text_logo()
 
         #font for the rest of the header
         self.set_font('Helvetica', 'B', 15)
         self.ln(20)
+
+    def _add_text_logo(self):
+        """Add text-based logo as fallback"""
+        self.set_font('Helvetica', 'B', 18)
+        self.set_text_color(BRAND_COLOR[0], BRAND_COLOR[1], BRAND_COLOR[2])
+        self.cell(50, 10, 'BizRay', ln=False, link='https://bizray.bnbdevelopment.hu')
+        self.set_text_color(0, 0, 0)
 
     def footer(self):
         self.set_y(-15)
@@ -59,10 +104,12 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
 
 
     pdf.set_font(FONT_FAMILY, 'B', TITLE_FONT_SIZE)
-    pdf.cell(0, 10, company_data.get('name', 'N/A'), ln=True)
+    company_name = company_data.get('name') or 'N/A'
+    pdf.cell(0, 10, str(company_name), ln=True)
 
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 8, f"Firmenbuchnummer: {company_data.get('firmenbuchnummer', 'N/A')}", ln=True)
+    firmenbuchnummer = company_data.get('firmenbuchnummer') or 'N/A'
+    pdf.cell(0, 8, f"Firmenbuchnummer: {str(firmenbuchnummer)}", ln=True)
 
     pdf.set_font(FONT_FAMILY, 'I', 8)
     pdf.cell(0, 8, f"Report generated on: {date.today().isoformat()}", ln=True)
@@ -103,14 +150,23 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     add_section_header("Company Details")
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
 
+    # Address handling with proper None checks
     address = company_data.get('address') or {}
-    full_address = (
-        f"{address.get('street', '')} {address.get('house_number', '')}\n"
-        f"{address.get('postal_code', '')} {address.get('city', '')}, {address.get('country', '')}"
-    )
+    street = address.get('street') or ''
+    house_number = address.get('house_number') or ''
+    postal_code = address.get('postal_code') or ''
+    city = address.get('city') or ''
+    country = address.get('country') or ''
+
+    street_line = f"{street} {house_number}".strip()
+    city_line = f"{postal_code} {city}".strip()
+    if country:
+        city_line = f"{city_line}, {country}" if city_line else country
+
+    full_address = f"{street_line}\n{city_line}".strip() or "N/A"
 
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(30, 7, "Address:")
+    pdf.cell(0, 7, "Address:", ln=True)
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
     pdf.multi_cell(0, 7, full_address)
     pdf.ln(2)
@@ -118,23 +174,25 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
     pdf.cell(40, 7, "Legal Form:")
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, company_data.get('legal_form', 'N/A'), ln=True)
+    pdf.cell(0, 7, str(company_data.get('legal_form') or 'N/A'), ln=True)
 
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
     pdf.cell(40, 7, "Seat:")
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, company_data.get('seat', 'N/A'), ln=True)
+    pdf.cell(0, 7, str(company_data.get('seat') or 'N/A'), ln=True)
 
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(40, 7, "Business Purpose:")
+    pdf.cell(0, 7, "Business Purpose:", ln=True)
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
     # Use multi_cell for the purpose as it can be long
-    pdf.multi_cell(0, 7, company_data.get('business_purpose', 'N/A'))
+    business_purpose = company_data.get('business_purpose')
+    pdf.multi_cell(0, 7, str(business_purpose) if business_purpose else 'N/A')
+    pdf.ln(2)
 
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
     pdf.cell(40, 7, "Reference Date:")
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, company_data.get('reference_date', 'N/A'), ln=True)
+    pdf.cell(0, 7, str(company_data.get('reference_date') or 'N/A'), ln=True)
 
     pdf.ln(10)
 
@@ -152,9 +210,16 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
         pdf.set_font(FONT_FAMILY, '', 9)
         # Loop through the first 5 entries to avoid a huge table
         for entry in registry_entries[:5]:
-            pdf.cell(40, 6, entry.get('registration_date', 'N/A'), border=1)
-            pdf.cell(80, 6, entry.get('type', 'N/A'), border=1)
-            pdf.cell(0, 6, entry.get('court', 'N/A'), border=1, ln=1)
+            reg_date = entry.get('registration_date')
+            reg_date_str = str(reg_date) if reg_date else 'N/A'
+            entry_type = entry.get('type')
+            entry_type_str = str(entry_type) if entry_type else 'N/A'
+            court = entry.get('court')
+            court_str = str(court) if court else 'N/A'
+
+            pdf.cell(40, 6, reg_date_str, border=1)
+            pdf.cell(80, 6, entry_type_str, border=1)
+            pdf.cell(0, 6, court_str, border=1, ln=1)
         if len(registry_entries) > 5:
             pdf.set_font(FONT_FAMILY, 'I', 8)
             pdf.cell(0, 6, f"...and {len(registry_entries) - 5} more entries.", ln=1)
@@ -164,5 +229,18 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
 
     pdf.ln(10)
 
-    return bytes(pdf.output())
+    # Get the PDF output
+    output = pdf.output()
+
+    # Handle different return types from different fpdf2 versions
+    if isinstance(output, bytes):
+        return output
+    elif isinstance(output, bytearray):
+        return bytes(output)
+    elif isinstance(output, str):
+        # Older versions or certain configurations return string
+        return output.encode('latin-1')
+    else:
+        # Fallback - try to convert to bytes
+        return bytes(output)
 

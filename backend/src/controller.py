@@ -392,8 +392,6 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
     Only company nodes are returned. Edges contain connection type and value.
     Maximum of 50 nodes will be returned.
     """
-    print(f"Getting network graph for company {company_id} with {hops} hops")
-
     MAX_NODES = 50
 
     session = SessionLocal()

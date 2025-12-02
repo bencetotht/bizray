@@ -50,12 +50,11 @@ class ZeepClient:
         Returns:
             urkunde_response: the response from the search_urkunde_by_fnr function
         """
-        print(f"Searching for documents with FNR: {fnr}")
         try:
             urkunde_response = self.client.service.SUCHEURKUNDE(FNR=fnr)
             return urkunde_response.ERGEBNIS
         except Exception as e:
-            print(f"Error during SUCHEURKUNDE for FNR {fnr}: {e}")
+            # Silently handle errors
             return None
     
     def get_urkunde(self, key):
@@ -67,15 +66,13 @@ class ZeepClient:
             extracted_data: the extracted data from the urkunde
         """
         if not key.endswith('XML'):
-            print(f"Key {key} does not end with .xml")
             return None
-        print(f"Getting urkunde with KEY: {key}")
         try:
             response = self.client.service.URKUNDE(KEY=key)
             return response
 
         except Exception as e:
-            print(f"Error calling URKUNDE for KEY {key}: {e}")
+            # Silently handle errors
             return None
         
     def close(self):
@@ -90,5 +87,6 @@ class ZeepClient:
                 self.transport = None
             if self.client is not None:
                 self.client = None
-        except Exception as e:
-            print(f"Error closing client: {e}")
+        except Exception:
+            # Silently handle errors during cleanup
+            pass

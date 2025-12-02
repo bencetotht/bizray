@@ -432,7 +432,7 @@ async def export_company_summary(company_id: str):
         all_docs = get_all_urkunde_contents(company_urkunde_list)
         if all_docs:
             risk_indicators_dict, _ = calculate_risk_indicators(
-                latest_urkunde_doc=all_docs[-1],
+                all_docs[-1],
                 historical_data=all_docs,
                 registry_entries=company_data.get("registry_entries", [])
             )
@@ -444,5 +444,7 @@ async def export_company_summary(company_id: str):
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={company_id}_summary.pdf"}
+        headers={
+            "Content-Disposition": f'attachment; filename="{company_id}_summary.pdf"'
+        }
     )
