@@ -1,11 +1,13 @@
 from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import func
 
 from src.auth import get_current_user, require_role
 from src.db import get_session, User
 from src.cache import get_cache, set_cache
+from src.controller import get_metrics
 
 admin_router = APIRouter(prefix="/api/v1/admin")
 
@@ -300,6 +302,70 @@ async def delete_user(
         raise
     except Exception as e:
         session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@admin_router.get("/metrics")
+async def get_admin_metrics(
+    current_user: dict = Security(require_role("admin"))
+):
+    """
+    Get extended metrics including public metrics and user statistics (Admin only)
+
+    Returns:
+    - Public metrics (companies, addresses, partners, registry_entries)
+    - User metrics (total_users, users_by_role)
+
+    Requires: Bearer token with admin role in Authorization header
+    """
+    cache_key = "admin:metrics"
+
+    # Try to get from cache
+    try:
+        cached_result = get_cache(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+
+    session = get_session()
+    try:
+        # Get public metrics
+        public_metrics = get_metrics(session)
+
+        # Get user statistics
+        total_users = session.query(func.count(User.id)).scalar()
+
+        # Get users by role
+        users_by_role = {}
+        role_counts = session.query(
+            User.user_role,
+            func.count(User.id)
+        ).group_by(User.user_role).all()
+
+        for role, count in role_counts:
+            users_by_role[role] = count
+
+        # Build response
+        response = {
+            "metrics": public_metrics,
+            "user_metrics": {
+                "total_users": total_users,
+                "users_by_role": users_by_role
+            }
+        }
+
+        # Cache the response for 5 minutes
+        try:
+            set_cache(cache_key, response, entity_type="api", ttl=300)
+        except Exception:
+            pass
+
+        return response
+
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         session.close()

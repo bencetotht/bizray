@@ -440,6 +440,34 @@ Error Responses:
 
 Note: This operation invalidates related cache entries.
 
+### Get admin metrics
+Request: `GET /api/v1/admin/metrics`
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Response:
+```json
+{
+  "metrics": {
+    "companies": 635169,
+    "addresses": 336510,
+    "partners": 514871,
+    "registry_entries": 1383898
+  },
+  "user_metrics": {
+    "total_users": 42,
+    "users_by_role": {
+      "registered": 38,
+      "admin": 3,
+      "premium": 1
+    }
+  }
+}
+```
+
+Note: This endpoint extends the public metrics endpoint (`/api/v1/metrics`) with additional user statistics. It is cached for 5 minutes to improve performance.
+
 ## Data Strucutre
 ```json
 {
