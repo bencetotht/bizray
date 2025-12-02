@@ -308,6 +308,166 @@ Response:
 }
 ```
 
+## Admin Endpoints
+
+Admin endpoints require a Bearer token with `admin` role in the Authorization header.
+
+### List all users
+Request: `GET /api/v1/admin/users`
+
+Parameters:
+- `page`: Page number (optional, default: 1)
+- `page_size`: Number of users per page (optional, default: 10, max: 100)
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Response:
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "john_doe",
+      "email": "john@example.com",
+      "role": "registered",
+      "registered_at": "2025-01-15T10:30:00",
+      "company_history_data": null
+    },
+    {
+      "id": 2,
+      "uuid": "660e8400-e29b-41d4-a716-446655440001",
+      "username": "jane_admin",
+      "email": "jane@example.com",
+      "role": "admin",
+      "registered_at": "2025-01-10T08:20:00",
+      "company_history_data": null
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+Note: This endpoint is cached for 5 minutes to improve performance.
+
+### Get a specific user
+Request: `GET /api/v1/admin/users/:id`
+
+Parameters:
+- `id`: User ID (required)
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Response:
+```json
+{
+  "id": 1,
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "john_doe",
+  "email": "john@example.com",
+  "role": "registered",
+  "registered_at": "2025-01-15T10:30:00",
+  "company_history_data": null
+}
+```
+
+Note: This endpoint is cached for 5 minutes to improve performance.
+
+### Update user details
+Request: `PUT /api/v1/admin/users/:id`
+
+Parameters:
+- `id`: User ID (required)
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Body (all fields optional):
+```json
+{
+  "username": "new_username",
+  "email": "newemail@example.com",
+  "role": "admin"
+}
+```
+
+Response:
+```json
+{
+  "id": 1,
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "new_username",
+  "email": "newemail@example.com",
+  "role": "admin",
+  "registered_at": "2025-01-15T10:30:00",
+  "company_history_data": null
+}
+```
+
+Error Responses:
+- `400 Bad Request`: Email already in use by another user
+- `404 Not Found`: User not found
+
+Note: This operation invalidates related cache entries.
+
+### Delete a user
+Request: `DELETE /api/v1/admin/users/:id`
+
+Parameters:
+- `id`: User ID (required)
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Response:
+```json
+{
+  "message": "User deleted successfully",
+  "deleted_user": {
+    "id": 1,
+    "email": "john@example.com"
+  }
+}
+```
+
+Error Responses:
+- `400 Bad Request`: Cannot delete your own account
+- `404 Not Found`: User not found
+
+Note: This operation invalidates related cache entries.
+
+### Get admin metrics
+Request: `GET /api/v1/admin/metrics`
+
+Headers:
+- `Authorization`: `Bearer <admin_token>` (required)
+
+Response:
+```json
+{
+  "metrics": {
+    "companies": 635169,
+    "addresses": 336510,
+    "partners": 514871,
+    "registry_entries": 1383898
+  },
+  "user_metrics": {
+    "total_users": 42,
+    "users_by_role": {
+      "registered": 38,
+      "admin": 3,
+      "premium": 1
+    }
+  }
+}
+```
+
+Note: This endpoint extends the public metrics endpoint (`/api/v1/metrics`) with additional user statistics. It is cached for 5 minutes to improve performance.
+
 ## Data Strucutre
 ```json
 {
