@@ -119,18 +119,78 @@ Error Responses:
 - `404 Not Found`: User not found
 
 ## Company information
+
+### Get available cities for filtering
+Request: `GET /api/v1/cities?q=search`
+
+Parameters:
+- `q`: search query (optional) - when provided, returns only cities from companies matching the query
+
+Response (without query):
+```json
+{
+  "cities": [
+    {
+      "city": "Wien",
+      "count": 125432
+    },
+    {
+      "city": "Graz",
+      "count": 45678
+    },
+    {
+      "city": "Linz",
+      "count": 32145
+    }
+  ]
+}
+```
+
+Response (with query `q=tech`):
+```json
+{
+  "cities": [
+    {
+      "city": "Wien",
+      "count": 523
+    },
+    {
+      "city": "Graz",
+      "count": 187
+    },
+    {
+      "city": "Salzburg",
+      "count": 94
+    }
+  ]
+}
+```
+
+**Usage Pattern:**
+1. User enters search query "tech"
+2. Frontend calls `GET /api/v1/cities?q=tech` to get cities where "tech" companies are located
+3. Frontend displays city filter with only relevant cities (Wien: 523, Graz: 187, etc.)
+4. User selects a city and frontend calls `GET /api/v1/company?q=tech&city=Wien`
+
+**Caching:**
+- Without query (`q`): Cached for 24 hours
+- With query (`q`): Cached for 1 hour
+
+**Note:** Cities are sorted by company count (descending) within the filtered results.
+
 ### Search for companies
 Request: `GET /api/v1/company?q=search`
 
 Parameters:
-- `q`: search query (required)
-- `page`: page number (optional, default: 1)
-- `page_size`: number of results per page (optional, default: 10)
+- `q`: search query (required, minimum 3 characters)
+- `p`: page number (optional, default: 1)
+- `l`: number of results per page (optional, default: 10, max: 100)
+- `city`: filter by city name (optional, exact match - use cities from `/api/v1/cities`)
 
 Response:
 ```json
 {
-  "results": [
+  "companies": [
     {
       "firmenbuchnummer": "661613k",
       "name": "Körpermanufaktur KG",
@@ -144,10 +204,20 @@ Response:
       "legal_form": "Kommanditgesellschaft",
       "business_purpose": "Betrieb einer andere Praxis für Physiotherapie und Chiropraktik",
       "seat": "Birndorn"
-    },
-  ]
+    }
+  ],
+  "total": 2
 }
 ```
+
+**Example with city filter:**
+```
+GET /api/v1/company?q=praxis&city=Wien&p=1&l=10
+```
+
+This will search for "praxis" only in companies located in Wien.
+
+Note: This endpoint is cached for 1 hour. Cache key includes the city parameter.
 
 ### Get detailed information about company
 Request: `GET /api/v1/company/:id`
