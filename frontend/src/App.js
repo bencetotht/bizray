@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/layouts/MainLayout";
 import MainPage from "./pages/MainPage";
 import AboutPage from "./pages/AboutPage"
@@ -14,6 +14,12 @@ import RegisterPage from "./pages/RegisterPage";
 import AccountPage from "./pages/AccountPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GraphWrapper from "./components/graph_components/GraphWrapper"
+import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminMetricsPage from "./pages/AdminMetricsPage";
+import AdminUserManagementPage from "./pages/AdminUserManagementPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./index.css";
 
 
@@ -40,6 +46,22 @@ export default function App() {
 
          
           <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/metrics" replace />} />
+          <Route path="metrics" element={<AdminMetricsPage />} />
+          <Route path="users" element={<AdminUserManagementPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
         </Route>
       </Routes>
     </Router>
