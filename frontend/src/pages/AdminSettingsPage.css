@@ -197,7 +197,7 @@
   }
 }
 
-.btn {
+.admin-settings-page .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -213,16 +213,16 @@
   white-space: nowrap;
 }
 
-.btn-primary {
+.admin-settings-page .btn-primary {
   background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.admin-settings-page .btn-primary:hover:not(:disabled) {
   transform: scale(1.05);
 }
 
-.btn-primary:disabled {
+.admin-settings-page .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
