@@ -37,31 +37,45 @@ export default function AdminMetricsPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/metrics`);
+      const token = localStorage.getItem("adminToken");
+      
+      if (!token) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/admin/metrics`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
         throw new Error("Failed to fetch metrics");
       }
 
       const data = await response.json();
-      const apiMetrics = data.metrics || data;
+      const apiMetrics = data.metrics || {};
+      const userMetrics = data.user_metrics || {};
+      
       setMetrics({
         ...apiMetrics,
-        users: 0
+        users: userMetrics.total_users || 0
       });
     } catch (err) {
-      const token = localStorage.getItem("adminToken");
-      if (token === "dev-mock-admin-token") {
-        setMetrics({
-          companies: 635000,
-          addresses: 337000,
-          partners: 515000,
-          registry_entries: 1400000,
-          users: 0
-        });
-      } else {
-        setError(err.message || "Failed to load metrics");
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
       }
+      setError(err.message || "Failed to load metrics");
       console.error("Error fetching metrics:", err);
     } finally {
       setLoading(false);

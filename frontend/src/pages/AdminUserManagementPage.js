@@ -16,13 +16,74 @@ export default function AdminUserManagementPage() {
   const [editForm, setEditForm] = useState({
     username: "",
     email: "",
-    role: "registered",
-    isBlocked: false
+    role: "registered"
   });
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
+  // Fetch users when page changes (only if no filters active - server-side pagination)
+  useEffect(() => {
+    if (!searchQuery && filterRole === "all") {
+      fetchUsers();
+    }
+  }, [currentPage]);
+
+  // Fetch all users when search/filter changes (for client-side filtering)
+  useEffect(() => {
+    if (searchQuery || filterRole !== "all") {
+      // Fetch all users without pagination for client-side filtering
+      fetchAllUsers();
+    }
+  }, [searchQuery, filterRole]);
+
+  // Fetch users when component mounts
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const fetchAllUsers = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      
+      if (!token) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      
+      // Fetch all users (use a large page_size to get all)
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users?page=1&page_size=1000`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      const usersList = data.users || data || [];
+      setUsers(usersList);
+      setTotalUsers(data.total || usersList.length);
+    } catch (err) {
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
+      }
+      console.error("Error fetching all users:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -31,132 +92,32 @@ export default function AdminUserManagementPage() {
       
       const token = localStorage.getItem("adminToken");
       
-      if (token === "dev-mock-admin-token") {
-        setTimeout(() => {
-          setUsers([
-            {
-              id: 1,
-              uuid: "user-1-uuid",
-              username: "john_doe",
-              email: "john@example.com",
-              role: "registered",
-              registered_at: "2024-01-15T10:30:00",
-              isBlocked: false
-            },
-            {
-              id: 2,
-              uuid: "user-2-uuid",
-              username: "jane_smith",
-              email: "jane@example.com",
-              role: "subscriber",
-              registered_at: "2024-02-20T14:15:00",
-              isBlocked: false
-            },
-            {
-              id: 3,
-              uuid: "dev-admin-uuid",
-              username: "admin",
-              email: "admin@admin.com",
-              role: "admin",
-              registered_at: "2024-01-01T00:00:00",
-              isBlocked: false
-            },
-            {
-              id: 4,
-              uuid: "user-4-uuid",
-              username: "bob_wilson",
-              email: "bob@example.com",
-              role: "registered",
-              registered_at: "2024-03-10T09:45:00",
-              isBlocked: false
-            },
-            {
-              id: 5,
-              uuid: "user-5-uuid",
-              username: "alice_brown",
-              email: "alice@example.com",
-              role: "subscriber",
-              registered_at: "2024-03-15T11:20:00",
-              isBlocked: false
-            },
-            {
-              id: 6,
-              uuid: "user-6-uuid",
-              username: "blocked_user",
-              email: "blocked@example.com",
-              role: "registered",
-              registered_at: "2024-01-10T08:00:00",
-              isBlocked: true
-            },
-            {
-              id: 7,
-              uuid: "user-7-uuid",
-              username: "charlie_davis",
-              email: "charlie@example.com",
-              role: "registered",
-              registered_at: "2024-03-20T12:00:00",
-              isBlocked: false
-            },
-            {
-              id: 8,
-              uuid: "user-8-uuid",
-              username: "diana_prince",
-              email: "diana@example.com",
-              role: "subscriber",
-              registered_at: "2024-03-25T15:30:00",
-              isBlocked: false
-            },
-            {
-              id: 9,
-              uuid: "user-9-uuid",
-              username: "edward_miller",
-              email: "edward@example.com",
-              role: "registered",
-              registered_at: "2024-04-01T09:15:00",
-              isBlocked: false
-            },
-            {
-              id: 10,
-              uuid: "user-10-uuid",
-              username: "fiona_green",
-              email: "fiona@example.com",
-              role: "subscriber",
-              registered_at: "2024-04-05T11:45:00",
-              isBlocked: false
-            },
-            {
-              id: 11,
-              uuid: "user-11-uuid",
-              username: "george_taylor",
-              email: "george@example.com",
-              role: "registered",
-              registered_at: "2024-04-10T14:20:00",
-              isBlocked: false
-            },
-            {
-              id: 12,
-              uuid: "user-12-uuid",
-              username: "helen_wilson",
-              email: "helen@example.com",
-              role: "subscriber",
-              registered_at: "2024-04-15T16:00:00",
-              isBlocked: false
-            }
-          ]);
-          setLoading(false);
-        }, 500);
+      if (!token) {
+        window.location.href = "/admin/login";
         return;
       }
       
-      const response = await fetch(`${API_BASE_URL}/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Use pagination parameters
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users?page=${currentPage}&page_size=${itemsPerPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
         if (response.status === 404) {
           setUsers([]);
+          setTotalUsers(0);
+          setTotalPages(1);
           setLoading(false);
           return;
         }
@@ -164,40 +125,21 @@ export default function AdminUserManagementPage() {
       }
 
       const data = await response.json();
-      setUsers(data.users || data || []);
+      const usersList = data.users || data || [];
+      setUsers(usersList);
+      setTotalUsers(data.total || usersList.length);
+      setTotalPages(Math.ceil((data.total || usersList.length) / itemsPerPage));
     } catch (err) {
-      const token = localStorage.getItem("adminToken");
-      if (token === "dev-mock-admin-token") {
-        setUsers([
-          {
-            id: 1,
-            uuid: "user-1-uuid",
-            username: "john_doe",
-            email: "john@example.com",
-            role: "registered",
-            registered_at: "2024-01-15T10:30:00"
-          },
-          {
-            id: 2,
-            uuid: "user-2-uuid",
-            username: "jane_smith",
-            email: "jane@example.com",
-            role: "subscriber",
-            registered_at: "2024-02-20T14:15:00"
-          },
-          {
-            id: 3,
-            uuid: "dev-admin-uuid",
-            username: "admin",
-            email: "admin@admin.com",
-            role: "admin",
-            registered_at: "2024-01-01T00:00:00"
-          }
-        ]);
-      } else {
-        setError(err.message || "Failed to load users");
-        setUsers([]);
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
       }
+      setError(err.message || "Failed to load users");
+      setUsers([]);
+      setTotalUsers(0);
+      setTotalPages(1);
       console.error("Error fetching users:", err);
     } finally {
       setLoading(false);
@@ -209,19 +151,38 @@ export default function AdminUserManagementPage() {
       user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.username?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesRole = filterRole === "all" || user.role === filterRole;
+    
+    let roleFilter = filterRole;
+    if (filterRole === "subscriber") {
+      roleFilter = "premium";
+    }
+    
+    const matchesRole = filterRole === "all" || user.role === roleFilter;
     
     return matchesSearch && matchesRole;
   });
 
-  //pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  
+  const hasActiveFilters = searchQuery || filterRole !== "all";
+  
+  
+  const paginatedUsers = hasActiveFilters
+    ? filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    : users; 
+  
+  const displayTotalPages = hasActiveFilters
+    ? Math.ceil(filteredUsers.length / itemsPerPage)
+    : totalPages;
+  const displayTotal = hasActiveFilters
+    ? filteredUsers.length
+    : totalUsers;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + paginatedUsers.length, displayTotal);
 
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
   }, [searchQuery, filterRole]);
 
   const formatDate = (dateString) => {
@@ -244,8 +205,8 @@ export default function AdminUserManagementPage() {
         return "role-badge admin";
       case "registered":
         return "role-badge registered";
-      case "subscriber":
-        return "role-badge subscriber";
+      case "premium":
+        return "role-badge subscriber"; 
       default:
         return "role-badge";
     }
@@ -257,7 +218,7 @@ export default function AdminUserManagementPage() {
         return "Admin";
       case "registered":
         return "Basic";
-      case "subscriber":
+      case "premium":
         return "Premium";
       default:
         return role || "N/A";
@@ -269,8 +230,7 @@ export default function AdminUserManagementPage() {
     setEditForm({
       username: user.username || "",
       email: user.email || "",
-      role: user.role || "registered",
-      isBlocked: user.isBlocked || false
+      role: user.role || "registered"
     });
   };
 
@@ -279,34 +239,119 @@ export default function AdminUserManagementPage() {
     setEditForm({
       username: "",
       email: "",
-      role: "registered",
-      isBlocked: false
+      role: "registered"
     });
   };
 
-  const handleEditSave = () => {
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Are you sure you want to delete user "${user.username || user.email}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const token = localStorage.getItem("adminToken");
+    
+    if (!token) {
+      window.location.href = "/admin/login";
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${user.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to delete user");
+      }
+      
+      setUsers(prevUsers => prevUsers.filter(u => 
+        u.id !== user.id && u.uuid !== user.uuid
+      ));
+      setTotalUsers(prev => Math.max(0, prev - 1));
+    
+      if (paginatedUsers.length === 1 && currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      }
+    } catch (err) {
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
+      }
+      setError(err.message || "Failed to delete user");
+      console.error("Error deleting user:", err);
+    }
+  };
+
+  const handleEditSave = async () => {
     if (!editingUser) return;
 
-    // Update user in the list
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === editingUser.id || user.uuid === editingUser.uuid
-          ? { ...user, ...editForm }
-          : user
-      )
-    );
+    const token = localStorage.getItem("adminToken");
+    
+    if (!token) {
+      window.location.href = "/admin/login";
+      return;
+    }
+    
+    try {
+      const updatePayload = {
+        username: editForm.username,
+        email: editForm.email,
+        role: editForm.role
+      };
+      
+      const response = await fetch(`${API_BASE_URL}/admin/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatePayload)
+      });
 
-    // When the backend is ready uncomment the following code
-    // await fetch(`${API_BASE_URL}/admin/users/${editingUser.id}`, {
-    //   method: "PUT",
-    //   headers: {
-    //     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify(editForm)
-    // });
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to update user");
+      }
 
-    handleEditClose();
+      const updatedUser = await response.json();
+      
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === editingUser.id || user.uuid === editingUser.uuid
+            ? { ...updatedUser }
+            : user
+        )
+      );
+      
+      handleEditClose();
+    } catch (err) {
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
+      }
+      setError(err.message || "Failed to update user");
+      console.error("Error updating user:", err);
+    }
   };
 
   if (loading) {
@@ -349,7 +394,7 @@ export default function AdminUserManagementPage() {
           <option value="all">All Roles</option>
           <option value="admin">Admin</option>
           <option value="registered">Basic (Registered)</option>
-          <option value="subscriber">Premium (Subscriber)</option>
+          <option value="premium">Premium</option>
         </select>
       </div>
 
@@ -424,7 +469,11 @@ export default function AdminUserManagementPage() {
                         >
                           <Edit size={16} />
                         </button>
-                        <button className="action-btn delete" title="Delete user">
+                        <button 
+                          className="action-btn delete" 
+                          title="Delete user"
+                          onClick={() => handleDeleteUser(user)}
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -441,13 +490,12 @@ export default function AdminUserManagementPage() {
         <>
           <div className="users-summary">
             <p>
-              Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
-              {filteredUsers.length !== users.length && ` (${users.length} total)`}
+              Showing {startIndex + 1}-{endIndex} of {displayTotal} users
             </p>
           </div>
           
           {/* Pagination */}
-          {totalPages > 1 && (
+          {displayTotalPages > 1 && (
             <div className="pagination">
               <button
                 className="pagination-btn"
@@ -459,10 +507,10 @@ export default function AdminUserManagementPage() {
               </button>
               
               <div className="pagination-pages">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                {Array.from({ length: displayTotalPages }, (_, i) => i + 1).map((page) => {
                   if (
                     page === 1 ||
-                    page === totalPages ||
+                    page === displayTotalPages ||
                     (page >= currentPage - 1 && page <= currentPage + 1)
                   ) {
                     return (
@@ -483,8 +531,8 @@ export default function AdminUserManagementPage() {
               
               <button
                 className="pagination-btn"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(displayTotalPages, prev + 1))}
+                disabled={currentPage === displayTotalPages}
               >
                 Next
                 <ChevronRight size={18} />
@@ -493,6 +541,7 @@ export default function AdminUserManagementPage() {
           )}
         </>
       )}
+
 
       {/* Edit User Modal */}
       {editingUser && (
@@ -536,26 +585,9 @@ export default function AdminUserManagementPage() {
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                 >
                   <option value="registered">Basic (Registered)</option>
-                  <option value="subscriber">Premium (Subscriber)</option>
+                  <option value="premium">Premium</option>
                   <option value="admin">Admin</option>
                 </select>
-              </div>
-              <div className="form-group">
-                <div className="setting-item">
-                  <div className="setting-info">
-                    <label htmlFor="edit-blocked">Block User</label>
-                    <p>Prevent this user from accessing the system</p>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      id="edit-blocked"
-                      checked={editForm.isBlocked}
-                      onChange={(e) => setEditForm({ ...editForm, isBlocked: e.target.checked })}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
               </div>
             </div>
             <div className="modal-footer">

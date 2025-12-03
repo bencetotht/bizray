@@ -90,6 +90,41 @@
   font-weight: 500;
 }
 
+.admin-login-access-denied {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  text-align: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+.access-denied-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: #f97316;
+}
+
+.admin-login-access-denied h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ea580c;
+  margin: 0 0 12px 0;
+}
+
+.admin-login-access-denied p {
+  font-size: 1rem;
+  color: #9a3412;
+  margin: 0 0 24px 0;
+  font-weight: 500;
+}
+
+.admin-login-access-denied .btn {
+  margin-top: 8px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

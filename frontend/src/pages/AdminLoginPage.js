@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, Home } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AdminLoginPage.css";
 
@@ -71,26 +71,6 @@ export default function AdminLoginPage() {
     }
 
     try {
-      //only for dvelopment mode: allow login with mock admin credentials
-      const DEV_ADMIN_EMAIL = "admin@admin.com";
-      const DEV_ADMIN_PASSWORD = "admin123";
-      
-      if (email === DEV_ADMIN_EMAIL && password === DEV_ADMIN_PASSWORD) {
-        const mockAdminUser = {
-          id: 1,
-          uuid: "dev-admin-uuid",
-          username: "admin",
-          email: DEV_ADMIN_EMAIL,
-          role: "admin",
-          registered_at: new Date().toISOString()
-        };
-        
-        localStorage.setItem("adminToken", "dev-mock-admin-token");
-        localStorage.setItem("adminUser", JSON.stringify(mockAdminUser));
-        navigate("/admin");
-        return;
-      }
-
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -99,36 +79,34 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error("Invalid response from server");
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || "Invalid email or password");
+        const errorMessage = data.detail || data.message || "Invalid email or password";
+        throw new Error(errorMessage);
       }
 
-      if (data.user && data.user.role === "admin") {
-        localStorage.setItem("adminToken", data.token);
-        localStorage.setItem("adminUser", JSON.stringify(data.user));
-        navigate("/admin");
-      } else {
-        setError("Access denied. Admin privileges required.");
+      if (!data.user || data.user.role !== "admin") {
+        setError("no_access");
+        setLoading(false);
+        return;
       }
+      
+      if (!data.token) {
+        throw new Error("No authentication token received");
+      }
+
+      localStorage.setItem("adminToken", data.token);
+      localStorage.setItem("adminUser", JSON.stringify(data.user));
+      navigate("/admin");
     } catch (err) {
-      if (email === "admin@admin.com" && password === "admin123") {
-        const mockAdminUser = {
-          id: 1,
-          uuid: "dev-admin-uuid",
-          username: "admin",
-          email: "admin@admin.com",
-          role: "admin",
-          registered_at: new Date().toISOString()
-        };
-        localStorage.setItem("adminToken", "dev-mock-admin-token");
-        localStorage.setItem("adminUser", JSON.stringify(mockAdminUser));
-        navigate("/admin");
-      } else {
-        setError(err.message || "Login failed. Please try again.");
-        console.error("Login error:", err);
-      }
+      setError(err.message || "Login failed. Please try again.");
+      console.error("Login error:", err);
     } finally {
       setLoading(false);
     }
@@ -154,14 +132,31 @@ export default function AdminLoginPage() {
               </p>
             </header>
 
-            <form className="admin-login-form" onSubmit={handleSubmit}>
-              {error && (
-                <div className="admin-login-error">
-                  {error}
+            {error === "no_access" ? (
+              <div className="admin-login-access-denied">
+                <div className="access-denied-icon">
+                  <Shield size={48} />
                 </div>
-              )}
+                <h3>Access Denied</h3>
+                <p>You do not have access to this page.</p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-full"
+                  onClick={() => navigate("/")}
+                >
+                  <Home size={18} />
+                  Go to Home Page
+                </button>
+              </div>
+            ) : (
+              <form className="admin-login-form" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="admin-login-error">
+                    {error}
+                  </div>
+                )}
 
-              <div className="form-group">
+                <div className="form-group">
                 <label htmlFor="email">
                   <Mail size={18} />
                   Email Address
@@ -218,28 +213,17 @@ export default function AdminLoginPage() {
                 )}
               </div>
 
-              <button 
-                type="submit" 
-                className="btn btn-primary btn-full"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign In"}
-                {!loading && <ArrowRight size={18} />}
-              </button>
-            </form>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary btn-full"
+                  disabled={loading}
+                >
+                  {loading ? "Signing in..." : "Sign In"}
+                  {!loading && <ArrowRight size={18} />}
+                </button>
+              </form>
+            )}
 
-            <div style={{ 
-              marginTop: "24px", 
-              padding: "12px", 
-              background: "#f0f9ff", 
-              border: "1px solid #bae6fd", 
-              borderRadius: "8px",
-              fontSize: "0.875rem",
-              color: "#0369a1",
-              textAlign: "center"
-            }}>
-              <strong>Development Mode:</strong> Use <code>admin@admin.com</code> / <code>admin123</code> to test
-            </div>
           </div>
         </div>
       </div>
