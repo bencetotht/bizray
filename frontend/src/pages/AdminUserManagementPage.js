@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Users, Search, Mail, Calendar, Shield, Trash2, Edit, X, Save, Ban, ChevronLeft, ChevronRight } from "lucide-react";
 import "./AdminUserManagementPage.css";
 
@@ -21,71 +21,7 @@ export default function AdminUserManagementPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch users when page changes (only if no filters active - server-side pagination)
-  useEffect(() => {
-    if (!searchQuery && filterRole === "all") {
-      fetchUsers();
-    }
-  }, [currentPage]);
-
-  // Fetch all users when search/filter changes (for client-side filtering)
-  useEffect(() => {
-    if (searchQuery || filterRole !== "all") {
-      // Fetch all users without pagination for client-side filtering
-      fetchAllUsers();
-    }
-  }, [searchQuery, filterRole]);
-
-  // Fetch users when component mounts
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchAllUsers = async () => {
-    try {
-      const token = localStorage.getItem("adminToken");
-      
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
-      
-      // Fetch all users (use a large page_size to get all)
-      const response = await fetch(
-        `${API_BASE_URL}/admin/users?page=1&page_size=1000`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem("adminToken");
-          localStorage.removeItem("adminUser");
-          window.location.href = "/admin/login";
-          return;
-        }
-        throw new Error("Failed to fetch users");
-      }
-
-      const data = await response.json();
-      const usersList = data.users || data || [];
-      setUsers(usersList);
-      setTotalUsers(data.total || usersList.length);
-    } catch (err) {
-      if (err.message.includes("401") || err.message.includes("403")) {
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminUser");
-        window.location.href = "/admin/login";
-        return;
-      }
-      console.error("Error fetching all users:", err);
-    }
-  };
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -97,7 +33,6 @@ export default function AdminUserManagementPage() {
         return;
       }
       
-      // Use pagination parameters
       const response = await fetch(
         `${API_BASE_URL}/admin/users?page=${currentPage}&page_size=${itemsPerPage}`,
         {
@@ -144,7 +79,69 @@ export default function AdminUserManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage]);
+
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      
+      if (!token) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users?page=1&page_size=1000`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
+          window.location.href = "/admin/login";
+          return;
+        }
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      const usersList = data.users || data || [];
+      setUsers(usersList);
+      setTotalUsers(data.total || usersList.length);
+    } catch (err) {
+      if (err.message.includes("401") || err.message.includes("403")) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUser");
+        window.location.href = "/admin/login";
+        return;
+      }
+      console.error("Error fetching all users:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const hasActiveFilters = searchQuery || filterRole !== "all";
+    if (!hasActiveFilters && currentPage !== 1) {
+      fetchUsers();
+    }
+  }, [currentPage, searchQuery, filterRole, fetchUsers]);
+
+  
+  useEffect(() => {
+    const hasActiveFilters = searchQuery || filterRole !== "all";
+    if (hasActiveFilters) {
+      fetchAllUsers();
+    }
+  }, [searchQuery, filterRole, fetchAllUsers]);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch = 
@@ -183,7 +180,7 @@ export default function AdminUserManagementPage() {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [searchQuery, filterRole]);
+  }, [searchQuery, filterRole, currentPage]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

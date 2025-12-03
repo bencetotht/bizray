@@ -81,7 +81,7 @@ function AccessDenied() {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [adminUser, setAdminUser] = useState(() => {
+  const [adminUser] = useState(() => {
     const userStr = localStorage.getItem("adminUser");
     return userStr ? JSON.parse(userStr) : null;
   });

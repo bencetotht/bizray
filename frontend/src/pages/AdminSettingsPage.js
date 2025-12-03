@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { Settings, Save, RefreshCw, Globe } from "lucide-react";
+import { Save, RefreshCw, Globe } from "lucide-react";
 import "./AdminSettingsPage.css";
-
-const API_BASE_URL = "https://apibizray.bnbdevelopment.hu/api/v1";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState(() => {
