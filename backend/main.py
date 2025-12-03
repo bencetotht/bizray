@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import api_router
+from admin_api import admin_router
 from src.cache import init
 
 
@@ -27,6 +28,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(admin_router)
 
 if __name__ == "__main__":
     import uvicorn
