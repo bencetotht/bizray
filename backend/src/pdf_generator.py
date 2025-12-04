@@ -4,8 +4,14 @@ import os
 from pathlib import Path
 import tempfile
 
-#defined the brand color, the logo
+# Brand colors
 BRAND_COLOR = (106, 112, 215)
+
+# Risk level colors
+RISK_LOW = (76, 175, 80)      # Green
+RISK_MEDIUM = (255, 152, 0)   # Orange
+RISK_HIGH = (244, 67, 54)     # Red
+RISK_NEUTRAL = (158, 158, 158) # Gray
 
 #logo path - check for PNG/JPG first, try to convert SVG if available
 LOGO_PATH_PNG = Path(__file__).parent / 'logo.png'
@@ -89,68 +95,149 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    #defining fonts and helpers => easy to change it later
-    TITLE_FONT_SIZE = 22
-    HEADER_FONT_SIZE = 16
-    BODY_FONT_SIZE = 11
+    # Defining fonts and helpers
+    TITLE_FONT_SIZE = 20
+    HEADER_FONT_SIZE = 14
+    BODY_FONT_SIZE = 10
     FONT_FAMILY = 'Helvetica'
 
     def add_section_header(title):
         pdf.set_font(FONT_FAMILY, 'B', HEADER_FONT_SIZE)
-        pdf.set_text_color(BRAND_COLOR[0], BRAND_COLOR[1], BRAND_COLOR[2])
-        pdf.cell(0, 10, title, ln=True)
+        pdf.set_text_color(60, 60, 60)
+        pdf.cell(0, 8, title, ln=True)
         pdf.set_text_color(0, 0, 0)
-        pdf.ln(2)   #space after header
+        pdf.ln(3)
+
+    def get_risk_color(value):
+        """Determine color based on risk value (0-1 scale, higher is riskier)"""
+        if value is None:
+            return RISK_NEUTRAL
+        if value < 0.33:
+            return RISK_LOW
+        elif value < 0.66:
+            return RISK_MEDIUM
+        else:
+            return RISK_HIGH
+
+    def draw_progress_bar(x, y, width, height, value, max_value=1.0):
+        """Draw a simple colored progress bar"""
+        if value is None:
+            pdf.set_fill_color(230, 230, 230)
+            pdf.rect(x, y, width, height, 'F')
+            return
+
+        # Background
+        pdf.set_fill_color(245, 245, 245)
+        pdf.rect(x, y, width, height, 'F')
+
+        # Calculate fill percentage
+        fill_width = (value / max_value) * width if max_value > 0 else 0
+        fill_width = min(fill_width, width)
+
+        # Get color based on risk level
+        color = get_risk_color(value)
+        pdf.set_fill_color(color[0], color[1], color[2])
+
+        # Draw filled portion
+        if fill_width > 0:
+            pdf.rect(x, y, fill_width, height, 'F')
 
 
+    # COMPANY HEADER - Simple and clean
     pdf.set_font(FONT_FAMILY, 'B', TITLE_FONT_SIZE)
     company_name = company_data.get('name') or 'N/A'
     pdf.cell(0, 10, str(company_name), ln=True)
 
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
+    pdf.set_text_color(100, 100, 100)
     firmenbuchnummer = company_data.get('firmenbuchnummer') or 'N/A'
-    pdf.cell(0, 8, f"Firmenbuchnummer: {str(firmenbuchnummer)}", ln=True)
+    pdf.cell(0, 5, f"Firmenbuchnummer: {str(firmenbuchnummer)}", ln=True)
+    pdf.cell(0, 5, f"Report generated: {date.today().isoformat()}", ln=True)
+    pdf.set_text_color(0, 0, 0)
 
-    pdf.set_font(FONT_FAMILY, 'I', 8)
-    pdf.cell(0, 8, f"Report generated on: {date.today().isoformat()}", ln=True)
-    pdf.ln(10)
+    pdf.ln(8)
 
 
-    # RISK ANALYSIS
+    # RISK ANALYSIS - Clean list with bars
+    add_section_header("Risk Indicators")
 
-    add_section_header("Risk Indicator Summary")
-    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-
-    #format it into a 2 column layout
-    col_width = pdf.w / 2 - 15
     indicators = risk_analysis.get('indicators', {})
 
-    for key, value in indicators.items():
-        display_key = key.replace('_', ' ').title()
+    # All indicators in a simple list
+    all_indicators = {
+        'debt_to_equity_ratio': 'Debt to Equity Ratio',
+        'debt_to_assets_ratio': 'Debt to Assets Ratio',
+        'equity_ratio': 'Equity Ratio',
+        'cash_ratio': 'Cash Ratio',
+        'concentration_risk': 'Concentration Risk',
+        'balance_sheet_volatility': 'Balance Sheet Volatility',
+        'growth_revenue': 'Revenue Growth',
+        'operational_result_profit': 'Profit Growth',
+    }
 
-        if value is None:
-            display_value = "N/A"
-        elif isinstance(value, bool):
-            display_value = "High Risk" if value else "Normal"
-        elif isinstance(value, float):
-            display_value = f"{value:.0%}" # e.g., 0.55 -> "55%"
-        else:
-            display_value = str(value)
+    bar_width = 70
+    bar_height = 4
 
-        pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-        pdf.cell(col_width, 8, f"{display_key}:")
-        pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-        pdf.cell(col_width, 8, display_value, ln=1)
-
-    pdf.ln(10)
-
-
-    # COMPANY DATA
-
-    add_section_header("Company Details")
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
 
-    # Address handling with proper None checks
+    for key, label in all_indicators.items():
+        if key in indicators:
+            value = indicators[key]
+
+            # Label
+            pdf.cell(80, 7, label)
+
+            # Draw progress bar
+            current_y = pdf.get_y()
+            draw_progress_bar(95, current_y + 2, bar_width, bar_height, value)
+
+            # Value
+            display_value = f"{value:.0%}" if value is not None else "N/A"
+            if value is not None:
+                color = get_risk_color(value)
+                pdf.set_text_color(color[0], color[1], color[2])
+
+            pdf.cell(bar_width + 5, 7, '')
+            pdf.cell(0, 7, display_value, ln=1)
+            pdf.set_text_color(0, 0, 0)
+
+    pdf.ln(3)
+
+    # Boolean/compliance indicators - simple text list
+    boolean_indicators = {
+        'irregular_fiscal_year': 'Irregular Fiscal Year',
+        'compliance_status': 'Compliance Issues',
+        'deferred_income_reliance': 'Deferred Income Reliance'
+    }
+
+    for key, label in boolean_indicators.items():
+        if key in indicators:
+            value = indicators[key]
+
+            if value is None:
+                status = "Unknown"
+                color = RISK_NEUTRAL
+            elif isinstance(value, bool):
+                status = "Yes" if value else "No"
+                color = RISK_HIGH if value else RISK_LOW
+            else:
+                status = f"{value:.0%}" if isinstance(value, float) else str(value)
+                color = get_risk_color(value) if isinstance(value, (int, float)) else RISK_NEUTRAL
+
+            pdf.cell(80, 7, label)
+            pdf.set_text_color(color[0], color[1], color[2])
+            pdf.cell(0, 7, status, ln=1)
+            pdf.set_text_color(0, 0, 0)
+
+    pdf.ln(8)
+
+
+    # COMPANY INFORMATION - Simple two-column layout
+    add_section_header("Company Information")
+
+    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
+
+    # Address handling
     address = company_data.get('address') or {}
     street = address.get('street') or ''
     house_number = address.get('house_number') or ''
@@ -163,71 +250,92 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     if country:
         city_line = f"{city_line}, {country}" if city_line else country
 
-    full_address = f"{street_line}\n{city_line}".strip() or "N/A"
+    full_address = f"{street_line}, {city_line}".strip() or "N/A"
 
-    pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(0, 7, "Address:", ln=True)
-    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.multi_cell(0, 7, full_address)
+    # Simple field list
+    info_fields = [
+        ('Legal Form', company_data.get('legal_form') or 'N/A'),
+        ('Seat', company_data.get('seat') or 'N/A'),
+        ('Address', full_address),
+        ('Reference Date', company_data.get('reference_date') or 'N/A'),
+    ]
+
+    for field_label, field_value in info_fields:
+        pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(40, 6, field_label + ':')
+        pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
+        pdf.set_text_color(0, 0, 0)
+        pdf.multi_cell(0, 6, str(field_value))
+
     pdf.ln(2)
 
+    # Business Purpose
     pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(40, 7, "Legal Form:")
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 6, 'Business Purpose:', ln=True)
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, str(company_data.get('legal_form') or 'N/A'), ln=True)
-
-    pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(40, 7, "Seat:")
-    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, str(company_data.get('seat') or 'N/A'), ln=True)
-
-    pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(0, 7, "Business Purpose:", ln=True)
-    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    # Use multi_cell for the purpose as it can be long
+    pdf.set_text_color(0, 0, 0)
     business_purpose = company_data.get('business_purpose')
-    pdf.multi_cell(0, 7, str(business_purpose) if business_purpose else 'N/A')
-    pdf.ln(2)
+    pdf.multi_cell(0, 5, str(business_purpose) if business_purpose else 'N/A')
 
-    pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
-    pdf.cell(40, 7, "Reference Date:")
-    pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
-    pdf.cell(0, 7, str(company_data.get('reference_date') or 'N/A'), ln=True)
+    pdf.ln(8)
 
-    pdf.ln(10)
 
-    # REGISTRY ENTRIES
+    # REGISTRY ENTRIES - Simple table
+    add_section_header("Registry Filings")
 
-    add_section_header("Official Registry Filings")
     registry_entries = company_data.get('registry_entries', [])
     if registry_entries:
-        # Set up a header for our little table
-        pdf.set_font(FONT_FAMILY, 'B', 10)
-        pdf.cell(40, 7, "Registration Date", border=1)
-        pdf.cell(80, 7, "Filing Type", border=1)
-        pdf.cell(0, 7, "Court", border=1, ln=1)
+        # Table header
+        pdf.set_fill_color(240, 240, 240)
+        pdf.set_font(FONT_FAMILY, 'B', 9)
+        pdf.cell(35, 6, "Date", border=1, fill=True)
+        pdf.cell(90, 6, "Type", border=1, fill=True)
+        pdf.cell(0, 6, "Court", border=1, fill=True, ln=1)
 
         pdf.set_font(FONT_FAMILY, '', 9)
-        # Loop through the first 5 entries to avoid a huge table
-        for entry in registry_entries[:5]:
-            reg_date = entry.get('registration_date')
-            reg_date_str = str(reg_date) if reg_date else 'N/A'
-            entry_type = entry.get('type')
-            entry_type_str = str(entry_type) if entry_type else 'N/A'
-            court = entry.get('court')
-            court_str = str(court) if court else 'N/A'
 
-            pdf.cell(40, 6, reg_date_str, border=1)
-            pdf.cell(80, 6, entry_type_str, border=1)
+        # Table rows
+        for entry in registry_entries[:10]:
+            reg_date_str = str(entry.get('registration_date') or 'N/A')
+            entry_type_str = str(entry.get('type') or 'N/A')
+            court_str = str(entry.get('court') or 'N/A')
+
+            pdf.cell(35, 6, reg_date_str, border=1)
+            pdf.cell(90, 6, entry_type_str, border=1)
             pdf.cell(0, 6, court_str, border=1, ln=1)
-        if len(registry_entries) > 5:
+
+        if len(registry_entries) > 10:
             pdf.set_font(FONT_FAMILY, 'I', 8)
-            pdf.cell(0, 6, f"...and {len(registry_entries) - 5} more entries.", ln=1)
+            pdf.set_text_color(120, 120, 120)
+            pdf.cell(0, 5, f"...and {len(registry_entries) - 10} more entries", ln=1)
+            pdf.set_text_color(0, 0, 0)
     else:
         pdf.set_font(FONT_FAMILY, 'I', BODY_FONT_SIZE)
-        pdf.cell(0, 7, "No registry filings found.", ln=True)
+        pdf.set_text_color(120, 120, 120)
+        pdf.cell(0, 6, "No registry filings found", ln=True)
+        pdf.set_text_color(0, 0, 0)
 
-    pdf.ln(10)
+    # FOOTER - Document metadata
+    pdf.ln(15)
+
+    # Separator line
+    pdf.set_draw_color(200, 200, 200)
+    pdf.line(10, pdf.get_y(), pdf.w - 10, pdf.get_y())
+    pdf.ln(5)
+
+    pdf.set_font(FONT_FAMILY, '', 8)
+    pdf.set_text_color(120, 120, 120)
+
+    # Generated by line
+    pdf.cell(0, 4, f"Generated by BizRay (bizray.bnbdevelopment.hu)", ln=True, align='C')
+
+    # Date and company number
+    footer_text = f"Date: {date.today().isoformat()} | Company: {firmenbuchnummer}"
+    pdf.cell(0, 4, footer_text, ln=True, align='C')
+
+    pdf.set_text_color(0, 0, 0)
 
     # Get the PDF output
     output = pdf.output(dest='S')
@@ -243,4 +351,3 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     else:
         # Fallback - try to convert to bytes
         return bytes(output)
-
