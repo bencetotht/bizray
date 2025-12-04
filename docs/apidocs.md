@@ -378,6 +378,41 @@ Response:
 }
 ```
 
+## Company Export
+
+### Export company summary as PDF
+Request: `GET /api/v1/company/:id/export`
+
+Parameters:
+- `id`: firmenbuchnummer of the company (required)
+
+Description:
+Generates a comprehensive PDF summary report for a specific company. The PDF includes:
+- Company header with logo and basic information (name, firmenbuchnummer, report date)
+- Risk indicator summary with calculated risk metrics
+- Detailed company information (address, legal form, seat, business purpose)
+- Official registry filings (registration date, filing type, court)
+
+The endpoint retrieves company data, fetches related registry documents (urkunde), calculates risk indicators based on historical data, and generates a branded PDF report.
+
+Response:
+- Content-Type: `application/pdf`
+- Content-Disposition: `attachment; filename={company_id}_summary.pdf`
+- Body: Binary PDF file
+
+Risk Indicators included in the PDF:
+The risk analysis section displays various calculated indicators formatted as follows:
+- Boolean indicators: Displayed as "High Risk" or "Normal"
+- Percentage indicators: Formatted as percentages (e.g., "55%")
+- Null values: Displayed as "N/A"
+
+Example usage:
+```bash
+curl -o company_report.pdf "https://api.bizray.example/api/v1/company/661613k/export"
+```
+
+Error Responses:
+- `404 Not Found`: Company with the specified ID does not exist
 ## Admin Endpoints
 
 Admin endpoints require a Bearer token with `admin` role in the Authorization header.

@@ -115,13 +115,25 @@ def check_compliance_status(registry_entries: List[RegistryEntry], check_date: d
     if not registry_entries:
         return False
 
-    valid_entries = [entry for entry in registry_entries if entry.registration_date is not None]
+    def get_registration_date(entry):
+        """Helper to get registration_date from both dict and ORM objects"""
+        if isinstance(entry, dict):
+            reg_date = entry.get('registration_date')
+            # Convert string to date if needed
+            if isinstance(reg_date, str):
+                from datetime import datetime
+                return datetime.fromisoformat(reg_date).date()
+            return reg_date
+        else:
+            return entry.registration_date
+
+    valid_entries = [entry for entry in registry_entries if get_registration_date(entry) is not None]
 
     if not valid_entries:
         return None
 
     eighteen_months_ago = check_date - timedelta(days=548)
-    most_recent_filling_date = max(entry.registration_date for entry in valid_entries)
+    most_recent_filling_date = max(get_registration_date(entry) for entry in valid_entries)
 
     if most_recent_filling_date < eighteen_months_ago:
         return False
