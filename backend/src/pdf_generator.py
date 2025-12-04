@@ -230,7 +230,7 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     pdf.ln(10)
 
     # Get the PDF output
-    output = pdf.output()
+    output = pdf.output(dest='S')
 
     # Handle different return types from different fpdf2 versions
     if isinstance(output, bytes):
