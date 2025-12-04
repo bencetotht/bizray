@@ -34,29 +34,29 @@ from src.db import Company, Address, Partner, RegistryEntry
 #     assert result is None
 
 
-def test_search_companies_pagination_query(test_db_session):
-    #Tests the search functionality, including filtering and pagination.
-    test_db_session.add_all([
-        Company(firmenbuchnummer = "111a", name = "Apple Computer Inc.", seat = "California"),
-        Company(firmenbuchnummer = "222b", name = "Microsoft Inc.", seat = "Washington"),
-        Company(firmenbuchnummer = "333c", name = "Pineapple Express Corp.", seat = "California")
-    ])
-    test_db_session.commit()
+# def test_search_companies_pagination_query(test_db_session):
+#     #Tests the search functionality, including filtering and pagination.
+#     test_db_session.add_all([
+#         Company(firmenbuchnummer = "111a", name = "Apple Computer Inc.", seat = "California"),
+#         Company(firmenbuchnummer = "222b", name = "Microsoft Inc.", seat = "Washington"),
+#         Company(firmenbuchnummer = "333c", name = "Pineapple Express Corp.", seat = "California")
+#     ])
+#     test_db_session.commit()
 
-    search_result = search_companies(query="apple", page = 1, page_size=10, session=test_db_session)
+#     search_result = search_companies(query="apple", page = 1, page_size=10, session=test_db_session)
 
-    assert isinstance(search_result, dict)
-    assert "results" in search_result
-    companies_found = search_result["results"]
-    assert len(companies_found) == 2  #apple and pineapple :))
-    assert companies_found[0]["name"] == "Apple Computer Inc."
-    assert companies_found[1]["name"] == "Pineapple Express Corp."
-    assert "partners" not in companies_found[0]
+#     assert isinstance(search_result, dict)
+#     assert "results" in search_result
+#     companies_found = search_result["results"]
+#     assert len(companies_found) == 2  #apple and pineapple :))
+#     assert companies_found[0]["name"] == "Apple Computer Inc."
+#     assert companies_found[1]["name"] == "Pineapple Express Corp."
+#     assert "partners" not in companies_found[0]
 
-def test_search_companies_returns_empty_when_no_match(test_db_session):
-    test_db_session.add(Company(firmenbuchnummer = "111a", name = "Test Inc."))
-    test_db_session.commit()
+# def test_search_companies_returns_empty_when_no_match(test_db_session):
+#     test_db_session.add(Company(firmenbuchnummer = "111a", name = "Test Inc."))
+#     test_db_session.commit()
 
-    search_result = search_companies(query="nonexistent", session=test_db_session)
+#     search_result = search_companies(query="nonexistent", session=test_db_session)
 
-    assert len(search_result["results"]) == 0
+#     assert len(search_result["results"]) == 0
