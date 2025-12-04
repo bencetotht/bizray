@@ -15,11 +15,9 @@ def get_company_urkunde(fnr):
     client = ZeepClient(os.getenv("API_KEY"), os.getenv("WSDL_URL"))
     urkunde_response = client.search_urkunde_by_fnr(fnr)
     if urkunde_response is None or len(urkunde_response) == 0:
-        print(f"No urkunde found for FNR: {fnr}")
         return None
     urkunde_response_xmls = [urkunde for urkunde in urkunde_response if urkunde.KEY.endswith('XML')]
     if len(urkunde_response_xmls) == 0:
-        print(f"No XML urkunde found for FNR: {fnr}")
         return None
     client.close()
     return urkunde_response_xmls

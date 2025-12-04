@@ -180,10 +180,12 @@ def search_companies(
     query: str,
     page: int = 1,
     page_size: int = 10,
+    city: Optional[str] = None,
     session: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """
     Search companies by string across several fields with pagination.
+    Optionally filter by city.
     Returns a dict with keys: companies (list), page, page_size, total, pages.
     """
     if page < 1:
@@ -191,8 +193,8 @@ def search_companies(
     if page_size < 1:
         page_size = 10
 
-    cache_key = f"db_search_companies:{query}:{page}:{page_size}"
-    
+    cache_key = f"db_search_companies:{query}:{page}:{page_size}:{city}"
+
     try:
         cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
@@ -214,16 +216,31 @@ def search_companies(
             Company.business_purpose.ilike(like),
         )
 
-        total = session.execute(select(func.count()).select_from(select(Company.id).where(filters).subquery())).scalar_one()
+        # Build the query with optional city filter
+        if city:
+            # Join with Address table to filter by city
+            base_query = (
+                select(Company)
+                .join(Address, Company.id == Address.company_id)
+                .where(and_(filters, Address.city == city))
+            )
+            count_query = (
+                select(func.count())
+                .select_from(
+                    select(Company.id)
+                    .join(Address, Company.id == Address.company_id)
+                    .where(and_(filters, Address.city == city))
+                    .subquery()
+                )
+            )
+        else:
+            base_query = select(Company).where(filters)
+            count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
+
+        total = session.execute(count_query).scalar_one()
 
         offset = (page - 1) * page_size
-        stmt = (
-            select(Company)
-            .where(filters)
-            .order_by(Company.name.asc())
-            .offset(offset)
-            .limit(page_size)
-        )
+        stmt = base_query.order_by(Company.name.asc()).offset(offset).limit(page_size)
         results = session.execute(stmt).scalars().all()
 
         # load relationships
@@ -236,39 +253,40 @@ def search_companies(
         list_items = [_serialize_company_list_item(c) for c in results]
 
         result = {"results": list_items}
-        
+
         try:
             set_cache(cache_key, result, entity_type="db", ttl=3600)
         except Exception:
             pass
-        
+
         return result
     finally:
         if owns_session:
             session.close()
 
-def search_companies_amount(query: str, session: Optional[Session] = None) -> int:
+def search_companies_amount(query: str, city: Optional[str] = None, session: Optional[Session] = None) -> int:
     """
     Get the number of companies matching the query.
     Uses the same search filters as search_companies for consistency.
+    Optionally filter by city.
     """
     if len(query) < 3:
         return 0
-    
-    cache_key = f"db_search_companies_amount:{query}"
-    
+
+    cache_key = f"db_search_companies_amount:{query}:{city}"
+
     try:
         cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
             return cached_result
     except Exception:
         pass
-    
+
     owns_session = False
     if session is None:
         session = SessionLocal()
         owns_session = True
-    
+
     try:
         like = f"%{query}%"
         filters = or_(
@@ -277,14 +295,27 @@ def search_companies_amount(query: str, session: Optional[Session] = None) -> in
             Company.seat.ilike(like),
             Company.business_purpose.ilike(like),
         )
-        
-        total = session.execute(select(func.count()).select_from(select(Company.id).where(filters).subquery())).scalar_one()
-        
+
+        if city:
+            count_query = (
+                select(func.count())
+                .select_from(
+                    select(Company.id)
+                    .join(Address, Company.id == Address.company_id)
+                    .where(and_(filters, Address.city == city))
+                    .subquery()
+                )
+            )
+        else:
+            count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
+
+        total = session.execute(count_query).scalar_one()
+
         try:
             set_cache(cache_key, total, entity_type="db", ttl=3600)
         except Exception:
             pass
-        
+
         return total
     finally:
         if owns_session:
@@ -364,14 +395,14 @@ def get_metrics(session: Optional[Session] = None) -> Dict[str, int]:
     if session is None:
         session = SessionLocal()
         owns_session = True
-    
+
     try:
         companies_count = session.execute(select(func.count(Company.id))).scalar_one()
         addresses_count = session.execute(select(func.count(Address.id))).scalar_one()
         partners_count = session.execute(select(func.count(Partner.id))).scalar_one()
         registry_entries_count = session.execute(select(func.count(RegistryEntry.id))).scalar_one()
         risk_indicators_count = session.execute(select(func.count(RiskIndicator.id))).scalar_one()
-        
+
         metrics = {
             "companies": companies_count,
             "addresses": addresses_count,
@@ -379,8 +410,96 @@ def get_metrics(session: Optional[Session] = None) -> Dict[str, int]:
             "registry_entries": registry_entries_count,
             # "risk_indicators": risk_indicators_count,
         }
-        
+
         return metrics
+    finally:
+        if owns_session:
+            session.close()
+
+
+def get_available_cities(query: Optional[str] = None, session: Optional[Session] = None) -> List[Dict[str, Any]]:
+    """
+    Get unique cities with company counts, optionally filtered by search query.
+    When query is provided, only returns cities from companies matching the search query.
+    Returns a list of dictionaries with 'city' and 'count' keys, ordered by count descending.
+    """
+    cache_key = f"db_available_cities:{query}"
+
+    try:
+        cached_result = get_cache(cache_key, entity_type="db")
+        if cached_result is not None:
+            return cached_result
+    except Exception as e:
+        print(f"Cache read error: {e}")
+
+    owns_session = False
+    if session is None:
+        session = SessionLocal()
+        owns_session = True
+
+    try:
+        if query:
+            # Filter cities based on companies matching the search query
+            like = f"%{query}%"
+            company_filters = or_(
+                Company.name.ilike(like),
+                Company.firmenbuchnummer.ilike(like),
+                Company.seat.ilike(like),
+                Company.business_purpose.ilike(like),
+            )
+
+            # Subquery approach: first find matching companies, then aggregate by city
+            # This is more efficient than joining on the full table
+            matching_companies = (
+                select(Company.id)
+                .where(company_filters)
+                .subquery()
+            )
+
+            stmt = (
+                select(Address.city, func.count(Address.id).label('count'))
+                .join(matching_companies, Address.company_id == matching_companies.c.id)
+                .where(Address.city.isnot(None))
+                .where(Address.city != '')
+                .group_by(Address.city)
+                .order_by(func.count(Address.id).desc())
+            )
+        else:
+            # No query - return all cities
+            stmt = (
+                select(Address.city, func.count(Address.id).label('count'))
+                .where(Address.city.isnot(None))
+                .where(Address.city != '')
+                .group_by(Address.city)
+                .order_by(func.count(Address.id).desc())
+            )
+
+        print(f"Executing cities query (query={query})")
+        results = session.execute(stmt).all()
+        print(f"Got {len(results)} cities")
+
+        cities = [
+            {
+                "city": row.city,
+                "count": row.count
+            }
+            for row in results
+        ]
+
+        # Cache for different durations based on whether it's query-specific or global
+        ttl = 3600 if query else 86400  # 1 hour for query-specific, 24 hours for all cities
+
+        try:
+            set_cache(cache_key, cities, entity_type="db", ttl=ttl)
+        except Exception as e:
+            print(f"Cache write error: {e}")
+
+        return cities
+    except Exception as e:
+        print(f"Error in get_available_cities: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
     finally:
         if owns_session:
             session.close()
@@ -392,8 +511,6 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
     Only company nodes are returned. Edges contain connection type and value.
     Maximum of 50 nodes will be returned.
     """
-    print(f"Getting network graph for company {company_id} with {hops} hops")
-
     MAX_NODES = 50
 
     session = SessionLocal()
