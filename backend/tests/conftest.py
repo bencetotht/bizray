@@ -1,9 +1,13 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+# Set test database URL BEFORE importing db.py to prevent production connection
 TEST_DATABASE_URL = "sqlite:///:memory:"
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+
 test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 
 
