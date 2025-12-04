@@ -1,6 +1,7 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Set test database URL BEFORE importing db.py to prevent production connection
