@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
 from uuid import uuid4
 
-from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount
+from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount, get_available_cities
 from src.cache import get_cache, set_cache
 from src.auth import hash_password, verify_password, create_jwt_token, get_current_user
 from src.db import get_session, User
@@ -233,13 +233,19 @@ async def change_password(
 
 
 @api_router.get("/company")
-async def get_companies(q: Optional[str] = None, p: Optional[int] = 1, l: Optional[int] = 10):
+async def get_companies(
+    q: Optional[str] = None,
+    p: Optional[int] = 1,
+    l: Optional[int] = 10,
+    city: Optional[str] = None
+):
     """
-    Company search
+    Company search with optional city filter
     Parameters:
-    - q: str - query string
-    - p: int - page number
-    - l: int - page size
+    - q: str - query string (required)
+    - p: int - page number (default: 1)
+    - l: int - page size (default: 10, max: 100)
+    - city: str - filter by city name (optional, exact match)
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
@@ -249,33 +255,33 @@ async def get_companies(q: Optional[str] = None, p: Optional[int] = 1, l: Option
         p = 1
     if l < 1 or l > 100:
         l = 10
-    
-    cache_key = f"search:{q}:{p}:{l}"
-    
+
+    cache_key = f"search:{q}:{p}:{l}:{city}"
+
     try:
         cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
         pass
-    
+
     try:
-        total_companies = search_companies_amount(q)
-        companies = search_companies(q, p, l)
+        total_companies = search_companies_amount(q, city)
+        companies = search_companies(q, p, l, city)
         if isinstance(companies, dict):
             results = companies.get("results") or companies.get("companies") or []
         elif isinstance(companies, list):
             results = companies
         else:
             results = []
-        
+
         response = {"companies": results, "total": total_companies}
-        
+
         try:
             set_cache(cache_key, response, entity_type="api", ttl=3600)
         except Exception:
             pass
-        
+
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -389,29 +395,74 @@ async def search_suggestions(q: Optional[str] = None):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/cities")
+async def get_cities(q: Optional[str] = None):
+    """
+    Get available cities with company counts for filtering
+    Optionally filtered by search query to show only relevant cities
+
+    Parameters:
+    - q: search query (optional) - when provided, returns only cities from companies matching the query
+
+    Returns cities sorted by company count (descending)
+    """
+    print(f"Cities endpoint called with q={q}")
+    cache_key = f"api_cities:{q}"
+
+    try:
+        cached_result = get_cache(cache_key, entity_type="api")
+        if cached_result is not None:
+            print(f"Returning cached result for cities (q={q})")
+            return cached_result
+    except Exception as e:
+        print(f"Cache read error in cities endpoint: {e}")
+
+    try:
+        print(f"Calling get_available_cities(q={q})")
+        cities = get_available_cities(q)
+        print(f"Got {len(cities)} cities from controller")
+        response = {"cities": cities}
+
+        # Cache for different durations based on whether it's query-specific or global
+        ttl = 3600 if q else 86400  # 1 hour for query-specific, 24 hours for all cities
+
+        try:
+            set_cache(cache_key, response, entity_type="api", ttl=ttl)
+            print(f"Cached cities response (q={q}, ttl={ttl})")
+        except Exception as e:
+            print(f"Cache write error in cities endpoint: {e}")
+
+        return response
+    except Exception as e:
+        print(f"Error in cities endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/metrics")
 async def get_metrics_endpoint():
     """
     Get metrics - counts of each entry type in the database
     """
     cache_key = "api_metrics"
-    
+
     try:
         cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             return cached_result
     except Exception:
         pass
-    
+
     try:
         metrics = get_metrics()
         response = {"metrics": metrics}
-        
+
         try:
             set_cache(cache_key, response, entity_type="api", ttl=43200)
         except Exception:
             pass
-        
+
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
