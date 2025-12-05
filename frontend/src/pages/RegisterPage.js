@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./RegisterPage.css";
+import { useAuth } from "../context/AuthContext";
+
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,7 +17,8 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { register } = useAuth();
 
   const calculatePasswordStrength = (password) => {
     if (!password) return { strength: 0, label: "", color: "" };
@@ -111,6 +114,24 @@ export default function RegisterPage() {
     //TODO: Implement actual registration logic
     console.log("Registration attempt:", formData);
     //navigate("/account");
+
+    try {
+      // map name → username for the backend
+      await register({
+        username: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Option A: send them to login after successful registration
+      navigate("/login");
+
+      // Option B: if we later make register() auto-login, we could navigate("/account") instead
+    } catch (err) {
+      setError(err.message || "Registration failed");
+    }
+
+
   };
 
   return (

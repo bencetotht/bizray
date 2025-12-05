@@ -20,51 +20,54 @@ import AdminMetricsPage from "./pages/AdminMetricsPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<MainPage />} />
-          <Route path="/search_page" element={<SearchPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/response" element={<SearchResponsePage />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/search_page" element={<SearchPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/response" element={<SearchResponsePage />} />
 
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/search" element={<SearchResults />} />
-          <Route path="/company/:id" element={<CompanyDetails />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/graph/:id" element={<GraphWrapper/>}/>
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/company/:id" element={<CompanyDetails />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/graph/:id" element={<GraphWrapper/>}/>
 
-         
-          <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
-        </Route>
+          
+            <Route path="*" element={<div style={{padding:'1rem'}}><h1>404</h1></div>} />
+          </Route>
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute requireAdmin={true}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/admin/metrics" replace />} />
-          <Route path="metrics" element={<AdminMetricsPage />} />
-          <Route path="users" element={<AdminUserManagementPage />} />
-          <Route path="settings" element={<AdminSettingsPage />} />
-        </Route>
-      </Routes>
-    </Router>
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/admin/metrics" replace />} />
+            <Route path="metrics" element={<AdminMetricsPage />} />
+            <Route path="users" element={<AdminUserManagementPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
