@@ -27,9 +27,7 @@ export function clearAccessToken() {
 // --------------------------------------------------
 
 export async function registerRequest({ username, email, password }) {
-//   const res = await fetch(`${API_PREFIX}/auth/register/`, {
-    const res = await fetch(`https://apibizray.bnbdevelopment.hu/api/v1/auth/register/`, {
-    
+  const res = await fetch(`${API_PREFIX}/auth/register/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
