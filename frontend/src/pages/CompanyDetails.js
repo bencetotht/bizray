@@ -1,11 +1,12 @@
 // src/pages/CompanyDetails.js
 import React from "react";
-import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink } from "lucide-react";
+import { Shield, MapPin, Users, FileText, Calendar, AlertCircle, Building2, ChevronDown, ExternalLink, Download } from "lucide-react";
 import "./CompanyDetails.css";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import CompanySummaryCard from "../components/CompanySummaryCard";
 import GraphWrapper from "../components/graph_components/GraphWrapper"
+import { exportCompanySummary } from "../components/ExportCompany";
 
 import RiskIndicators from "../components/RiskIndicators";
 
@@ -24,12 +25,29 @@ export default function CompanyDetails() {
   const [partnersExpanded, setPartnersExpanded] = useState(true);
   const [registryExpanded, setRegistryExpanded] = useState(true);
   const [riskExpanded, setRiskExpanded] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
   const getRiskColor = (score) => {
     if (score === null || score === undefined) return { bg: "#e2e8f0", color: "#4a5568" };
     if (score >= 0.7) return { bg: "#fed7d7", color: "#c53030" };
     if (score >= 0.4) return { bg: "#feebc8", color: "#d69e2e" };
     return { bg: "#c6f6d5", color: "#22543d" };
 
+  };
+
+  const handleExportPDF = async () => {
+  setIsExporting(true);
+  setExportError(null);
+
+  const result = await exportCompanySummary(id);
+    if (result.success) {
+      console.log('PDF exported successfully:', result.filename);
+    } else {
+      setExportError(result.error);
+      setTimeout(() => setExportError(null), 5000);
+    }
+
+    setIsExporting(false);
   };
 
 
@@ -150,37 +168,51 @@ export default function CompanyDetails() {
                     : "??"}
                 </div>
                 <div>
-                  <h2>{displayValue(company.name)}</h2>
+                  <div className="company-name-row">
+                    <h2>{displayValue(company.name)}</h2>
+                    {company.riskScore !== null && company.riskScore !== undefined && (
+                      <span
+                        className="risk-indicator-compact"
+                        style={{
+                          background: getRiskColor(company.riskScore).bg,
+                          color: getRiskColor(company.riskScore).color,
+                        }}
+                      >
+                        <Shield size={14} />
+                        <span>{(Number(company.riskScore) * 100).toFixed(1)}%</span>
+                      </span>
+                    )}
+                  </div>
                   <p>{displayValue(company.seat)}</p>
                 </div>
               </div>
-              <div
-                className="overall-risk-badge header-risk-badge"
-                style={{
-                  background: getRiskColor(company.riskScore).bg,
-                  color: getRiskColor(company.riskScore).color,
-                }}
-                role="status"
-                aria-label={`Risk level: ${company.riskScore === null || company.riskScore === undefined ? "N/A" : company.riskScore >= 0.7 ? "High" : company.riskScore >= 0.4 ? "Medium" : "Low"}`}
-              >
-                <Shield size={16} aria-hidden="true" />
-                <span className="overall-risk-text">
-                  {company.riskScore === null || company.riskScore === undefined
-                    ? "N/A"
-                    : company.riskScore >= 0.7
-                    ? "High"
-                    : company.riskScore >= 0.4
-                    ? "Medium"
-                    : "Low"}
-                </span>
-                <span className="overall-risk-value">
-                  {company.riskScore === null || company.riskScore === undefined
-                    ? ""
-                    : `${(Number(company.riskScore) * 100).toFixed(1)}%`}
-                </span>
+              <div className="header-actions">
+                <button
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                  className="export-pdf-btn"
+                  title="Export company summary as PDF"
+                >
+                  <Download size={18} />
+                  <span>{isExporting ? 'Generating...' : 'Export PDF'}</span>
+                </button>
               </div>
             </div>
-
+            {exportError && (
+              <div className="export-error-toast">
+                <div className="export-error-content">
+                  <AlertCircle size={20} />
+                  <span>{exportError}</span>
+                </div>
+                <button 
+                  className="export-error-close"
+                  onClick={() => setExportError(null)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+            )}
             {/* Summary Fields */}
             <CompanySummaryCard company={company} />
 
