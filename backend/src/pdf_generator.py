@@ -49,27 +49,35 @@ class BrandedPDF(FPDF):
     Custom pdf class for the header and footer of the pdf
     """
     def header(self):
-        # Only add logo if a valid image format is available
-        if LOGO_PATH:
-            try:
-                self.image(LOGO_PATH, 10, 8, 33, link='https://bizray.bnbdevelopment.hu')
-            except Exception:
-                # If image loading fails, fall back to text
+        try:
+            # Only add logo if a valid image format is available
+            if LOGO_PATH:
+                try:
+                    self.image(LOGO_PATH, 10, 8, 33, link='https://bizray.bnbdevelopment.hu')
+                except Exception:
+                    # If image loading fails, fall back to text
+                    self._add_text_logo()
+            else:
+                # Add text-based branding if no logo available
                 self._add_text_logo()
-        else:
-            # Add text-based branding if no logo available
-            self._add_text_logo()
 
-        #font for the rest of the header
-        self.set_font('Helvetica', 'B', 15)
-        self.ln(20)
+            # Set font and add spacing - use smaller ln to avoid space issues
+            self.set_font('Helvetica', 'B', 15)
+            self.ln(10)
+        except Exception:
+            # If header rendering fails completely, just skip it
+            pass
 
     def _add_text_logo(self):
         """Add text-based logo as fallback"""
-        self.set_font('Helvetica', 'B', 18)
-        self.set_text_color(BRAND_COLOR[0], BRAND_COLOR[1], BRAND_COLOR[2])
-        self.cell(50, 10, 'BizRay', ln=False, link='https://bizray.bnbdevelopment.hu')
-        self.set_text_color(0, 0, 0)
+        try:
+            self.set_font('Helvetica', 'B', 18)
+            self.set_text_color(BRAND_COLOR[0], BRAND_COLOR[1], BRAND_COLOR[2])
+            self.cell(50, 10, 'BizRay', ln=False, link='https://bizray.bnbdevelopment.hu')
+            self.set_text_color(0, 0, 0)
+        except Exception:
+            # If text logo fails, just reset text color and continue
+            self.set_text_color(0, 0, 0)
 
     def footer(self):
         self.set_y(-15)
@@ -146,7 +154,8 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     # COMPANY HEADER - Simple and clean
     pdf.set_font(FONT_FAMILY, 'B', TITLE_FONT_SIZE)
     company_name = company_data.get('name') or 'N/A'
-    pdf.cell(0, 10, str(company_name), ln=True)
+    # Use multi_cell to handle long company names with automatic text wrapping
+    pdf.multi_cell(0, 10, str(company_name))
 
     pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
     pdf.set_text_color(100, 100, 100)
@@ -301,6 +310,12 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
             reg_date_str = str(entry.get('registration_date') or 'N/A')
             entry_type_str = str(entry.get('type') or 'N/A')
             court_str = str(entry.get('court') or 'N/A')
+
+            # Truncate very long text to prevent rendering errors
+            if len(entry_type_str) > 60:
+                entry_type_str = entry_type_str[:57] + '...'
+            if len(court_str) > 30:
+                court_str = court_str[:27] + '...'
 
             pdf.cell(35, 6, reg_date_str, border=1)
             pdf.cell(90, 6, entry_type_str, border=1)

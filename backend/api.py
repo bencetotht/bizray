@@ -497,7 +497,16 @@ async def export_company_summary(company_id: str):
 
             risk_data_for_pdf = {"indicators": risk_indicators_dict}
 
-    pdf_bytes = create_company_pdf(company_data, risk_data_for_pdf)
+    try:
+        pdf_bytes = create_company_pdf(company_data, risk_data_for_pdf)
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"PDF generation error for company {company_id}: {error_details}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate PDF: {str(e)}"
+        )
 
     return Response(
         content=pdf_bytes,
