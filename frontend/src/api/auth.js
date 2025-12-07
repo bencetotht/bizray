@@ -77,8 +77,6 @@ export async function authFetch(path, options = {}) {
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
-  } else {
-    // console.error("⚠️ NO TOKEN FOUND - Request will fail!");
   }
 
   const response = await fetch(path, {
