@@ -1,915 +1,806 @@
+// Graph.jsx
 import { useEffect, useMemo, useState } from "react";
 import ReactFlow, {
-    useEdgesState,
-    useNodesState,
-    getStraightPath,
-    BaseEdge,
-    EdgeLabelRenderer,
-    Background,
-    MiniMap,
-    Controls,
+  useEdgesState,
+  useNodesState,
+  getStraightPath,
+  BaseEdge,
+  EdgeLabelRenderer,
+  Background,
+  MiniMap,
+  Controls,
 } from "reactflow";
-import 'reactflow/dist/style.css';
+import "reactflow/dist/style.css";
 
-import FaceIcon from '@mui/icons-material/Face';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import FaceIcon from "@mui/icons-material/Face";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import LockIcon from "@mui/icons-material/Lock";
+
 import { authFetch } from "../../api/auth";
-
-
 import SettingsButton from "./GraphSettings";
-
 import { companyNodeTypes } from "./CompanyNodeTypes";
+import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 
+const initialNodes = [];
+const initialEdges = [];
 
-
-const initialNodes = [
-];
-const initialEdges = [
-];
-
-
-
+/* ---------- STAR LAYOUT (unchanged logic) ---------- */
 
 function starLayout(nodes, mainNodeId) {
-    const centerX = 0;
-    const centerY = 0;
-    const rootRadius = 400;
-    const childRadius = 350;
+  const centerX = 0;
+  const centerY = 0;
+  const rootRadius = 400;
+  const childRadius = 350;
 
-    if (!nodes || nodes.length === 0) return [];
+  if (!nodes || nodes.length === 0) return [];
 
+  const hasCustomPosition = (node) =>
+    node.position &&
+    (node.position.x !== 0 ||
+      node.position.y !== 0 ||
+      node.type === "main_company_display");
 
-    const hasCustomPosition = (node) =>
-        node.position &&
-        (
-            node.position.x !== 0 ||
-            node.position.y !== 0 ||
-            node.type === "main_company_display"
-        );
+  let mainNode = nodes.find((n) => n.id === mainNodeId);
+  if (!mainNode) {
+    mainNode = nodes[0];
+  }
 
+  const mainPos = mainNode.position || { x: 0, y: 0 };
+  const isRootLike = mainPos.x === 0 && mainPos.y === 0;
 
-
-    let mainNode = nodes.find((n) => n.id === mainNodeId);
-    if (!mainNode) {
-        mainNode = nodes[0];
-    }
-
-    const mainPos = mainNode.position || { x: 0, y: 0 };
-    const isRootLike = mainPos.x === 0 && mainPos.y === 0;
-
-
-    if (isRootLike) {
-        const others = nodes.filter((n) => n.id !== mainNode.id);
-        const angleStep = others.length > 0 ? (2 * Math.PI) / others.length : 0;
-
-        return nodes.map((node) => {
-            if (node.id === mainNode.id) {
-
-                return {
-                    ...node,
-                    position: { x: centerX, y: centerY },
-                    data: {
-                        ...(node.data ?? {}),
-                        branchAngle: 0,
-                    },
-                };
-            }
-
-
-            if (hasCustomPosition(node)) {
-                return node;
-            }
-
-            const index = others.findIndex((n) => n.id === node.id);
-            const angle = index * angleStep;
-
-            const x = centerX + rootRadius * Math.cos(angle);
-            const y = centerY + rootRadius * Math.sin(angle);
-
-            return {
-                ...node,
-                position: { x, y },
-
-                data: {
-                    ...(node.data ?? {}),
-                    branchAngle: angle,
-                },
-            };
-        });
-    }
-
-
+  if (isRootLike) {
     const others = nodes.filter((n) => n.id !== mainNode.id);
-    const newChildren = others.filter((n) => !hasCustomPosition(n));
-
-
-    const baseAngle =
-        mainNode.data?.branchAngle ??
-        Math.atan2(mainPos.y - centerY, mainPos.x - centerX);
-
-    const spread = (140 * Math.PI) / 180;
-
-    const angleStep =
-        newChildren.length > 1 ? spread / (newChildren.length - 1) : 0;
-    const startAngle = baseAngle - spread / 2;
+    const angleStep = others.length > 0 ? (2 * Math.PI) / others.length : 0;
 
     return nodes.map((node) => {
-
-        if (node.id === mainNode.id) {
-            return {
-                ...node,
-                position: mainPos,
-            };
-        }
-
-
-        if (hasCustomPosition(node)) {
-            return node;
-        }
-
-
-        const index = newChildren.findIndex((n) => n.id === node.id);
-        if (index === -1) {
-            return node;
-        }
-
-        const angle = startAngle + index * angleStep;
-        const x = mainPos.x + childRadius * Math.cos(angle);
-        const y = mainPos.y + childRadius * Math.sin(angle);
-
+      if (node.id === mainNode.id) {
         return {
-            ...node,
-            position: { x, y },
-            data: {
-                ...(node.data ?? {}),
-
-                branchAngle: angle,
-            },
+          ...node,
+          position: { x: centerX, y: centerY },
+          data: {
+            ...(node.data ?? {}),
+            branchAngle: 0,
+          },
         };
+      }
+
+      if (hasCustomPosition(node)) {
+        return node;
+      }
+
+      const index = others.findIndex((n) => n.id === node.id);
+      const angle = index * angleStep;
+
+      const x = centerX + rootRadius * Math.cos(angle);
+      const y = centerY + rootRadius * Math.sin(angle);
+
+      return {
+        ...node,
+        position: { x, y },
+        data: {
+          ...(node.data ?? {}),
+          branchAngle: angle,
+        },
+      };
     });
+  }
+
+  const others = nodes.filter((n) => n.id !== mainNode.id);
+  const newChildren = others.filter((n) => !hasCustomPosition(n));
+
+  const baseAngle =
+    mainNode.data?.branchAngle ??
+    Math.atan2(mainPos.y - centerY, mainPos.x - centerX);
+
+  const spread = (140 * Math.PI) / 180;
+
+  const angleStep =
+    newChildren.length > 1 ? spread / (newChildren.length - 1) : 0;
+  const startAngle = baseAngle - spread / 2;
+
+  return nodes.map((node) => {
+    if (node.id === mainNode.id) {
+      return {
+        ...node,
+        position: mainPos,
+      };
+    }
+
+    if (hasCustomPosition(node)) {
+      return node;
+    }
+
+    const index = newChildren.findIndex((n) => n.id === node.id);
+    if (index === -1) {
+      return node;
+    }
+
+    const angle = startAngle + index * angleStep;
+    const x = mainPos.x + childRadius * Math.cos(angle);
+    const y = mainPos.y + childRadius * Math.sin(angle);
+
+    return {
+      ...node,
+      position: { x, y },
+      data: {
+        ...(node.data ?? {}),
+        branchAngle: angle,
+      },
+    };
+  });
 }
 
+/* ---------- EDGE WITH DETAIL BUBBLE ---------- */
 
+// function DetailedEdge(props) {
+//   const [edgePath, labelX, labelY] = getStraightPath(props);
+//   const [showInfo, setShowInfo] = useState(false);
 
+//   return (
+//     <>
+//       <BaseEdge
+//         {...props}
+//         path={edgePath}
+//         style={{
+//           ...props.style,
+//           stroke: "#667eea",
+//           strokeWidth: 2.5,
+//           opacity: 0.85,
+//         }}
+//       />
 
-
-
+//       <EdgeLabelRenderer>
+//         <div
+//           onMouseEnter={() => setShowInfo(true)}
+//           onMouseLeave={() => setShowInfo(false)}
+//           style={{
+//             position: "absolute",
+//             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+//             pointerEvents: "all",
+//           }}
+//           className="w-9 h-9 rounded-full bg-white border border-indigo-200 flex justify-center items-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110 cursor-pointer"
+//         >
+//           {props.data?.label === "Person" ? (
+//             <FaceIcon style={{ fontSize: 18, color: "#667eea" }} />
+//           ) : (
+//             <LocationOnIcon style={{ fontSize: 18, color: "#764ba2" }} />
+//           )}
+//           {showInfo && (
+//             <div
+//               style={{
+//                 zIndex: 1020,
+//                 background:
+//                   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+//               }}
+//               className="inline-flex px-3 py-1.5 min-w-max rounded-lg shadow-xl gap-2 justify-center items-center text-white text-xs font-medium backdrop-blur-sm absolute top-[120%] whitespace-nowrap"
+//             >
+//               {props.data.value}
+//             </div>
+//           )}
+//         </div>
+//       </EdgeLabelRenderer>
+//     </>
+//   );
+// }
 
 function DetailedEdge(props) {
-    const [edgePath, labelX, labelY] = getStraightPath(props);
-    const [showInfo, setShowInfo] = useState(false)
+  const [edgePath, labelX, labelY] = getStraightPath(props);
+  const [showInfo, setShowInfo] = useState(false);
 
-    // console.log(props)
-    return (
-        <>
-            <BaseEdge
-                {...props}
-                path={edgePath}
-                style={{
-                    ...props.style,
-                    stroke: 'purple',
-                    strokeWidth: 3,
+  return (
+    <>
+      <BaseEdge
+        {...props}
+        path={edgePath}
+        style={{
+          ...props.style,
+          stroke: "#667eea",
+          strokeWidth: 2.5,
+          opacity: 0.85,
+        }}
+      />
 
-                }}
-            />
+      <EdgeLabelRenderer>
+        <div
+          onMouseEnter={() => setShowInfo(true)}
+          onMouseLeave={() => setShowInfo(false)}
+          style={{
+            position: "absolute",
+            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+            pointerEvents: "all",
+          }}
+          className="w-9 h-9 rounded-full bg-white border border-indigo-200 flex justify-center items-center shadow-md cursor-pointer"
+        >
+          {props.data?.label === "Person" ? (
+            <FaceIcon style={{ fontSize: 18, color: "#667eea" }} />
+          ) : (
+            <LocationOnIcon style={{ fontSize: 18, color: "#764ba2" }} />
+          )}
 
-
-            <EdgeLabelRenderer>
-                <div
-
-                    onMouseEnter={() => { setShowInfo(true) }}
-                    onMouseLeave={() => { setShowInfo(false) }}
-
-                    style={{
-                        position: 'absolute',
-                        transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-
-                        pointerEvents: 'all',
-                    }}
-                    className={`
-w-12 h-12 
-rounded-full
-bg-white
-backdrop-blur-lg
-border border-black/25
-relative
-
-flex
-justify-center
-items-center
-shadow-xl
-shadow-black/40
-
-                    `}
-                >
-
-                    {props.data?.label === "Person" ?
-                        <FaceIcon />
-                        :
-                        <LocationOnIcon />
-
-                    }
-                    {showInfo && <div
-                        style={{ zIndex: 1020 }}
-                        className="
-    inline-flex  
-     !px-3 !py-1   
-    min-w-30
-    max-w-50
-    bg-white              
-    rounded-2xl
-    shadow-xl
-    px-3
-    py-2
-    gap-2
-    justify-center
-    items-center
-    text-black
-    text-xs
-    backdrop-blur-xl 
-    border border-white/30 
-    absolute
-    top-[120%]
-    z-[200]
-    text-[20px]
-  "
-                    >
-                        {props.data.value}
-                    </div>}
-
-
-                </div>
-
-            </EdgeLabelRenderer>
-
-        </>
-
-    );
+          {showInfo && (
+            <div
+              style={{
+                zIndex: 1020,
+                background:
+                  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+              className="inline-flex !px-3 py-1.5 min-w-max rounded-lg shadow-xl gap-2 justify-center items-center text-white text-xs font-medium backdrop-blur-sm absolute top-[120%] whitespace-nowrap"
+            >
+              {props.data.value}
+            </div>
+          )}
+        </div>
+      </EdgeLabelRenderer>
+    </>
+  );
 }
+
 
 const edgeTypes = {
-    detailed_edge: DetailedEdge,
-}
+  detailed_edge: DetailedEdge,
+};
 
-
-
-
-
-
-
+/* ---------- MAIN GRAPH COMPONENT ---------- */
 
 export default function Graph({ id_that_was_passed }) {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-    const [defaultCompanyDisplayType, setDefaultCompanyDisplayType] = useState("default_company_display")
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [defaultCompanyDisplayType, setDefaultCompanyDisplayType] =
+    useState("default_company_display");
+
+  const [visibleNodeIds, setVisibleNodeIds] = useState(() => new Set());
+  const [childrenByParent, setChildrenByParent] = useState({});
+  const [rootId, setRootId] = useState(null);
+  const [edgeFilter, setEdgeFilter] = useState("all");
+  
+
+  const [highlightPath, setHighlightPath] = useState(true); // extra setting, pure front-end
+
+  const { isAuthenticated, loadingUser, user } = useAuth();
+
+  const hasPremiumAccess =
+    user?.role === "subscriber" || user?.role === "admin";
+  const isRegisteredOnly = user?.role === "registered";
 
 
-    const [visibleNodeIds, setVisibleNodeIds] = useState(() => new Set());
-    const [childrenByParent, setChildrenByParent] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [showSpinner, setShowSpinner] = useState(false);
 
-    const [rootId, setRootId] = useState(null);
+useEffect(() => {
+  let timeout;
 
-    const [edgeFilter, setEdgeFilter] = useState("all");
+  if (isLoading) {
+    // Only show loader if loading lasts long enough
+    timeout = setTimeout(() => {
+      setShowSpinner(true);
+    }, 500); // delay in ms
+  } else {
+    setShowSpinner(false);
+  }
+
+  return () => {
+    clearTimeout(timeout);
+  };
+}, [isLoading]);
 
 
 
-    function edgeMatchesFilter(edge) {
-        const label = edge.data?.label;
 
-        if (edgeFilter === "all") return true;
-        if (edgeFilter === "person") return label === "Person";
-        if (edgeFilter === "location") return label === "Location";
+  /* ---------- AUTH / INITIAL FETCH ---------- */
 
-        return true;
+  useEffect(() => {
+    if (loadingUser) {
+      console.log("Still loading user, waiting...");
+      return;
     }
 
-
-
-
-
-
-
-
-
-    function changeSingleNodeType(nodeId, newType) {
-        setNodes((prevNodes) =>
-            prevNodes.map((node) =>
-                node.id === nodeId
-                    ? { ...node, type: newType }
-                    : node
-            )
-        );
-    }
-    function change_company_display_default(set_to_this_type) {
-        // console.log("Changed the display to: ", set_to_this_type)
-        setDefaultCompanyDisplayType(set_to_this_type);
+    if (!isAuthenticated) {
+      console.log("Not authenticated, stopping fetch.");
+      setIsLoading(false);
+      return;
     }
 
+    console.log("User loaded and authenticated, fetching company");
+    fetchCompany(id_that_was_passed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingUser, isAuthenticated, id_that_was_passed]);
 
-    useEffect(() => {
-        setNodes((prevNodes) =>
-            prevNodes.map((node) => {
-                if (node.type === "main_company_display" || node.selected) return node;
+  /* ---------- EDGE FILTER LOGIC (with root focus) ---------- */
 
-                if (
-                    node.type === "default_company_display" ||
-                    node.type === "minimal_company_display"
-                ) {
-                    return {
-                        ...node,
-                        type: defaultCompanyDisplayType,
-                    };
-                }
+  function edgeMatchesFilter(edge) {
+    const label = edge.data?.label;
 
-                return node;
-            })
-        );
-    }, [defaultCompanyDisplayType]);
+    if (edgeFilter === "all") return true;
 
+    // root-focused view for person/location filters
+    if (rootId) {
+      const connectsRoot = edge.source === rootId || edge.target === rootId;
+      if (!connectsRoot) return false;
+    }
 
+    if (edgeFilter === "person") return label === "Person";
+    if (edgeFilter === "location") return label === "Location";
 
+    return true;
+  }
 
+  /* ---------- NODE TYPE CHANGE HELPERS ---------- */
 
+  function changeSingleNodeType(nodeId, newType) {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
+        node.id === nodeId ? { ...node, type: newType } : node
+      )
+    );
+  }
 
-    //____________________________________________________________
-    //___________Fetching Company Data & Updating View____________
-    //____________________________________________________________
+  function change_company_display_default(set_to_this_type) {
+    setDefaultCompanyDisplayType(set_to_this_type);
+  }
 
+  // keep behavior: all non-main, non-selected company nodes follow default type
+  useEffect(() => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => {
+        if (node.type === "main_company_display" || node.selected) return node;
 
-    //This Function removes the duplicate Nodes and edges that come when fetching a target node
-    //So if company A -> B and you fetch B, that you dont get the node B -> A
-    //It just stays A -> B
-    const updateGraphData = (newNodes = [], newEdges = []) => {
+        if (
+          node.type === "default_company_display" ||
+          node.type === "minimal_company_display"
+        ) {
+          return {
+            ...node,
+            type: defaultCompanyDisplayType,
+          };
+        }
 
-        setNodes((prevNodes) => {
+        return node;
+      })
+    );
+  }, [defaultCompanyDisplayType, setNodes]);
 
-            const byId = new Map(prevNodes.map((n) => [n.id, n]));
+  /* ---------- MERGE NEW GRAPH DATA ---------- */
 
+  const updateGraphData = (newNodes = [], newEdges = []) => {
+    setNodes((prevNodes) => {
+      const byId = new Map(prevNodes.map((n) => [n.id, n]));
+      newNodes.forEach((n) => {
+        const existing = byId.get(n.id) || {};
+        byId.set(n.id, { ...existing, ...n });
+      });
+      return Array.from(byId.values());
+    });
 
-            newNodes.forEach((n) => {
-                const existing = byId.get(n.id) || {};
-                byId.set(n.id, { ...existing, ...n });
-            });
+    setEdges((prevEdges) => {
+      const byId = new Map(prevEdges.map((e) => [e.id, e]));
+      newEdges.forEach((e) => {
+        const existing = byId.get(e.id) || {};
+        byId.set(e.id, { ...existing, ...e });
+      });
+      return Array.from(byId.values());
+    });
+  };
 
+  /* ---------- FETCH COMPANY & BUILD GRAPH ---------- */
 
-            return Array.from(byId.values());
-        });
-
-
-        setEdges((prevEdges) => {
-
-            const byId = new Map(prevEdges.map((e) => [e.id, e]));
-
-
-            newEdges.forEach((e) => {
-                const existing = byId.get(e.id) || {};
-                byId.set(e.id, { ...existing, ...e });
-            });
-
-            return Array.from(byId.values());
-        });
-    };
-
-
-    async function fetchCompany(id) {
-
-        //Fetching the Company from Api via the id
-        const response = await authFetch(
+  async function fetchCompany(id) {
+    setIsLoading(true);
+    try {
+      const response = await authFetch(
         `https://apibizray.bnbdevelopment.hu/api/v1/network/${id}`,
-        {
-            method: "GET"
+        { method: "GET" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch company data");
+      }
+
+      const data = await response.json();
+      const company = data.company;
+      const mainId = company.firmenbuchnummer;
+
+      if (!rootId) {
+        setRootId(mainId);
+      }
+
+      const parentId = id;
+      const existingById = new Map(nodes.map((n) => [n.id, n]));
+
+      const rawNodes = company.nodes.map((node) => {
+        const existing = existingById.get(node.id);
+        const isMain = node.id === (rootId ?? mainId);
+
+        return {
+          id: node.id,
+          type:
+            existing?.type ??
+            (isMain ? "main_company_display" : defaultCompanyDisplayType),
+          position: existing?.position ?? { x: 0, y: 0 },
+          data: {
+            ...(existing?.data ?? {}),
+            label: node.label,
+          },
+        };
+      });
+
+      // Build edges & remove duplicate A<->B pairs (keep first only)
+      const uniquePairMap = new Map();
+      company.edges.forEach((edge) => {
+        const pairKey =
+          edge.source < edge.target
+            ? `${edge.source}|${edge.target}`
+            : `${edge.target}|${edge.source}`;
+
+        if (!uniquePairMap.has(pairKey)) {
+          uniquePairMap.set(pairKey, {
+            id: `${edge.source}-${edge.target}`,
+            source: edge.source,
+            target: edge.target,
+            type: "straight",
+            data: { label: edge.label, value: edge.value },
+            animated: true,
+          });
         }
-    );
-        if (!response.ok) {
-            throw new Error("Failed to fetch company data");
-        }
-        const data = await response.json();
-        const company = data.company;
-        const mainId = company.firmenbuchnummer;
+      });
 
+      const rawEdges = Array.from(uniquePairMap.values());
 
+      const positionedNodes = starLayout(rawNodes, parentId);
+      updateGraphData(positionedNodes, rawEdges);
 
-        //The company fetched on the mount will stay the rootId forever
-        if (!rootId) {
-            setRootId(mainId);
-        }
+      const newChildIds = positionedNodes
+        .map((n) => n.id)
+        .filter((nid) => nid !== parentId && !visibleNodeIds.has(nid));
 
+      setChildrenByParent((prev) => {
+        const prevChildrenSet = prev[parentId] ?? new Set();
+        const updatedChildrenSet = new Set(prevChildrenSet);
+        newChildIds.forEach((nid) => updatedChildrenSet.add(nid));
+        return { ...prev, [parentId]: updatedChildrenSet };
+      });
 
-        //The Parent Id will later be important for recursively collapsing all child nodes if you collapse this one
-        const parentId = id;
+      setVisibleNodeIds((prev) => {
+        const next = new Set(prev);
+        positionedNodes.forEach((n) => next.add(n.id));
+        return next;
+      });
+    } catch (error) {
+      console.error("Error fetching company:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
+  /* ---------- TREE HELPERS (unchanged logic) ---------- */
 
+  function findParentOf(childId, childrenByParentMap) {
+    for (const [parentId, childrenSet] of Object.entries(childrenByParentMap)) {
+      if (childrenSet.has(childId)) {
+        return parentId;
+      }
+    }
+    return null;
+  }
 
-        //Gives ALL node ids that are currently displayed
-        const existingById = new Map(nodes.map((n) => [n.id, n]));
+  function getPathToRoot(nodeId) {
+    if (!rootId) return [];
+    const path = [nodeId];
+    let current = nodeId;
+    const seen = new Set([nodeId]);
 
-
-
-        //Creates First Node Instances, only the Root Node is treated differently
-        const rawNodes = company.nodes.map((node) => {
-            const existing = existingById.get(node.id);
-            const isMain = node.id === (rootId ?? mainId);
-
-            return {
-                id: node.id,
-
-                type: existing?.type ?? (isMain ? "main_company_display" : defaultCompanyDisplayType),
-
-                position: existing?.position ?? { x: 0, y: 0 },
-
-                data: {
-                    ...(existing?.data ?? {}),
-                    label: node.label,
-                },
-            };
-        });
-
-
-
-        //Creates raw edges - nothing special
-        const rawEdges = company.edges.map((edge) => {
-            const createdEdge = {
-                id: `${edge.source}-${edge.target}`,
-                source: edge.source,
-                target: edge.target,
-                type: "straight",
-                data: { label: edge.label, value: edge.value },
-                animated: true,
-            };
-
-            return createdEdge;
-        });
-
-
-
-        //Creates Layout and Position of Nodes with two rules: 
-        //IF ROOT NODE -> Make a circle with all nodes around it
-        //IF NOT ROOT NODE -> Takes angle of parent and makes a half circle for the childs
-        const positionedNodes = starLayout(rawNodes, parentId);
-
-
-
-        //Should remove duplicate Edges (so A->B = B->A, so not necessary) !!!!MAYBE NOT WOKRING FOR CHILDS THO
-        updateGraphData(positionedNodes, rawEdges);
-
-
-
-
-        //On Inital Mount - All Nodes are new, you can ignore
-        //If you expand a Child, it checks, which Connection Nodes (Companies) are already displayed, then follows two rules: 
-        //IF they are displayed - just leave them like that
-        //IF NOT -> These are now added to newChildIds (will later be important for collapsing all childs and child of childs recursively)
-        const newChildIds = positionedNodes
-            .map((n) => n.id)
-            .filter((nid) => nid !== parentId && !visibleNodeIds.has(nid));
-
-
-
-
-        //Creates a Objects to reconstruct the path of who calls him for expanding
-        //The Parent - is the one who calls the expansion: 
-        //All Nodes that are not expanded till then will be added as their Child Nodes 
-        setChildrenByParent((prev) => {
-            const prevChildrenSet = prev[parentId] ?? new Set();
-            const updatedChildrenSet = new Set(prevChildrenSet);
-
-            newChildIds.forEach((nid) => {
-                updatedChildrenSet.add(nid);
-            });
-
-            return {
-                ...prev,
-                [parentId]: updatedChildrenSet,
-            };
-        });
-
-
-
-
-
-
-
-
-
-
-
-        //Updates all the Nodes that are now displayed!
-        setVisibleNodeIds((prev) => {
-            const next = new Set(prev);
-            positionedNodes.forEach((n) => next.add(n.id));
-            return next;
-        });
+    while (current !== rootId) {
+      const parent = findParentOf(current, childrenByParent);
+      if (!parent || seen.has(parent)) break;
+      path.push(parent);
+      seen.add(parent);
+      current = parent;
     }
 
+    return path.reverse();
+  }
 
-    function getPathToRoot(nodeId) {
-        if (!rootId) return [];
+  /* ---------- PATH HIGHLIGHT SETS ---------- */
 
-        const path = [nodeId];
-        let current = nodeId;
-        const seen = new Set([nodeId]); // safety against cycles
+  const pathEdgeSet = useMemo(() => {
+    const set = new Set();
+    if (!rootId || !highlightPath) return set;
 
-        while (current !== rootId) {
-            const parent = parentByChild[current];
+    const selectedNode = nodes.find((n) => n.selected);
+    if (!selectedNode) return set;
 
-            if (!parent || seen.has(parent)) {
-                // no parent known or broken / cyclic structure
-                break;
-            }
+    const path = getPathToRoot(selectedNode.id);
+    if (path.length < 2) return set;
 
-            path.push(parent);
-            seen.add(parent);
-            current = parent;
-        }
-
-        // currently: [selected, ..., root]
-        // return as: [root, ..., selected]
-        return path.reverse();
+    for (let i = 0; i < path.length - 1; i++) {
+      const from = path[i];
+      const to = path[i + 1];
+      set.add(`${from}->${to}`);
     }
 
+    return set;
+  }, [nodes, rootId, childrenByParent, highlightPath]);
 
-    function findParentOf(childId, childrenByParent) {
-        for (const [parentId, childrenSet] of Object.entries(childrenByParent)) {
-            if (childrenSet.has(childId)) {
-                return parentId;
-            }
-        }
-        return null;
+  const pathNodeIds = useMemo(() => {
+    const set = new Set();
+    if (!rootId || !highlightPath) return set;
+
+    const selectedNode = nodes.find((n) => n.selected);
+    if (!selectedNode) return set;
+
+    const path = getPathToRoot(selectedNode.id);
+    path.forEach((id) => set.add(id));
+    return set;
+  }, [nodes, rootId, childrenByParent, highlightPath]);
+
+  /* ---------- EDGE / NODE SELECTION & FILTERS ---------- */
+
+  const selectedNodeIds = useMemo(
+    () => nodes.filter((n) => n.selected).map((n) => n.id),
+    [nodes]
+  );
+
+  const filteredEdges = useMemo(
+    () => edges.filter((edge) => edgeMatchesFilter(edge)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [edges, edgeFilter, rootId]
+  );
+
+  const displayEdges = useMemo(
+    () =>
+      filteredEdges.map((edge) => {
+        const isConnected =
+          selectedNodeIds.includes(edge.source) ||
+          selectedNodeIds.includes(edge.target);
+        const isOnPath = pathEdgeSet.has(`${edge.source}->${edge.target}`);
+
+        return {
+          ...edge,
+          type: isConnected || isOnPath ? "detailed_edge" : "straight",
+        };
+      }),
+    [filteredEdges, selectedNodeIds, pathEdgeSet]
+  );
+
+  const visibleByFilterNodeIds = useMemo(() => {
+    const set = new Set();
+    filteredEdges.forEach((edge) => {
+      set.add(edge.source);
+      set.add(edge.target);
+    });
+    if (rootId) set.add(rootId);
+    return set;
+  }, [filteredEdges, rootId]);
+
+  const collectSubtreeIds = (parentId, childrenMap, depth = 0) => {
+    const result = new Set();
+    const directChildren = childrenMap[parentId];
+    if (!directChildren) return result;
+
+    for (const childId of directChildren) {
+      result.add(childId);
+      const sub = collectSubtreeIds(childId, childrenMap, depth + 1);
+      for (const id of sub) result.add(id);
     }
+    return result;
+  };
 
-    function getPathToRoot(nodeId) {
-        if (!rootId) return [];
-
-        const path = [nodeId];
-        let current = nodeId;
-        const seen = new Set([nodeId]);
-
-        while (current !== rootId) {
-            const parent = findParentOf(current, childrenByParent);
-
-            if (!parent || seen.has(parent)) {
-
-                break;
-            }
-
-            path.push(parent);
-            seen.add(parent);
-            current = parent;
-        }
-
-
-        return path.reverse();
-    }
-
-
-    const pathEdgeSet = useMemo(() => {
-        const set = new Set();
-
-        if (!rootId) return set;
-
-
-        const selectedNode = nodes.find((n) => n.selected);
-        if (!selectedNode) return set;
-
-        const path = getPathToRoot(selectedNode.id);
-        if (path.length < 2) return set;
-
-
-        for (let i = 0; i < path.length - 1; i++) {
-            const from = path[i];
-            const to = path[i + 1];
-            set.add(`${from}->${to}`);
-        }
-
-        return set;
-    }, [nodes, rootId, childrenByParent]);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    useEffect(() => {
-        if (!rootId) return;
-
-
-        const selectedNode = nodes.find((n) => n.selected);
-        if (!selectedNode) return;
-
-        const path = getPathToRoot(selectedNode.id);
-        console.log("PATH root → ... → selected:", path);
-
-
-    }, [nodes, rootId]);
-
-
-
-    useEffect(() => {
-        //DEBUG
-        // console.log("VISIBLE NODE IDS (effect):", visibleNodeIds);
-        // console.log("CHILDREN BY PARENT (effect):", childrenByParent);
-    }, [visibleNodeIds, childrenByParent]);
-
-
-
-
-
-    useEffect(() => {
-        //This fetches the actual company at first Mount, never called again later
-        fetchCompany(id_that_was_passed);
-        //304173p
-        //563319k
-    }, []);
-
-
-
-
-    const selectedNodeIds = useMemo(
-        //Checks which notes are currently selected for the edges later on (Selected! So multiple are possible although i didnt implement it yet)
-        () => nodes.filter((n) => n.selected).map((n) => n.id),
-        [nodes]
+  const collapseCompany = (parentId) => {
+    const toRemove = collectSubtreeIds(parentId, childrenByParent);
+    setNodes((prev) => prev.filter((n) => !toRemove.has(n.id)));
+    setEdges((prev) =>
+      prev.filter(
+        (e) =>
+          !toRemove.has(e.source) &&
+          !toRemove.has(e.target) &&
+          e.source !== parentId
+      )
     );
 
+    if (toRemove.size === 0) return;
 
-    //     const displayEdges = useMemo(
-    //   () =>
-    //     edges
-    //       .filter((edge) => edgeMatchesFilter(edge)) 
-    //       .map((edge) => {
-    //         const isConnected =
-    //           selectedNodeIds.includes(edge.source) ||
-    //           selectedNodeIds.includes(edge.target);
+    setVisibleNodeIds((prev) => {
+      const next = new Set(prev);
+      toRemove.forEach((id) => next.delete(id));
+      return next;
+    });
 
-    //         const isOnPath = pathEdgeSet.has(`${edge.source}->${edge.target}`);
-
-    //         return {
-    //           ...edge,
-    //           type: isConnected || isOnPath ? "detailed_edge" : "straight",
-    //         };
-    //       }),
-    //   [edges, selectedNodeIds, pathEdgeSet, edgeFilter] 
-    // );
-
-    // 1) First: edges that match the current filter
-    const filteredEdges = useMemo(
-        () => edges.filter((edge) => edgeMatchesFilter(edge)),
-        [edges, edgeFilter]
-    );
-
-    // 2) Then: style them depending on selection + path
-    const displayEdges = useMemo(
-        () =>
-            filteredEdges.map((edge) => {
-                const isConnected =
-                    selectedNodeIds.includes(edge.source) ||
-                    selectedNodeIds.includes(edge.target);
-
-                const isOnPath = pathEdgeSet.has(`${edge.source}->${edge.target}`);
-
-                return {
-                    ...edge,
-                    type: isConnected || isOnPath ? "detailed_edge" : "straight",
-                };
-            }),
-        [filteredEdges, selectedNodeIds, pathEdgeSet]
-    );
-
-    // All node IDs that still have at least one visible edge
-    const visibleByFilterNodeIds = useMemo(() => {
-        const set = new Set();
-
-        // For each visible edge, mark its endpoints as visible
-        filteredEdges.forEach((edge) => {
-            set.add(edge.source);
-            set.add(edge.target);
-        });
-
-        // Optionally always keep the root visible, even if no edges match
-        if (rootId) {
-            set.add(rootId);
-        }
-
-        return set;
-    }, [filteredEdges, rootId]);
-
-
-
-
-    //This gives ALL Children that the company expanded
-    //So children -> grandchildren -> grandgrandchildren ... 
-    //It recursively calls itself to collect all
-    const collect_subtree_debug = true;
-    const collectSubtreeIds = (parentId, childrenMap, depth = 0) => {
-        const indent = "    ".repeat(depth);
-
-        const result = new Set();
-        const directChildren = childrenMap[parentId];
-
-        //DEBUG
-        if (collect_subtree_debug) {
-            // console.log(indent, "PARENT: ", parentId)
-            // console.log(indent, "DIRECT CHILDREN: ", directChildren)
-        }
-
-        if (!directChildren) {
-            return result;
-        }
-
-        for (const childId of directChildren) {
-            result.add(childId);
-            const sub = collectSubtreeIds(childId, childrenMap, depth + 1);
-            for (const id of sub) {
-                result.add(id);
-            }
-        }
-
-        return result;
-    };
-
-
-    //This simply receives all children, grandchildren etc. of parentId and removes them from display
-    const collapseCompany = (parentId) => {
-        const toRemove = collectSubtreeIds(parentId, childrenByParent);
-
-
-        //Filters out all nodes that are being collapsed - This is plain
-        setNodes((prev) => prev.filter((n) => !toRemove.has(n.id)));
-
-
-
-        setEdges((prev) => {
-            const edge_filter = prev.filter(
-                (e) =>
-
-                    !toRemove.has(e.source) &&
-                    !toRemove.has(e.target) &&
-                    e.source !== parentId
-
-            )
-            console.log(edge_filter)
-            return edge_filter
-        }
+    setChildrenByParent((prev) => {
+      const updated = { ...prev };
+      toRemove.forEach((id) => delete updated[id]);
+      Object.keys(updated).forEach((parent) => {
+        const set = updated[parent];
+        if (!set) return;
+        const newSet = new Set(
+          [...set].filter((childId) => !toRemove.has(childId))
         );
+        updated[parent] = newSet;
+      });
+      return updated;
+    });
+  };
 
+  /* ---------- RENDERED NODES (inject helpers + path medium view) ---------- */
 
-        if (toRemove.size === 0) {
-            return;
+  const renderNodes = useMemo(
+    () =>
+      nodes.map((node) => {
+        // Path-to-root nodes should always be "medium" (default display),
+        // except the main node which keeps its special type.
+        let effectiveType = node.type;
+        if (
+          pathNodeIds.has(node.id) &&
+          node.type === "minimal_company_display"
+        ) {
+          effectiveType = "default_company_display";
         }
 
+        return {
+          ...node,
+          type: effectiveType,
+          data: {
+            ...node.data,
+            fetchCompany: (id) => fetchCompany(id),
+            collapseCompany: (id) => collapseCompany(id),
+            changeNodeType: (id, newType) => changeSingleNodeType(id, newType),
+          },
+        };
+      }),
+    [nodes, pathNodeIds]
+  );
+
+  const displayNodes = useMemo(
+    () => renderNodes.filter((node) => visibleByFilterNodeIds.has(node.id)),
+    [renderNodes, visibleByFilterNodeIds]
+  );
+
+  /* ---------- RENDER ---------- */
+
+  return (
+    <div
+  className="w-full h-screen relative"
+  style={{ background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)" }}
+>
+      {/* Bottom Settings Panel */}
+      <SettingsButton
+        open={false}
+        changing_default_company_display_tape_f={change_company_display_default}
+        onEdgeFilterChange={setEdgeFilter}
+        highlightPath={highlightPath}
+        setHighlightPath={setHighlightPath}
+      />
+
+      {/* Main Graph Wrapper – centered container feeling */}
+      <div className="h-full w-full px-4 md:px-6 py-4 md:py-6 relative flex flex-col">
+        {/* Loading Overlay */}
+        {showSpinner && (
+  <div className="absolute inset-0 flex items-center justify-center z-50 bg-white/60 backdrop-blur-sm">
+    <div className="text-center">
+      <div className="w-14 h-14 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-lg font-medium text-indigo-600">
+        Loading network...
+      </p>
+    </div>
+  </div>
+)}
 
 
+        {/* Graph Card */}
+        <div
+          className={`flex-1 w-full rounded-2xl overflow-hidden shadow-xl border border-slate-200 transition-all duration-300 ${
+            isRegisteredOnly ? "blur-sm" : ""
+          }`}
+          style={{
+            boxShadow: "0 20px 40px rgba(15, 23, 42, 0.15)",
+          }}
+        >
+          <ReactFlow
+            style={{
+    background: "transparent",
+  }}
+            nodes={displayNodes}
+            edges={displayEdges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            nodeTypes={companyNodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            fitViewOptions={{ padding: 0.25 }}
+            minZoom={0.05}
+            maxZoom={4}
+            zoomOnScroll
+            zoomOnPinch
+            zoomOnDoubleClick
+            nodesDraggable={!isRegisteredOnly}
+            nodesConnectable={!isRegisteredOnly}
+            elementsSelectable={!isRegisteredOnly}
+          >
+            <Background
+              variant="dots"
+              gap={18}
+              size={1.2}
+              color="rgba(0, 0, 0, 0.6)"
 
-        //Removes the Nodes the the currently visible set
-        setVisibleNodeIds((prev) => {
-            const next = new Set(prev);
-            toRemove.forEach((id) => next.delete(id));
-            return next;
-        });
+            />
+            <MiniMap
+              pannable
+              zoomable
+              style={{
+                background: "#ffffff",
+                border: "1px solid rgba(148, 163, 184, 0.7)",
+                borderRadius: "10px",
+                overflow: "hidden",
+              }}
+              nodeColor={(node) => {
+                if (node.type === "main_company_display") return "#667eea";
+                return "#a855f7";
+              }}
+            />
+            <Controls
+              style={{
+                border: "1px solid rgba(148, 163, 184, 0.7)",
+                borderRadius: "10px",
+                overflow: "hidden",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.25)",
+              }}
+            />
+          </ReactFlow>
+        </div>
 
-
-        //Updates the Children-Parent Map
-        setChildrenByParent((prev) => {
-            const updated = { ...prev };
-
-            toRemove.forEach((id) => {
-                delete updated[id];
-            });
-
-            Object.keys(updated).forEach((parent) => {
-                const set = updated[parent];
-                if (!set) return;
-                const newSet = new Set(
-                    [...set].filter((childId) => !toRemove.has(childId))
-                );
-                updated[parent] = newSet;
-            });
-
-            return updated;
-        });
-    };
-
-
-
-    // const renderNodes = useMemo(
-    //     () =>
-    //         nodes.map((node) => ({
-    //             ...node,
-    //             data: {
-    //                 ...node.data,
-    //                 fetchCompany: (id) => {
-    //                     fetchCompany(id);
-    //                 },
-    //                 collapseCompany: (id) => {
-    //                     collapseCompany(id);
-    //                 },
-    //                 changeNodeType: (id, newType) => changeSingleNodeType(id, newType),
-    //             },
-    //         })),
-    //     [nodes, childrenByParent]
-    // );
-
-
-    const renderNodes = useMemo(
-        () =>
-            nodes.map((node) => ({
-                ...node,
-                data: {
-                    ...node.data,
-                    fetchCompany: (id) => {
-                        fetchCompany(id);
-                    },
-                    collapseCompany: (id) => {
-                        collapseCompany(id);
-                    },
-                    changeNodeType: (id, newType) => changeSingleNodeType(id, newType),
-                },
-            })),
-        [nodes, childrenByParent]
-    );
-
-    // Only pass nodes that have at least one visible edge (or are root)
-    const displayNodes = useMemo(
-        () =>
-            renderNodes.filter((node) => visibleByFilterNodeIds.has(node.id)),
-        [renderNodes, visibleByFilterNodeIds]
-    );
-
-
-
-
-    return (
-        <>
-            <div className="w-full h-[100vh] bg-blue-300 py-15 relative">
-
-                <SettingsButton
-
-                    open={false}
-                    changing_default_company_display_tape_f={change_company_display_default}
-                    onEdgeFilterChange={setEdgeFilter}
-                />
-
-
-
-                <div className="bg-blue-200 px-10 h-full w-full">
-                    <div className="h-full w-full ">
-                        <ReactFlow
-                            style={{ backgroundColor: '#f3f5feff' }}
-                            nodes={displayNodes}
-                            edges={displayEdges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            nodeTypes={companyNodeTypes}
-                            edgeTypes={edgeTypes}
-                            fitView
-                            fitViewOptions={{ padding: 0.3 }}
-
-                            minZoom={0.05}
-                            maxZoom={4}
-                            zoomOnScroll
-                            zoomOnPinch
-                            zoomOnDoubleClick
-                        >
-
-                            <Background
-                                variant="dots"
-                                gap={20}
-                                size={1}
-                                color="#07111eff"
-                            />
-
-
-                            <MiniMap
-                                pannable
-                                zoomable
-                            />
-
-
-                            <Controls />
-                        </ReactFlow>
-
-                    </div>
-
+        {/* Premium Overlay (unchanged logic, restyled with .btn classes idea) */}
+        {isRegisteredOnly && (
+          <div className="absolute  inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
+            <div
+              className="bg-white rounded-2xl p-8 max-w-lg w-full pointer-events-auto transform transition-all duration-300 hover:scale-[1.02]"
+              style={{
+                boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
+                border: "1px solid rgba(148, 163, 184, 0.3)",
+              }}
+            >
+              <div className="flex !p-5  flex-col items-center text-center !gap-6">
+                <div className="w-18 h-18 rounded-full flex items-center justify-center shadow-md bg-gradient-to-br from-indigo-500 to-purple-500">
+                  <LockIcon className="text-white" style={{ fontSize: 34 }} />
                 </div>
 
+                <h3 className="text-2xl md:text-3xl font-bold text-slate-800">
+                  Premium Feature
+                </h3>
+
+                <p className="text-base md:text-lg leading-relaxed text-slate-600">
+                  Unlock the full company network visualization to explore
+                  connections, relationships, and business structures in detail.
+                </p>
+
+                <div className="w-full space-y-3 mt-2 ">
+                  <Link
+                    to="/pricing"
+                    className="btn btn-primary w-full text-center !mb-2"
+                  >
+                    Upgrade to Premium
+                  </Link>
+
+                  <Link
+                    to="/pricing"
+                    className="btn btn-secondary w-full text-center"
+                  >
+                    Learn More
+                  </Link>
+                </div>
+
+                <div className="mt-4 pt-4 border-t w-full border-slate-200">
+                  <p className="text-sm text-slate-500">
+                    <strong className="text-indigo-500">
+                      Premium includes:
+                    </strong>{" "}
+                    Network visualization • Advanced filters • Export options •
+                    Priority support
+                  </p>
+                </div>
+              </div>
             </div>
-        </>
-    )
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
-
-
-
-
-
-
-
-
-
-

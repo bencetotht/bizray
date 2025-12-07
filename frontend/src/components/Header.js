@@ -70,7 +70,7 @@ const Header = () => {
               <NavLink to="/register" className="btn btn-primary"><User size={16} />Sign Up</NavLink>
             </div> : <div className="auth-buttons">
               
-              <NavLink to="/account" className="btn btn-primary"><User size={16} />Account</NavLink>
+              <NavLink to="/account" className="btn btn-primary"><User size={16} />{user.username}</NavLink>
             </div>
             
           }

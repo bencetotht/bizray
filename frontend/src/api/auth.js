@@ -85,40 +85,71 @@ export async function loginRequest({ email, password }) {
 // ----------------------
 // AUTH-FETCH
 // ----------------------
+// export async function authFetch(path, options = {}) {
+//   const token = getAccessToken();
+
+//   // console.log("==================================================");
+//   // console.log("[authFetch] REQUEST OUT");
+//   // console.log("→ URL:", path);
+//   // console.log("→ Token from localStorage:", token);
+//   // console.log("→ Full Authorization header:", `Bearer ${token}`);
+//   // console.log("==================================================");
+
+//   const headers = {
+//     ...(options.headers || {}),
+//   };
+
+  
+//   // console.log("HEADERRRR before token:::___________________", headers)
+
+//   if (token) {
+//     headers["Authorization"] = `Bearer ${token}`;
+//   }
+
+//   // console.log("HEADERRRR after token:::___________________", headers)
+
+//   const response = await fetch(path, {
+//     ...options,
+//     headers,
+//   });
+
+//   // console.log("[authFetch] RESPONSE STATUS:", response.status);
+//   // console.log("==================================================");
+
+//   return response;
+// }
 export async function authFetch(path, options = {}) {
   const token = getAccessToken();
 
-  // console.log("==================================================");
-  // console.log("[authFetch] REQUEST OUT");
-  // console.log("→ URL:", path);
-  // console.log("→ Token from localStorage:", token);
-  // console.log("→ Full Authorization header:", `Bearer ${token}`);
-  // console.log("==================================================");
+  console.log("==================================================");
+  console.log("[authFetch] REQUEST");
+  console.log("→ URL:", path);
+  console.log("→ Token exists:", !!token);
+  console.log("→ Token preview:", token ? token.substring(0, 20) + "..." : "NO TOKEN");
+  console.log("==================================================");
 
   const headers = {
     ...(options.headers || {}),
   };
 
-  
-  // console.log("HEADERRRR before token:::___________________", headers)
-
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    console.error("⚠️ NO TOKEN FOUND - Request will fail!");
   }
 
-  // console.log("HEADERRRR after token:::___________________", headers)
+  console.log("→ Headers being sent:", headers);
 
   const response = await fetch(path, {
     ...options,
     headers,
   });
 
-  // console.log("[authFetch] RESPONSE STATUS:", response.status);
-  // console.log("==================================================");
+  console.log("[authFetch] RESPONSE STATUS:", response.status);
+  console.log("==================================================");
 
   return response;
 }
-
 
 // ----------------------
 // CURRENT USER
