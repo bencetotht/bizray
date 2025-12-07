@@ -13,6 +13,7 @@ import 'reactflow/dist/style.css';
 
 import FaceIcon from '@mui/icons-material/Face';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { authFetch } from "../../api/auth";
 
 
 import SettingsButton from "./GraphSettings";
@@ -373,7 +374,12 @@ export default function Graph({ id_that_was_passed }) {
     async function fetchCompany(id) {
 
         //Fetching the Company from Api via the id
-        const response = await fetch(`https://apibizray.bnbdevelopment.hu/api/v1/network/${id}`);
+        const response = await authFetch(
+        `https://apibizray.bnbdevelopment.hu/api/v1/network/${id}`,
+        {
+            method: "GET"
+        }
+    );
         if (!response.ok) {
             throw new Error("Failed to fetch company data");
         }

@@ -1,6 +1,8 @@
 // src/api/auth.js
 
-const API_PREFIX = "/api/v1";
+//const API_PREFIX = "/api/v1";
+
+import { API_PREFIX } from "./config";
 
 const ACCESS_TOKEN_KEY = "access_token";
 
@@ -29,6 +31,8 @@ function makeUrl(path) {
 // REGISTER
 // ----------------------
 export async function registerRequest({ username, email, password }) {
+  console.log("makeURL FOR REGISTER:: ::: ", makeUrl("/auth/register/"))
+  
   const res = await fetch(makeUrl("/auth/register/"), {
     method: "POST",
     headers: {
@@ -84,33 +88,33 @@ export async function loginRequest({ email, password }) {
 export async function authFetch(path, options = {}) {
   const token = getAccessToken();
 
-  console.log("==================================================");
-  console.log("[authFetch] REQUEST OUT");
-  console.log("→ URL:", path);
-  console.log("→ Token from localStorage:", token);
-  console.log("→ Full Authorization header:", `Bearer ${token}`);
-  console.log("==================================================");
+  // console.log("==================================================");
+  // console.log("[authFetch] REQUEST OUT");
+  // console.log("→ URL:", path);
+  // console.log("→ Token from localStorage:", token);
+  // console.log("→ Full Authorization header:", `Bearer ${token}`);
+  // console.log("==================================================");
 
   const headers = {
     ...(options.headers || {}),
   };
 
   
-  console.log("HEADERRRR before token:::___________________", headers)
+  // console.log("HEADERRRR before token:::___________________", headers)
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  console.log("HEADERRRR after token:::___________________", headers)
+  // console.log("HEADERRRR after token:::___________________", headers)
 
   const response = await fetch(path, {
     ...options,
     headers,
   });
 
-  console.log("[authFetch] RESPONSE STATUS:", response.status);
-  console.log("==================================================");
+  // console.log("[authFetch] RESPONSE STATUS:", response.status);
+  // console.log("==================================================");
 
   return response;
 }
@@ -120,7 +124,7 @@ export async function authFetch(path, options = {}) {
 // CURRENT USER
 // ----------------------
 export async function fetchCurrentUser() {
-  const res = await authFetch("/api/v1/auth/me/", {
+  const res = await authFetch("/api/v1/auth/me", {
     method: "GET",
   });
 

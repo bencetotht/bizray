@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, Mail, Settings, LogOut, Shield, CreditCard, Bell, Key, Trash2, Eye, EyeOff } from "lucide-react";
+import {
+  User,
+  Mail,
+  Settings,
+  LogOut,
+  Shield,
+  CreditCard,
+  Bell,
+  Key,
+  Trash2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AccountPage.css";
 import { useAuth } from "../context/AuthContext";
@@ -8,41 +20,79 @@ import { useAuth } from "../context/AuthContext";
 export default function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("profile");
-  const { user, isAuthenticated, loadingUser } = useAuth();
 
-  console.log("USAAAA", user)
-  useEffect(() => {
-    if (location.hash === "#billing") {
-      setActiveTab("billing");
-    }
-  }, [location.hash]);
+  const { user, isAuthenticated, loadingUser, logout } = useAuth();
+
+  const [activeTab, setActiveTab] = useState("profile");
+
   const [formData, setFormData] = useState({
     name: "",
-    email: "john.doe@example.com",
+    email: "",
     company: "",
     phone: "",
   });
+
   const [errors, setErrors] = useState({});
   const [showEmail, setShowEmail] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // -------------------------
+  // 1) Handle URL hash → billing tab
+  // -------------------------
+  useEffect(() => {
+    if (location.hash === "#billing") {
+      setActiveTab("billing");
+    }
+  }, [location.hash]);
+
+  // -------------------------
+  // 2) Once user is loaded, prefill form
+  // -------------------------
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: user.username || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user]);
+
+  // -------------------------
+  // 3) Early returns – BEFORE using user.username
+  // -------------------------
+  if (loadingUser) {
+    return <div>Loading your account…</div>;
+  }
+
+  if (!isAuthenticated || !user) {
+    // you can also do: navigate("/login"); return null;
+    return <div>Please log in first.</div>;
+  }
+
+  // Now it's safe – user is definitely defined
+  console.log("USAAAA", user.username);
+
+  // -------------------------
+  // 4) Handlers
+  // -------------------------
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
-    
+    }));
+
     if (errors[name]) {
-      setErrors({
-        ...errors,
+      setErrors((prev) => ({
+        ...prev,
         [name]: "",
-      });
+      }));
     }
-    
+
     if (e.target.validity.valueMissing) {
       e.target.setCustomValidity("Please fill in this field.");
     } else {
@@ -52,48 +102,58 @@ export default function AccountPage() {
 
   const validateField = (name, value) => {
     let error = "";
-    
+
     if (!value || value.trim() === "") {
       if (name === "name") {
         error = "Please fill in this field.";
       } else if (name === "email") {
         error = "Please enter a valid email address.";
       }
-    } else if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    } else if (
+      name === "email" &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    ) {
       error = "Please enter a valid email address.";
     }
-    
+
     return error;
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     const error = validateField(name, value);
-    setErrors({
-      ...errors,
+
+    setErrors((prev) => ({
+      ...prev,
       [name]: error,
-    });
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    //TODO: Implement save logic
+    // TODO: send formData to backend
     console.log("Saving profile:", formData);
   };
 
   const handleLogout = () => {
-    //TODO: Implement logout logic
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   const handleDeleteAccount = () => {
-    //TODO: Implement delete account logic
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-      console.log("Deleting account...");
-      //navigate("/somewhere, not existing yet");
+    if (
+      window.confirm(
+        "Are you sure you want to delete your account? This action cannot be undone."
+      )
+    ) {
+      console.log("Deleting account…");
+      // TODO: call delete endpoint, then navigate
     }
   };
 
+  // -------------------------
+  // 5) Render
+  // -------------------------
   return (
     <section className="account-page">
       <div className="account-bg">
@@ -103,46 +163,59 @@ export default function AccountPage() {
 
       <div className="container">
         <div className="account-wrapper">
+          {/* SIDEBAR */}
           <aside className="account-sidebar">
             <div className="account-user-info">
               <div className="account-avatar">
-                {formData.name.charAt(0).toUpperCase()}
+                {formData.name
+                  ? formData.name.charAt(0).toUpperCase()
+                  : user.username.charAt(0).toUpperCase()}
               </div>
-              <h3>{formData.name}</h3>
-              <p>{formData.email}</p>
+              <h3>{formData.name || user.username}</h3>
+              <p>{showEmail ? formData.email || user.email : "Email hidden"}</p>
             </div>
 
             <nav className="account-nav">
               <button
-                className={`account-nav-item ${activeTab === "profile" ? "active" : ""}`}
+                className={`account-nav-item ${
+                  activeTab === "profile" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("profile")}
               >
                 <User size={20} />
                 Profile
               </button>
               <button
-                className={`account-nav-item ${activeTab === "security" ? "active" : ""}`}
+                className={`account-nav-item ${
+                  activeTab === "security" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("security")}
               >
                 <Shield size={20} />
                 Security
               </button>
               <button
-                className={`account-nav-item ${activeTab === "billing" ? "active" : ""}`}
+                className={`account-nav-item ${
+                  activeTab === "billing" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("billing")}
               >
                 <CreditCard size={20} />
                 Billing
               </button>
               <button
-                className={`account-nav-item ${activeTab === "notifications" ? "active" : ""}`}
+                className={`account-nav-item ${
+                  activeTab === "notifications" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("notifications")}
               >
                 <Bell size={20} />
                 Notifications
               </button>
               <button
-                className={`account-nav-item ${activeTab === "settings" ? "active" : ""}`}
+                className={`account-nav-item ${
+                  activeTab === "settings" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("settings")}
               >
                 <Settings size={20} />
@@ -163,6 +236,7 @@ export default function AccountPage() {
             </div>
           </aside>
 
+          {/* MAIN CONTENT */}
           <main className="account-content">
             <div className="account-card">
               {activeTab === "profile" && (
@@ -189,9 +263,7 @@ export default function AccountPage() {
                         className={errors.name ? "input-error" : ""}
                       />
                       {errors.name && (
-                        <span className="field-error">
-                          {errors.name}
-                        </span>
+                        <span className="field-error">{errors.name}</span>
                       )}
                     </div>
 
@@ -211,9 +283,7 @@ export default function AccountPage() {
                         className={errors.email ? "input-error" : ""}
                       />
                       {errors.email && (
-                        <span className="field-error">
-                          {errors.email}
-                        </span>
+                        <span className="field-error">{errors.email}</span>
                       )}
                     </div>
 
@@ -276,10 +346,18 @@ export default function AccountPage() {
                         <button
                           type="button"
                           className="password-toggle"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                          aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                          aria-label={
+                            showCurrentPassword ? "Hide password" : "Show password"
+                          }
                         >
-                          {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showCurrentPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -298,10 +376,18 @@ export default function AccountPage() {
                         <button
                           type="button"
                           className="password-toggle"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          aria-label={showNewPassword ? "Hide password" : "Show password"}
+                          onClick={() =>
+                            setShowNewPassword(!showNewPassword)
+                          }
+                          aria-label={
+                            showNewPassword ? "Hide password" : "Show password"
+                          }
                         >
-                          {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showNewPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -320,10 +406,20 @@ export default function AccountPage() {
                         <button
                           type="button"
                           className="password-toggle"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          aria-label={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
                         >
-                          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          {showConfirmPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -347,7 +443,10 @@ export default function AccountPage() {
                       <h3>Current Plan</h3>
                       <div className="plan-badge free">Free</div>
                       <p>Basic search and company details</p>
-                      <button className="btn btn-primary" style={{ marginTop: "16px" }}>
+                      <button
+                        className="btn btn-primary"
+                        style={{ marginTop: "16px" }}
+                      >
                         Upgrade to Pro
                       </button>
                     </div>
@@ -372,7 +471,11 @@ export default function AccountPage() {
                       <span>Marketing Notifications</span>
                     </label>
 
-                    <button type="button" className="btn btn-primary" style={{ marginTop: "16px" }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ marginTop: "16px" }}
+                    >
                       Save Preferences
                     </button>
                   </div>
@@ -405,8 +508,8 @@ export default function AccountPage() {
                     </div>
 
                     <label className="checkbox-label">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={showEmail}
                         onChange={(e) => setShowEmail(e.target.checked)}
                       />
@@ -439,4 +542,3 @@ export default function AccountPage() {
     </section>
   );
 }
-

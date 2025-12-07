@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
 useEffect(() => {
   async function init() {
     const token = getAccessToken();
-    console.log("[Auth init] token from localStorage:", token);
+    // console.log("[Auth init] token from localStorage:", token);
 
     if (!token) {
       setLoadingUser(false);
@@ -167,11 +167,11 @@ useEffect(() => {
   // --------------------------------------------------
   async function login({ email, password }) {
     const data = await loginRequest({ email, password });
-    console.log("Inital Data: ",data)
+    // console.log("Inital Data: ",data)
 
 
     if (data.token) {
-      console.log("Acces token now: ", data.token)
+      // console.log("Acces token now: ", data.token)
       storeAccessToken(data.token);
     }
     if (data.user) {

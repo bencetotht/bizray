@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, redirect } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./LoginPage.css";
@@ -16,6 +16,11 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { user, isAuthenticated, loadingUser, logout } = useAuth();
+
+  if (isAuthenticated) {
+    redirect("/account")
+  }
 
   const handleInputChange = (e) => {
     const value = e.target.value;
