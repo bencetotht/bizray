@@ -17,62 +17,51 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = !!user;
 
-  // --------------------------------------------------
-  // INITIAL LOAD → IF TOKEN EXISTS, LOAD THE USER
-  // --------------------------------------------------
-
   function parseJwt(token) {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error("Failed to parse JWT", e);
-    return null;
-  }
-}
-
-
-
-
-useEffect(() => {
-  async function init() {
-    const token = getAccessToken();
-    // console.log("[Auth init] token from localStorage:", token);
-
-    if (!token) {
-      setLoadingUser(false);
-      return;
-    }
-
     try {
-      const currentUser = await fetchCurrentUser();
-      console.log("[Auth init] fetched current user:", currentUser);
-      setUser(currentUser);
-    } catch (err) {
-      console.error("[Auth init] fetchCurrentUser error:", err);
-      
-      
-      clearAccessToken();
-      setUser(null);
-    }
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
 
-    setLoadingUser(false);
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error("Failed to parse JWT", e);
+      return null;
+    }
   }
 
-  init();
-}, []);
+  useEffect(() => {
+    async function init() {
+      const token = getAccessToken();
+      // console.log("[Auth init] token from localStorage:", token);
 
+      if (!token) {
+        setLoadingUser(false);
+        return;
+      }
 
+      try {
+        const currentUser = await fetchCurrentUser();
+        // console.log("[Auth init] fetched current user:", currentUser);
+        setUser(currentUser);
+      } catch (err) {
+        console.error("[Auth init] fetchCurrentUser error:", err);
+        
+        
+        clearAccessToken();
+        setUser(null);
+      }
 
+      setLoadingUser(false);
+    }
 
+    init();
+  }, []);
   
   async function register({ username, email, password }) {
     return registerRequest({ username, email, password });

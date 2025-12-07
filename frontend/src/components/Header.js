@@ -9,10 +9,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const closeMenu = () => setIsMenuOpen(false);
-  const { user, isAuthenticated, loadingUser, logout } = useAuth();
-
-  // Add this console.log to debug
-  console.log("Header - isAuthenticated:", isAuthenticated, "loadingUser:", loadingUser, "user:", user);
+  const { user, isAuthenticated } = useAuth();
 
 
   const submitSearch = () => {
