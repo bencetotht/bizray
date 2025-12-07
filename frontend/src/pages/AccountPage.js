@@ -3,19 +3,22 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { User, Mail, Settings, LogOut, Shield, CreditCard, Bell, Key, Trash2, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AccountPage.css";
+import { useAuth } from "../context/AuthContext";
 
 export default function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("profile");
-  
+  const { user, isAuthenticated, loadingUser } = useAuth();
+
+  console.log("USAAAA", user)
   useEffect(() => {
     if (location.hash === "#billing") {
       setActiveTab("billing");
     }
   }, [location.hash]);
   const [formData, setFormData] = useState({
-    name: "John Doe",
+    name: "",
     email: "john.doe@example.com",
     company: "",
     phone: "",

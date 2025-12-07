@@ -1,15 +1,12 @@
 // src/api/auth.js
 
-import {API_PREFIX} from "./config"
-
-// const API_PREFIX = "/api/v1";
+const API_PREFIX = "/api/v1";
 
 const ACCESS_TOKEN_KEY = "access_token";
 
-// --------------------------------------------------
+// ----------------------
 // TOKEN HELPERS
-// --------------------------------------------------
-
+// ----------------------
 export function storeAccessToken(token) {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);
 }
@@ -22,73 +19,115 @@ export function clearAccessToken() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
-// --------------------------------------------------
-// REGISTRATION
-// --------------------------------------------------
+// Kleine Hilfsfunktion für URLs
+function makeUrl(path) {
+  // path immer mit "/" beginnen: z.B. "/auth/login/"
+  return `${API_PREFIX}${path}`;
+}
 
+// ----------------------
+// REGISTER
+// ----------------------
 export async function registerRequest({ username, email, password }) {
-  const res = await fetch(`${API_PREFIX}/auth/register/`, {
+  const res = await fetch(makeUrl("/auth/register/"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ username, email, password }),
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || "Registration failed");
+    const errorBody = await res.json().catch(() => ({}));
+    console.error("Registration error details:", errorBody);
+    const message =
+      errorBody.detail?.[0]?.msg ||
+      errorBody.detail ||
+      errorBody.message ||
+      "Registration failed";
+    throw new Error(message);
   }
 
   return res.json();
 }
 
-// --------------------------------------------------
+// ----------------------
 // LOGIN
-// --------------------------------------------------
-
+// ----------------------
 export async function loginRequest({ email, password }) {
-  const res = await fetch(`${API_PREFIX}/auth/login/`, {
+  const res = await fetch(makeUrl("/auth/login/"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ email, password }),
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || "Login failed");
+    const errorBody = await res.json().catch(() => ({}));
+    console.error("Login error details:", errorBody);
+    const message =
+      errorBody.detail?.[0]?.msg ||
+      errorBody.detail ||
+      errorBody.message ||
+      "Login failed";
+    throw new Error(message);
   }
 
-  return res.json(); // expected: { token, user }
+  
+  return res.json(); // { token, user }
 }
 
-// --------------------------------------------------
-// AUTHENTICATED FETCH
-// --------------------------------------------------
-
+// ----------------------
+// AUTH-FETCH
+// ----------------------
 export async function authFetch(path, options = {}) {
   const token = getAccessToken();
 
-  const headers = { ...(options.headers || {}) };
+  console.log("==================================================");
+  console.log("[authFetch] REQUEST OUT");
+  console.log("→ URL:", path);
+  console.log("→ Token from localStorage:", token);
+  console.log("→ Full Authorization header:", `Bearer ${token}`);
+  console.log("==================================================");
+
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  
+  console.log("HEADERRRR before token:::___________________", headers)
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  return fetch(`${API_PREFIX}${path}`, {
+  console.log("HEADERRRR after token:::___________________", headers)
+
+  const response = await fetch(path, {
     ...options,
     headers,
   });
+
+  console.log("[authFetch] RESPONSE STATUS:", response.status);
+  console.log("==================================================");
+
+  return response;
 }
 
-// --------------------------------------------------
-// FETCH CURRENT USER
-// --------------------------------------------------
 
+// ----------------------
+// CURRENT USER
+// ----------------------
 export async function fetchCurrentUser() {
-  const res = await authFetch("/auth/me/", { method: "GET" });
+  const res = await authFetch("/api/v1/auth/me/", {
+    method: "GET",
+  });
 
   if (!res.ok) {
+    console.error("fetchCurrentUser failed with status:", res.status);
     throw new Error("Failed to fetch current user");
   }
 
-  return res.json();
+  return res.json(); // direkt der User laut Doku
 }

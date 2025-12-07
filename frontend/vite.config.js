@@ -17,16 +17,16 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    open: false,
-    proxy: {
-      "/api": {
-        target: "https://apibizray.bnbdevelopment.hu",
-        changeOrigin: true,
-        secure: false,
-      },
+  port: 3000,
+  open: false,
+  proxy: {
+    "/api": {
+      target: "https://apibizray.bnbdevelopment.hu",
+      changeOrigin: true,
+      secure: false,
     },
-  }
+  },
+},
 
 });
 
