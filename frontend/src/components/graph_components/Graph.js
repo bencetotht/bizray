@@ -25,7 +25,10 @@ import { Link } from "react-router-dom";
 const initialNodes = [];
 const initialEdges = [];
 
-/* ---------- STAR LAYOUT (unchanged logic) ---------- */
+
+
+
+
 
 function starLayout(nodes, mainNodeId) {
   const centerX = 0;
@@ -131,58 +134,7 @@ function starLayout(nodes, mainNodeId) {
   });
 }
 
-/* ---------- EDGE WITH DETAIL BUBBLE ---------- */
 
-// function DetailedEdge(props) {
-//   const [edgePath, labelX, labelY] = getStraightPath(props);
-//   const [showInfo, setShowInfo] = useState(false);
-
-//   return (
-//     <>
-//       <BaseEdge
-//         {...props}
-//         path={edgePath}
-//         style={{
-//           ...props.style,
-//           stroke: "#667eea",
-//           strokeWidth: 2.5,
-//           opacity: 0.85,
-//         }}
-//       />
-
-//       <EdgeLabelRenderer>
-//         <div
-//           onMouseEnter={() => setShowInfo(true)}
-//           onMouseLeave={() => setShowInfo(false)}
-//           style={{
-//             position: "absolute",
-//             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-//             pointerEvents: "all",
-//           }}
-//           className="w-9 h-9 rounded-full bg-white border border-indigo-200 flex justify-center items-center shadow-md hover:shadow-lg transition-all duration-200 hover:scale-110 cursor-pointer"
-//         >
-//           {props.data?.label === "Person" ? (
-//             <FaceIcon style={{ fontSize: 18, color: "#667eea" }} />
-//           ) : (
-//             <LocationOnIcon style={{ fontSize: 18, color: "#764ba2" }} />
-//           )}
-//           {showInfo && (
-//             <div
-//               style={{
-//                 zIndex: 1020,
-//                 background:
-//                   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-//               }}
-//               className="inline-flex px-3 py-1.5 min-w-max rounded-lg shadow-xl gap-2 justify-center items-center text-white text-xs font-medium backdrop-blur-sm absolute top-[120%] whitespace-nowrap"
-//             >
-//               {props.data.value}
-//             </div>
-//           )}
-//         </div>
-//       </EdgeLabelRenderer>
-//     </>
-//   );
-// }
 
 function DetailedEdge(props) {
   const [edgePath, labelX, labelY] = getStraightPath(props);
@@ -241,7 +193,8 @@ const edgeTypes = {
   detailed_edge: DetailedEdge,
 };
 
-/* ---------- MAIN GRAPH COMPONENT ---------- */
+
+
 
 export default function Graph({ id_that_was_passed }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -255,7 +208,7 @@ export default function Graph({ id_that_was_passed }) {
   const [edgeFilter, setEdgeFilter] = useState("all");
   
 
-  const [highlightPath, setHighlightPath] = useState(true); // extra setting, pure front-end
+  const [highlightPath, setHighlightPath] = useState(true); 
 
   const { isAuthenticated, loadingUser, user } = useAuth();
 
@@ -271,10 +224,9 @@ useEffect(() => {
   let timeout;
 
   if (isLoading) {
-    // Only show loader if loading lasts long enough
     timeout = setTimeout(() => {
       setShowSpinner(true);
-    }, 500); // delay in ms
+    }, 500); 
   } else {
     setShowSpinner(false);
   }
@@ -287,7 +239,6 @@ useEffect(() => {
 
 
 
-  /* ---------- AUTH / INITIAL FETCH ---------- */
 
   useEffect(() => {
     if (loadingUser) {
@@ -303,17 +254,14 @@ useEffect(() => {
 
     console.log("User loaded and authenticated, fetching company");
     fetchCompany(id_that_was_passed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingUser, isAuthenticated, id_that_was_passed]);
 
-  /* ---------- EDGE FILTER LOGIC (with root focus) ---------- */
 
   function edgeMatchesFilter(edge) {
     const label = edge.data?.label;
 
     if (edgeFilter === "all") return true;
 
-    // root-focused view for person/location filters
     if (rootId) {
       const connectsRoot = edge.source === rootId || edge.target === rootId;
       if (!connectsRoot) return false;
@@ -325,7 +273,6 @@ useEffect(() => {
     return true;
   }
 
-  /* ---------- NODE TYPE CHANGE HELPERS ---------- */
 
   function changeSingleNodeType(nodeId, newType) {
     setNodes((prevNodes) =>
@@ -339,7 +286,6 @@ useEffect(() => {
     setDefaultCompanyDisplayType(set_to_this_type);
   }
 
-  // keep behavior: all non-main, non-selected company nodes follow default type
   useEffect(() => {
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
@@ -360,7 +306,6 @@ useEffect(() => {
     );
   }, [defaultCompanyDisplayType, setNodes]);
 
-  /* ---------- MERGE NEW GRAPH DATA ---------- */
 
   const updateGraphData = (newNodes = [], newEdges = []) => {
     setNodes((prevNodes) => {
@@ -382,7 +327,6 @@ useEffect(() => {
     });
   };
 
-  /* ---------- FETCH COMPANY & BUILD GRAPH ---------- */
 
   async function fetchCompany(id) {
     setIsLoading(true);
@@ -424,7 +368,7 @@ useEffect(() => {
         };
       });
 
-      // Build edges & remove duplicate A<->B pairs (keep first only)
+
       const uniquePairMap = new Map();
       company.edges.forEach((edge) => {
         const pairKey =
@@ -472,7 +416,6 @@ useEffect(() => {
     }
   }
 
-  /* ---------- TREE HELPERS (unchanged logic) ---------- */
 
   function findParentOf(childId, childrenByParentMap) {
     for (const [parentId, childrenSet] of Object.entries(childrenByParentMap)) {
@@ -500,7 +443,6 @@ useEffect(() => {
     return path.reverse();
   }
 
-  /* ---------- PATH HIGHLIGHT SETS ---------- */
 
   const pathEdgeSet = useMemo(() => {
     const set = new Set();
@@ -533,7 +475,6 @@ useEffect(() => {
     return set;
   }, [nodes, rootId, childrenByParent, highlightPath]);
 
-  /* ---------- EDGE / NODE SELECTION & FILTERS ---------- */
 
   const selectedNodeIds = useMemo(
     () => nodes.filter((n) => n.selected).map((n) => n.id),
@@ -542,7 +483,6 @@ useEffect(() => {
 
   const filteredEdges = useMemo(
     () => edges.filter((edge) => edgeMatchesFilter(edge)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [edges, edgeFilter, rootId]
   );
 
@@ -620,7 +560,7 @@ useEffect(() => {
     });
   };
 
-  /* ---------- RENDERED NODES (inject helpers + path medium view) ---------- */
+
 
   const renderNodes = useMemo(
     () =>
@@ -663,6 +603,7 @@ useEffect(() => {
 >
       {/* Bottom Settings Panel */}
       <SettingsButton
+      
         open={false}
         changing_default_company_display_tape_f={change_company_display_default}
         onEdgeFilterChange={setEdgeFilter}

@@ -18,9 +18,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loadingUser, logout } = useAuth();
 
-  if (isAuthenticated) {
-    redirect("/account")
-  }
 
   const handleInputChange = (e) => {
     const value = e.target.value;

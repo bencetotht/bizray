@@ -41,91 +41,6 @@ export function AuthProvider({ children }) {
 
 
 
-  // useEffect(() => {
-  //   async function init() {
-  //     const token = getAccessToken();
-  //     if (!token) {
-  //       setLoadingUser(false);
-  //       return;
-  //     }
-
-  //     try {
-  //       const currentUser = await fetchCurrentUser();
-  //       setUser(currentUser);
-  //     } catch (err) {
-  //       clearAccessToken();
-  //       setUser(null);
-  //     }
-
-  //     setLoadingUser(false);
-  //   }
-
-  //   init();
-  // }, []);
-
-
-//   useEffect(() => {
-//   function init() {
-//     const token = getAccessToken();
-//     if (!token) {
-//       setLoadingUser(false);
-//       return;
-//     }
-
-//     const payload = parseJwt(token);
-//     if (!payload) {
-//       clearAccessToken();
-//       setUser(null);
-//       setLoadingUser(false);
-//       return;
-//     }
-
-//     // Build a user object from JWT payload
-//     const currentUser = {
-//       id: payload.user_id,
-//       uuid: payload.uuid,
-//       email: payload.email,
-//       role: payload.role,
-//       username: payload.username
-//       // optional: you can add username if backend starts putting it into JWT
-//     };
-
-//     setUser(currentUser);
-//     setLoadingUser(false);
-//   }
-
-//   init();
-// }, []);
-
-
-  // --------------------------------------------------
-  // REGISTER
-  // --------------------------------------------------
-  
-  // src/context/AuthContext.jsx
-// useEffect(() => {
-//   async function init() {
-//     const token = getAccessToken();
-
-//     if (!token) {
-//       setLoadingUser(false);
-//       return;
-//     }
-
-//     try {
-//       const currentUser = await fetchCurrentUser();  // 👈 uses token
-//       setUser(currentUser);
-//     } catch (err) {
-//       clearAccessToken();
-//       setUser(null);
-//     }
-
-//     setLoadingUser(false);
-//   }
-
-//   init();
-// }, []);
-
 
 useEffect(() => {
   async function init() {
@@ -143,8 +58,9 @@ useEffect(() => {
       setUser(currentUser);
     } catch (err) {
       console.error("[Auth init] fetchCurrentUser error:", err);
-      // vorübergehend: Token NICHT löschen, damit wir debuggen können
-      // clearAccessToken();
+      
+      
+      clearAccessToken();
       setUser(null);
     }
 

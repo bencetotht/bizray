@@ -38,18 +38,18 @@ export default function AccountPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // -------------------------
-  // 1) Handle URL hash → billing tab
-  // -------------------------
+
+
+
   useEffect(() => {
     if (location.hash === "#billing") {
       setActiveTab("billing");
     }
   }, [location.hash]);
 
-  // -------------------------
-  // 2) Once user is loaded, prefill form
-  // -------------------------
+
+  
+
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -60,24 +60,20 @@ export default function AccountPage() {
     }
   }, [user]);
 
-  // -------------------------
-  // 3) Early returns – BEFORE using user.username
-  // -------------------------
+
+  
+
   if (loadingUser) {
     return <div>Loading your account…</div>;
   }
 
   if (!isAuthenticated || !user) {
-    // you can also do: navigate("/login"); return null;
     return <div>Please log in first.</div>;
   }
 
-  // Now it's safe – user is definitely defined
   console.log("USAAAA", user.username);
 
-  // -------------------------
-  // 4) Handlers
-  // -------------------------
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -131,7 +127,6 @@ export default function AccountPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: send formData to backend
     console.log("Saving profile:", formData);
   };
 
@@ -147,13 +142,10 @@ export default function AccountPage() {
       )
     ) {
       console.log("Deleting account…");
-      // TODO: call delete endpoint, then navigate
     }
   };
 
-  // -------------------------
-  // 5) Render
-  // -------------------------
+
   return (
     <section className="account-page">
       <div className="account-bg">

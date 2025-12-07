@@ -12,7 +12,7 @@ function SettingsExpandContainer({
 }) {
   const [view, setView] = useState("medium");
   const [type, setType] = useState("all");
-  const [highlightPath, setHighlightPath] = useState(true); // purely local, frontend-only
+  const [highlightPath, setHighlightPath] = useState(true); 
 
   return (
     <div className="w-full absolute bottom-0 left-0 z-40 flex justify-center pb-2">

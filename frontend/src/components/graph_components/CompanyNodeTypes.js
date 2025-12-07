@@ -1,4 +1,3 @@
-// CompanyNodeTypes.jsx
 import { Handle } from "reactflow";
 import StoreIcon from "@mui/icons-material/Store";
 import { ExternalLink } from "lucide-react";
@@ -123,24 +122,7 @@ function DefaultCompanyDisplay({ id, selected, data }) {
 
       {/* Controls */}
       <div className="flex justify-between items-center mt-1 gap-2">
-        {/* Size toggle button (instead of double-click) */}
-        {/* <button
-          onClick={(e) => {
-            e.stopPropagation();
-            data.changeNodeType(id, "minimal_company_display");
-          }}
-          className="
-            bg-slate-100 text-slate-600
-            px-2 py-1
-            rounded-lg
-            text-[10px] font-medium
-            hover:bg-slate-200
-            border border-slate-200
-            transition-all duration-150
-          "
-        >
-          Compact
-        </button> */}
+
         <div className="w-full flex justify-center">
             <div className="flex gap-2">
           {/* Expand / Collapse */}
@@ -207,7 +189,7 @@ function DefaultCompanyDisplay({ id, selected, data }) {
   );
 }
 
-/* ---------- MINIMAL COMPANY NODE (CIRCLE, WITH INITIAL & BUTTON) ---------- */
+/* ---------- MINIMAL COMPANY NODE (CIRCLE, WITH INITIAL) ---------- */
 
 function MinimalCompanyDisplay({ id, selected, data }) {
   const initial = useMemo(() => getInitial(data.label), [data.label]);
@@ -251,27 +233,6 @@ function MinimalCompanyDisplay({ id, selected, data }) {
         <Handle type="source" position="bottom" />
         <Handle type="target" position="top" />
       </div>
-
-      {/* Size toggle button for minimal view */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          data.changeNodeType(id, "default_company_display");
-        }}
-        className="
-          mt-0.5
-          px-2 py-0.5
-          rounded-full
-          bg-slate-100
-          text-slate-600
-          text-[9px] font-medium
-          border border-slate-200
-          hover:bg-slate-200
-          transition-all duration-150
-        "
-      >
-        Expand
-      </button>
     </div>
   );
 }
