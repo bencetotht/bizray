@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Search, Loader2, AlertCircle } from "lucide-react";
+import { Search, Loader2, AlertCircle, SlidersHorizontal } from "lucide-react";
+import { FormControl, Select, MenuItem } from "@mui/material";
 import SearchResultCard from "../components/SearchResultCard";
 import "./SearchResults.css";
 
@@ -20,11 +21,58 @@ export default function SearchResults() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [limit] = useState(12);
+  const [cities, setCities] = useState([]);
+  const [selectedCities, setSelectedCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
 
-  // Reset page to 1 when search query changes
+  // Reset page to 1 when search query changes or city filter changes
   useEffect(() => {
     setPage(1);
-  }, [q]);
+  }, [q, selectedCities]);
+
+useEffect(() => {
+  const controller = new AbortController();
+
+  setSelectedCities([]);
+  setCities([]);
+
+  if (!q || q.length < 3) {
+    controller.abort();
+    return;
+  }
+
+  setLoadingCities(true);
+
+  const url = `https://apibizray.bnbdevelopment.hu/api/v1/cities?q=${encodeURIComponent(q)}`;
+
+  fetch(url, { signal: controller.signal })
+    .then((res) => {
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    })
+    .then((data) => {
+      const fetchedCities = data.cities || [];
+  
+      const sortedCities = fetchedCities.sort((a, b) => {
+        if (a.city === "Wien") return -1;
+        if (b.city === "Wien") return 1;
+        
+        return a.city.localeCompare(b.city);
+      });
+
+      setCities(sortedCities);
+      setLoadingCities(false);
+    })
+    .catch((err) => {
+      if (err.name !== "AbortError") {
+        console.error("Error fetching cities:", err);
+        setLoadingCities(false);
+      }
+    });
+
+  return () => controller.abort();
+}, [q]);
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,7 +102,10 @@ export default function SearchResults() {
     setCompanies([]);
     setHasSearched(false);
 
-    const url = `https://apibizray.bnbdevelopment.hu/api/v1/company?q=${encodeURIComponent(q)}&l=${limit}&p=${page}`;
+    let url = `https://apibizray.bnbdevelopment.hu/api/v1/company?q=${encodeURIComponent(q)}&l=${limit}&p=${page}`;
+    selectedCities.forEach(city => {
+      url += `&city=${encodeURIComponent(city)}`;
+    });
 
     fetch(url, { signal: controller.signal })
       .then((res) => {
@@ -77,7 +128,7 @@ export default function SearchResults() {
       });
 
     return () => controller.abort();
-  }, [q, page, limit]);
+  }, [q, page, limit, selectedCities]);
 
 
   if (loading) {
@@ -131,7 +182,10 @@ export default function SearchResults() {
             <Search size={48} />
             <h2>No companies found</h2>
             <p>We couldn't find any companies matching "{q}"</p>
-            <p className="search-results-suggestion">Try adjusting your search terms</p>
+            {selectedCities.length > 0 && (
+              <p>in {selectedCities.join(", ")}</p>
+            )}
+            <p className="search-results-suggestion">Try adjusting your search terms or filters</p>
           </div>
         </div>
       </section>
@@ -145,6 +199,19 @@ export default function SearchResults() {
       setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleCityChange = (event) => {
+    const value = event.target.value;
+    if (value.includes("all")) {
+      setSelectedCities([]);
+    } else {
+      setSelectedCities(value);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCities([]);
   };
 
   const renderPagination = () => {
@@ -226,6 +293,73 @@ export default function SearchResults() {
             {totalPages > 1 && ` (Page ${page} of ${totalPages})`}
           </p>
         </div>
+        {cities.length > 0 && (
+          <div className="city-filter-container">
+            <FormControl 
+              className="city-filter" 
+              variant="outlined" 
+              size="small"
+              disabled={loadingCities}
+            >
+              <Select
+                multiple
+                value={selectedCities}
+                onChange={handleCityChange}
+                displayEmpty
+                renderValue={() => (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <SlidersHorizontal size={16} />
+                    Filter by City
+                  </span>
+                )}
+                className={selectedCities.length > 0 ? 'has-filters' : ''}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 350,
+                    },
+                  },
+                  disableAutoFocusItem: true,
+                }}
+              >
+                <MenuItem value="all">
+                  <div className="city-menu-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedCities.length === 0}
+                      readOnly
+                      className="city-checkbox"
+                    />
+                    <span className="city-name">All Cities</span>
+                    <span className="city-count">{cities.reduce((sum, city) => sum + city.count, 0)}</span>
+                  </div>
+                </MenuItem>
+                {cities.map((city) => (
+                  <MenuItem key={city.city} value={city.city}>
+                    <div className="city-menu-item">
+                      <input
+                        type="checkbox"
+                        checked={selectedCities.includes(city.city)}
+                        readOnly
+                        className="city-checkbox"
+                      />
+                      <span className="city-name">{city.city}</span>
+                      <span className="city-count">{city.count}</span>
+                    </div>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {selectedCities.length > 0 && (
+              <button 
+                className="clear-filters-btn"
+                onClick={handleClearFilters}
+              >
+                Clear Filter
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="search-results-grid">
           {companies.map((company) => (

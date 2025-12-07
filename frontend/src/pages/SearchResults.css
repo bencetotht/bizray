@@ -112,6 +112,22 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body {
+  overflow-y: scroll;
 }
 
 @media (max-width: 768px) {
@@ -130,6 +146,16 @@
 
   .search-results-empty {
     padding: 40px 20px;
+  }
+
+  .city-filter-container {
+    justify-content: center;
+  }
+
+  .city-filter {
+    width: 100%;
+    max-width: 450px;
+    min-width: unset;
   }
 }
 
@@ -212,3 +238,153 @@
   }
 }
 
+.city-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: flex-start;
+}
+
+.city-filter {
+  min-width: 180px !important;
+  max-width: 180px !important;
+  width: 180px !important;
+}
+
+.city-filter .MuiInputBase-root {
+  width: 180px !important;
+}
+
+.city-filter .MuiOutlinedInput-root {
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.city-filter .MuiOutlinedInput-root:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.city-filter .MuiOutlinedInput-root.Mui-focused {
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.city-filter .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border: none;
+}
+
+.city-filter .has-filters .MuiOutlinedInput-root {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  position: relative;
+}
+
+.city-filter .has-filters .MuiSelect-select {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.city-filter .has-filters .MuiOutlinedInput-root::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #667eea;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.4);
+}
+
+.city-filter .MuiPaper-root {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e2e8f0;
+  margin-top: 8px;
+}
+
+.city-filter .MuiList-root {
+  padding: 8px !important;
+}
+
+.city-filter .MuiMenuItem-root {
+  padding: 0 !important;
+}
+
+.city-filter .MuiMenuItem-root:last-child {
+  border-bottom: none;
+}
+
+.city-filter .MuiMenuItem-root.Mui-selected {
+  background: rgba(102, 126, 234, 0.08) !important;
+}
+
+.city-filter .MuiMenuItem-root:hover {
+  background: rgba(102, 126, 234, 0.04);
+}
+
+.city-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.city-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+  flex-shrink: 0;
+}
+
+.city-name {
+  flex: 1;
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.city-count {
+  color: #718096;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.clear-filters-btn {
+  padding: 0 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-filters-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.clear-filters-btn:active {
+  transform: translateY(0);
+}
