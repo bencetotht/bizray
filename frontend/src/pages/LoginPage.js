@@ -3,14 +3,21 @@ import { useNavigate, Link } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./LoginPage.css";
+import { useAuth } from "../context/AuthContext";
+
+
+
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  // const { user, isAuthenticated, loadingUser, logout } = useAuth();
+
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -70,10 +77,11 @@ export default function LoginPage() {
     // for now, it just simulate successful login and navigate to account page
     try {
       console.log("Login attempt:", { email, password });
+      await login({ email, password });
       navigate("/account");
     } catch (err) {
-      setError("Login failed. Please try again.");
       console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
     }
   };
 

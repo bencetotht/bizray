@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import { Search, Menu, X, User, LogIn } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Header.css";
+import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const closeMenu = () => setIsMenuOpen(false);
+  const { user, isAuthenticated } = useAuth();
+
 
   const submitSearch = () => {
     const q = searchQuery.trim();
@@ -58,10 +61,20 @@ const Header = () => {
               </button>
             </div>
 
-            <div className="auth-buttons">
+            {!isAuthenticated ? <div className="auth-buttons">
+              
               <NavLink to="/login" className="btn btn-secondary"><LogIn size={16} />Login</NavLink>
               <NavLink to="/register" className="btn btn-primary"><User size={16} />Sign Up</NavLink>
+            </div> : <div className="auth-buttons">
+              
+              <NavLink to="/account" className="btn btn-primary"><User size={16} />{user.username}</NavLink>
             </div>
+            
+          }
+
+
+
+
 
             <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -116,14 +129,7 @@ const Header = () => {
           </div>
 
           <div className="mobile-auth-buttons">
-            <NavLink to="/login" className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
-              <LogIn size={18} />
-              <span>Login</span>
-            </NavLink>
-            <NavLink to="/register" className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
-              <User size={18} />
-              <span>Sign Up</span>
-            </NavLink>
+
           </div>
         </div>
       </div>
