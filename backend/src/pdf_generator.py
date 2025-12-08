@@ -63,12 +63,16 @@ class BrandedPDF(FPDF):
         #font for the rest of the header
         self.set_font('Helvetica', 'B', 15)
         self.ln(20)
+        # CRITICAL: Reset X position to left margin after header
+        # Without this, multi_cell calls fail with "Not enough horizontal space"
+        self.set_x(self.l_margin)
 
     def _add_text_logo(self):
         """Add text-based logo as fallback"""
         self.set_font('Helvetica', 'B', 18)
         self.set_text_color(BRAND_COLOR[0], BRAND_COLOR[1], BRAND_COLOR[2])
-        self.cell(50, 10, 'BizRay', ln=False, link='https://bizray.bnbdevelopment.hu')
+        # Use ln=True to reset X position after text logo
+        self.cell(50, 10, 'BizRay', ln=True, link='https://bizray.bnbdevelopment.hu')
         self.set_text_color(0, 0, 0)
 
     def footer(self):
@@ -108,7 +112,16 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
 
     def safe_text(text, max_length=None):
         """Safely convert text to string and optionally truncate"""
-        text_str = str(text) if text is not None else 'N/A'
+        if text is None:
+            return 'N/A'
+
+        # Convert to string and handle potential encoding issues from Redis cache
+        text_str = str(text)
+
+        # Remove any problematic characters that might cause FPDF rendering issues
+        # Replace non-printable characters and normalize whitespace
+        text_str = ' '.join(text_str.split())
+
         if max_length and len(text_str) > max_length:
             return text_str[:max_length-3] + "..."
         return text_str
@@ -157,15 +170,21 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
 
     try:
         # COMPANY HEADER - Simple and clean
+        # CRITICAL: Ensure X position is at left margin before any rendering
+        # This prevents "Not enough horizontal space" errors, especially with cached data
+        pdf.set_x(pdf.l_margin)
+
         pdf.set_font(FONT_FAMILY, 'B', TITLE_FONT_SIZE)
         company_name = safe_text(company_data.get('name'), max_length=100)
         # Use multi_cell for company name to handle long names
         pdf.multi_cell(0, 10, company_name)
 
+        pdf.set_x(pdf.l_margin)  # Reset X after multi_cell
         pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
         pdf.set_text_color(100, 100, 100)
         firmenbuchnummer = safe_text(company_data.get('firmenbuchnummer'))
         pdf.multi_cell(0, 5, f"Firmenbuchnummer: {firmenbuchnummer}")
+        pdf.set_x(pdf.l_margin)  # Reset X after multi_cell
         pdf.multi_cell(0, 5, f"Report generated: {date.today().isoformat()}")
         pdf.set_text_color(0, 0, 0)
 
