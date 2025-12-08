@@ -19,53 +19,103 @@ function makeUrl(path) {
 }
 
 export async function registerRequest({ username, email, password }) {
-  // console.log("makeURL FOR REGISTER:: ::: ", makeUrl("/auth/register/"))
-  
-  const res = await fetch(makeUrl("/auth/register/"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, email, password }),
-  });
+  try {
+    const res = await fetch(makeUrl("/auth/register"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, email, password }),
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    // console.error("Registration error details:", errorBody);
-    const message =
-      errorBody.detail?.[0]?.msg ||
-      errorBody.detail ||
-      errorBody.message ||
-      "Registration failed";
-    throw new Error(message);
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+
+      // Extract detailed error message
+      let message = "Registration failed";
+
+      if (errorBody.detail) {
+        // Handle FastAPI validation errors (array format)
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail.map(err => err.msg || err).join(", ");
+        } else {
+          // Handle string detail message
+          message = errorBody.detail;
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      }
+
+      // Add status code for debugging
+      if (res.status === 400) {
+        // Bad request - validation or duplicate email
+        throw new Error(message);
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`Registration failed (${res.status}): ${message}`);
+      }
+    }
+
+    return res.json();
+  } catch (error) {
+    // Handle network errors
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
   }
-
-  return res.json();
 }
 
 
 
 export async function loginRequest({ email, password }) {
-  const res = await fetch(makeUrl("/auth/login/"), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const res = await fetch(makeUrl("/auth/login"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    // console.error("Login error details:", errorBody);
-    const message =
-      errorBody.detail?.[0]?.msg ||
-      errorBody.detail ||
-      errorBody.message ||
-      "Login failed";
-    throw new Error(message);
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+
+      // Extract detailed error message
+      let message = "Login failed";
+
+      if (errorBody.detail) {
+        // Handle FastAPI validation errors (array format)
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail.map(err => err.msg || err).join(", ");
+        } else {
+          // Handle string detail message
+          message = errorBody.detail;
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      }
+
+      // Add status code context
+      if (res.status === 401) {
+        // Unauthorized - wrong credentials
+        throw new Error(message);
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`Login failed (${res.status}): ${message}`);
+      }
+    }
+
+    return res.json(); // { token, user }
+  } catch (error) {
+    // Handle network errors
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
   }
-
-  return res.json(); // { token, user }
 }
 
 export async function authFetch(path, options = {}) {
@@ -88,14 +138,29 @@ export async function authFetch(path, options = {}) {
 }
 
 export async function fetchCurrentUser() {
-  const res = await authFetch("/api/v1/auth/me", {
-    method: "GET",
-  });
+  try {
+    const res = await authFetch("/api/v1/auth/me", {
+      method: "GET",
+    });
 
-  if (!res.ok) {
-    console.error("fetchCurrentUser failed with status:", res.status);
-    throw new Error("Failed to fetch current user");
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      const message = errorBody.detail || errorBody.message || "Failed to fetch user information";
+
+      if (res.status === 401) {
+        throw new Error("Session expired. Please log in again.");
+      } else if (res.status === 404) {
+        throw new Error("User not found. Please log in again.");
+      } else {
+        throw new Error(`${message} (${res.status})`);
+      }
+    }
+
+    return res.json();
+  } catch (error) {
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
   }
-
-  return res.json();
 }
