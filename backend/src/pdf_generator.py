@@ -127,9 +127,11 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
         return text_str
 
     def add_section_header(title):
+        pdf.set_x(pdf.l_margin)  # Reset X position before header
         pdf.set_font(FONT_FAMILY, 'B', HEADER_FONT_SIZE)
         pdf.set_text_color(60, 60, 60)
         pdf.multi_cell(0, 8, safe_text(title))
+        pdf.set_x(pdf.l_margin)  # Reset X position after multi_cell
         pdf.set_text_color(0, 0, 0)
         pdf.ln(3)
 
@@ -223,6 +225,8 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
                 # Truncate label if too long to prevent overflow
                 display_label = safe_text(label, max_length=35)
 
+                # Reset X position for each row
+                pdf.set_x(pdf.l_margin)
                 # Label
                 pdf.cell(80, 7, display_label)
 
@@ -256,6 +260,8 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
                 # Truncate label if too long
                 display_label = safe_text(label, max_length=35)
 
+                # Reset X position for each row
+                pdf.set_x(pdf.l_margin)
                 if value is None:
                     status = "Unknown"
                     color = RISK_NEUTRAL
@@ -309,19 +315,25 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
         ]
 
         for field_label, field_value in info_fields:
+            # Reset X position to ensure proper layout
+            pdf.set_x(pdf.l_margin)
             pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
             pdf.set_text_color(100, 100, 100)
-            pdf.cell(40, 6, field_label + ':')
+            pdf.cell(0, 6, field_label + ':', ln=True)
+            pdf.set_x(pdf.l_margin)
             pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
             pdf.set_text_color(0, 0, 0)
             pdf.multi_cell(0, 6, field_value)
+            pdf.ln(1)  # Small spacing between fields
 
         pdf.ln(2)
 
         # Business Purpose
+        pdf.set_x(pdf.l_margin)
         pdf.set_font(FONT_FAMILY, 'B', BODY_FONT_SIZE)
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 6, 'Business Purpose:', ln=True)
+        pdf.set_x(pdf.l_margin)
         pdf.set_font(FONT_FAMILY, '', BODY_FONT_SIZE)
         pdf.set_text_color(0, 0, 0)
         business_purpose = safe_text(company_data.get('business_purpose'), max_length=500)
@@ -339,6 +351,7 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
         registry_entries = company_data.get('registry_entries', [])
         if registry_entries:
             # Table header
+            pdf.set_x(pdf.l_margin)
             pdf.set_fill_color(240, 240, 240)
             pdf.set_font(FONT_FAMILY, 'B', 9)
             pdf.cell(35, 6, "Date", border=1, fill=True)
@@ -353,6 +366,7 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
                 entry_type_str = safe_text(entry.get('type'), max_length=40)
                 court_str = safe_text(entry.get('court'), max_length=25)
 
+                pdf.set_x(pdf.l_margin)
                 pdf.cell(35, 6, reg_date_str, border=1)
                 pdf.cell(90, 6, entry_type_str, border=1)
                 pdf.cell(0, 6, court_str, border=1, ln=1)
