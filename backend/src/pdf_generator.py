@@ -95,6 +95,7 @@ def create_company_pdf(company_data: dict, risk_analysis: dict) -> bytes:
     try:
         pdf = BrandedPDF('P', 'mm', 'A4')
         pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_margins(left=10, top=10, right=10)
         pdf.add_page()
     except Exception as e:
         raise Exception(f"Failed to initialize PDF: {str(e)}")
