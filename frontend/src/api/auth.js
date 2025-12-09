@@ -167,3 +167,121 @@ export async function fetchCurrentUser() {
     throw error;
   }
 }
+
+export async function changePasswordRequest({ current_password, new_password }) {
+  try {
+    const res = await authFetch("/api/v1/auth/password", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ current_password, new_password }),
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      let message = "Failed to change password";
+
+      if (errorBody.detail) {
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail.map(err => err.msg || err).join(", ");
+        } else {
+          message = errorBody.detail;
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      }
+
+      if (res.status === 401) {
+        throw new Error(message);
+      } else if (res.status === 400) {
+        throw new Error(message);
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`${message} (${res.status})`);
+      }
+    }
+
+    return res.json();
+  } catch (error) {
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
+  }
+}
+
+export async function changeUsernameRequest({ username }) {
+  try {
+    const res = await authFetch("/api/v1/auth/username", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username }),
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      let message = "Failed to change username";
+
+      if (errorBody.detail) {
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail.map(err => err.msg || err).join(", ");
+        } else {
+          message = errorBody.detail;
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      }
+
+      if (res.status === 400) {
+        throw new Error(message);
+      } else if (res.status === 401) {
+        throw new Error("Session expired. Please log in again.");
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`${message} (${res.status})`);
+      }
+    }
+
+    return res.json();
+  } catch (error) {
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
+  }
+}
+
+export async function deleteAccountRequest() {
+  try {
+    const res = await authFetch("/api/v1/auth/profile", {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      const message = errorBody.detail || errorBody.message || "Failed to delete account";
+
+      if (res.status === 401) {
+        throw new Error("Session expired. Please log in again.");
+      } else if (res.status === 404) {
+        throw new Error("User not found.");
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`${message} (${res.status})`);
+      }
+    }
+
+    return res.json();
+  } catch (error) {
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
+  }
+}

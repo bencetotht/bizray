@@ -1,5 +1,7 @@
 .admin-users-page {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .admin-users-header {
@@ -8,6 +10,7 @@
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .admin-users-header h1 {
@@ -29,6 +32,7 @@
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .admin-users-page .search-box {
@@ -103,7 +107,9 @@
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .loading-state,
@@ -131,12 +137,14 @@
 }
 
 .users-table-wrapper {
-  overflow-x: auto;
+  width: 100%;
+  overflow-x: visible;
 }
 
 .users-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .users-table thead {
@@ -154,6 +162,32 @@
   letter-spacing: 0.5px;
 }
 
+/* Column widths for better distribution */
+.users-table th:nth-child(1),
+.users-table td:nth-child(1) {
+  width: 25%; /* User column */
+}
+
+.users-table th:nth-child(2),
+.users-table td:nth-child(2) {
+  width: 30%; /* Email column */
+}
+
+.users-table th:nth-child(3),
+.users-table td:nth-child(3) {
+  width: 15%; /* Role column */
+}
+
+.users-table th:nth-child(4),
+.users-table td:nth-child(4) {
+  width: 18%; /* Registered column */
+}
+
+.users-table th:nth-child(5),
+.users-table td:nth-child(5) {
+  width: 12%; /* Actions column */
+}
+
 .users-table tbody tr {
   border-bottom: 1px solid #e2e8f0;
   transition: background 0.2s ease;
@@ -167,6 +201,8 @@
   padding: 16px;
   font-size: 0.95rem;
   color: #2d3748;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-info {
@@ -214,6 +250,13 @@
   align-items: center;
   gap: 8px;
   color: #718096;
+  overflow: hidden;
+}
+
+.user-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-email svg,
@@ -284,6 +327,7 @@
 
 .users-summary {
   margin-top: 24px;
+  padding: 0 4px;
   text-align: center;
   color: #718096;
   font-size: 0.9rem;
@@ -296,6 +340,7 @@
   align-items: center;
   gap: 12px;
   margin-top: 24px;
+  padding: 0 4px;
   flex-wrap: wrap;
 }
 

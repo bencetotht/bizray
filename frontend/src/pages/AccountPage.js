@@ -12,10 +12,13 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AccountPage.css";
 import { useAuth } from "../context/AuthContext";
+import { changeUsernameRequest, changePasswordRequest, deleteAccountRequest, fetchCurrentUser } from "../api/auth";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -37,6 +40,27 @@ export default function AccountPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Profile form state
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: ""
+  });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // Delete account state
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteInputError, setDeleteInputError] = useState("");
 
 
 
@@ -70,9 +94,6 @@ export default function AccountPage() {
   if (!isAuthenticated || !user) {
     return <div>Please log in first.</div>;
   }
-
-  console.log("USAAAA", user.username);
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -125,9 +146,31 @@ export default function AccountPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Saving profile:", formData);
+    setErrorMessage("");
+    setSuccessMessage("");
+    setSaving(true);
+
+    try {
+      const result = await changeUsernameRequest({ username: formData.name });
+      setSuccessMessage("Profile updated successfully!");
+
+      // Refresh user data to update context
+      const updatedUser = await fetchCurrentUser();
+      // The AuthContext will automatically update through its periodic check
+
+      // Update local form data
+      setFormData((prev) => ({
+        ...prev,
+        name: result.user.username || updatedUser.username
+      }));
+
+    } catch (error) {
+      setErrorMessage(error.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = () => {
@@ -135,13 +178,79 @@ export default function AccountPage() {
     navigate("/login");
   };
 
-  const handleDeleteAccount = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      console.log("Deleting account…");
+  const handleDeleteAccount = async () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteModalClose = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmText("");
+    setDeleteInputError("");
+  };
+
+  const handleDeleteConfirm = async () => {
+    // Validate confirmation text
+    if (deleteConfirmText.toLowerCase() !== "delete") {
+      setDeleteInputError('Please type "DELETE" to confirm');
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteInputError("");
+
+    try {
+      await deleteAccountRequest();
+
+      // Logout and clear tokens
+      logout();
+
+      // Navigate to login
+      navigate("/login");
+
+    } catch (error) {
+      setDeleteInputError(`Failed to delete account: ${error.message}`);
+      setDeleting(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    // Validation
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      setPasswordError("Please fill in all password fields");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      return;
+    }
+
+    setPasswordSaving(true);
+
+    try {
+      await changePasswordRequest({
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword
+      });
+
+      setPasswordSuccess("Password changed successfully!");
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: ""
+      });
+    } catch (error) {
+      setPasswordError(error.message || "Failed to change password");
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -221,9 +330,9 @@ export default function AccountPage() {
                 Sign Out
               </button>
 
-              <button className="account-delete" onClick={handleDeleteAccount}>
+              <button className="account-delete" onClick={handleDeleteAccount} disabled={deleting}>
                 <Trash2 size={20} />
-                Delete Account
+                {deleting ? "Deleting..." : "Delete Account"}
               </button>
             </div>
           </aside>
@@ -309,8 +418,19 @@ export default function AccountPage() {
                       />
                     </div>
 
-                    <button type="submit" className="btn btn-primary">
-                      Save Changes
+                    {successMessage && (
+                      <div style={{ color: "green", marginBottom: "16px", padding: "12px", backgroundColor: "#d4edda", borderRadius: "4px" }}>
+                        {successMessage}
+                      </div>
+                    )}
+                    {errorMessage && (
+                      <div style={{ color: "red", marginBottom: "16px", padding: "12px", backgroundColor: "#f8d7da", borderRadius: "4px" }}>
+                        {errorMessage}
+                      </div>
+                    )}
+
+                    <button type="submit" className="btn btn-primary" disabled={saving}>
+                      {saving ? "Saving..." : "Save Changes"}
                     </button>
                   </form>
                 </div>
@@ -334,6 +454,8 @@ export default function AccountPage() {
                           type={showCurrentPassword ? "text" : "password"}
                           id="currentPassword"
                           placeholder="Enter current password"
+                          value={passwordForm.currentPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                         />
                         <button
                           type="button"
@@ -364,6 +486,8 @@ export default function AccountPage() {
                           type={showNewPassword ? "text" : "password"}
                           id="newPassword"
                           placeholder="Enter new password"
+                          value={passwordForm.newPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                         />
                         <button
                           type="button"
@@ -394,6 +518,8 @@ export default function AccountPage() {
                           type={showConfirmPassword ? "text" : "password"}
                           id="confirmNewPassword"
                           placeholder="Re-enter new password"
+                          value={passwordForm.confirmNewPassword}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, confirmNewPassword: e.target.value })}
                         />
                         <button
                           type="button"
@@ -416,8 +542,24 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    <button type="button" className="btn btn-primary">
-                      Update Password
+                    {passwordSuccess && (
+                      <div style={{ color: "green", marginBottom: "16px", padding: "12px", backgroundColor: "#d4edda", borderRadius: "4px" }}>
+                        {passwordSuccess}
+                      </div>
+                    )}
+                    {passwordError && (
+                      <div style={{ color: "red", marginBottom: "16px", padding: "12px", backgroundColor: "#f8d7da", borderRadius: "4px" }}>
+                        {passwordError}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handlePasswordChange}
+                      disabled={passwordSaving}
+                    >
+                      {passwordSaving ? "Updating..." : "Update Password"}
                     </button>
                   </div>
                 </div>
@@ -525,11 +667,88 @@ export default function AccountPage() {
             Sign Out
           </button>
 
-          <button className="account-delete" onClick={handleDeleteAccount}>
+          <button className="account-delete" onClick={handleDeleteAccount} disabled={deleting}>
             <Trash2 size={20} />
-            Delete Account
+            {deleting ? "Deleting..." : "Delete Account"}
           </button>
         </div>
+
+        {/* Delete Account Modal */}
+        {showDeleteModal && (
+          <div className="delete-modal-overlay" onClick={handleDeleteModalClose}>
+            <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="delete-modal-header">
+                <div className="delete-modal-icon">
+                  <AlertTriangle />
+                </div>
+                <h3>Delete Account</h3>
+                <p>This action cannot be undone</p>
+              </div>
+
+              <div className="delete-modal-body">
+                <div className="delete-modal-warning">
+                  <div className="delete-modal-warning-title">
+                    <AlertTriangle size={20} />
+                    You will permanently lose:
+                  </div>
+                  <ul>
+                    <li>Your account profile and all personal data</li>
+                    <li>Access to all company searches and saved information</li>
+                    <li>Your search history</li>
+                    <li>This action is irreversible</li>
+                  </ul>
+                </div>
+
+                <div className="delete-modal-confirmation">
+                  <p>To confirm deletion, please type <strong>DELETE</strong> below:</p>
+                  <div className="delete-modal-input-wrapper">
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="Type DELETE to confirm"
+                      className={deleteInputError ? "error" : ""}
+                      disabled={deleting}
+                    />
+                  </div>
+                  {deleteInputError && (
+                    <div className="delete-modal-input-error">
+                      {deleteInputError}
+                    </div>
+                  )}
+                </div>
+
+                <div className="delete-modal-actions">
+                  <button
+                    className="delete-modal-cancel"
+                    onClick={handleDeleteModalClose}
+                    disabled={deleting}
+                  >
+                    <X size={18} />
+                    Cancel
+                  </button>
+                  <button
+                    className="delete-modal-confirm"
+                    onClick={handleDeleteConfirm}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <>
+                        <span className="delete-modal-loading"></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={18} />
+                        Delete Account
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

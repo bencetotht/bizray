@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Users, Search, Mail, Calendar, Shield, Trash2, Edit, X, Save, Ban, ChevronLeft, ChevronRight } from "lucide-react";
 import "./AdminUserManagementPage.css";
+import { API_PREFIX } from "../api/config";
 
-const API_BASE_URL = "https://apibizray.bnbdevelopment.hu/api/v1";
+const API_BASE_URL = API_PREFIX;
 
 export default function AdminUserManagementPage() {
   const [users, setUsers] = useState([]);
@@ -124,18 +125,15 @@ export default function AdminUserManagementPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
+  // Fetch users on mount and when page changes (without filters)
   useEffect(() => {
     const hasActiveFilters = searchQuery || filterRole !== "all";
-    if (!hasActiveFilters && currentPage !== 1) {
+    if (!hasActiveFilters) {
       fetchUsers();
     }
-  }, [currentPage, searchQuery, filterRole, fetchUsers]);
+  }, [currentPage, fetchUsers]);
 
-  
+  // Fetch all users when filters are active (for client-side filtering)
   useEffect(() => {
     const hasActiveFilters = searchQuery || filterRole !== "all";
     if (hasActiveFilters) {
@@ -176,11 +174,10 @@ export default function AdminUserManagementPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + paginatedUsers.length, displayTotal);
 
+  // Reset to page 1 when search query or filter changes
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [searchQuery, filterRole, currentPage]);
+    setCurrentPage(1);
+  }, [searchQuery, filterRole]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

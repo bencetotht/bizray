@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, Home } from "lucide-react";
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AdminLoginPage.css";
+import { API_PREFIX } from "../api/config";
 
-const API_BASE_URL = "https://apibizray.bnbdevelopment.hu/api/v1";
+const API_BASE_URL = API_PREFIX;
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
