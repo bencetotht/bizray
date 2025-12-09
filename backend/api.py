@@ -36,6 +36,10 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=256)
 
 
+class ChangeUsernameRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=128)
+
+
 @api_router.get("/")
 async def root():
     return {"message": "Welcome to BizRay API"}
@@ -221,6 +225,85 @@ async def change_password(
                 "uuid": user.uuid,
                 "email": user.email
             }
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@api_router.put("/auth/username")
+async def change_username(
+    request: ChangeUsernameRequest,
+    current_user: dict = Security(get_current_user)
+):
+    """
+    Change username
+    Requires: Bearer token in Authorization header
+    Parameters:
+    - username: New username (3-128 characters)
+    """
+    session = get_session()
+    try:
+        # Get user from database based on JWT token
+        user = session.query(User).filter(User.id == current_user["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update the username
+        user.username = request.username
+
+        session.commit()
+
+        return {
+            "message": "Username changed successfully",
+            "user": {
+                "id": user.id,
+                "uuid": user.uuid,
+                "username": user.username,
+                "email": user.email
+            }
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
+@api_router.delete("/auth/profile")
+async def delete_profile(current_user: dict = Security(get_current_user)):
+    """
+    Delete own user profile
+    Requires: Bearer token in Authorization header
+    """
+    session = get_session()
+    try:
+        # Get user from database based on JWT token
+        user = session.query(User).filter(User.id == current_user["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_info = {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username
+        }
+
+        # Delete the user
+        session.delete(user)
+        session.commit()
+
+        return {
+            "message": "Profile deleted successfully",
+            "deleted_user": user_info
         }
     except HTTPException:
         session.rollback()

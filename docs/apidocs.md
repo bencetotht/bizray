@@ -138,6 +138,64 @@ Error Responses:
 - `400 Bad Request`: New password must be different from current password
 - `404 Not Found`: User not found
 
+### Change username
+Request: `PUT /api/v1/auth/username`
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+Body:
+```json
+{
+  "username": "new_username"
+}
+```
+
+Parameters:
+- `username`: New username (3-128 characters, required)
+
+Response:
+```json
+{
+  "message": "Username changed successfully",
+  "user": {
+    "id": 1,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "new_username",
+    "email": "john@example.com"
+  }
+}
+```
+
+Error Responses:
+- `404 Not Found`: User not found
+- `401 Unauthorized`: Invalid or missing authentication token
+
+### Delete profile
+Request: `DELETE /api/v1/auth/profile`
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+Description:
+Permanently deletes the authenticated user's profile. Users can only delete their own profile.
+
+Response:
+```json
+{
+  "message": "Profile deleted successfully",
+  "deleted_user": {
+    "id": 1,
+    "email": "john@example.com",
+    "username": "john_doe"
+  }
+}
+```
+
+Error Responses:
+- `404 Not Found`: User not found
+- `401 Unauthorized`: Invalid or missing authentication token
+
 ## Company information
 
 ### Get available cities for filtering
