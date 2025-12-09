@@ -24,7 +24,7 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="logo" onClick={() => window.location.href = "/" } style={{cursor: "pointer"}}>
+          <div className="logo" onClick={() => navigate("/")} style={{cursor: "pointer"}}>
             <span className="logo-text">BizRay</span>
             <span className="logo-tagline">X-Ray for Business</span>
           </div>
