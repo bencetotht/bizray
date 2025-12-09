@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import "./AdminMetricsPage.css";
+import { API_PREFIX } from "../api/config";
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +22,7 @@ ChartJS.register(
   Legend
 );
 
-const API_BASE_URL = "https://apibizray.bnbdevelopment.hu/api/v1";
+const API_BASE_URL = API_PREFIX;
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState(null);
