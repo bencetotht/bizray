@@ -129,7 +129,10 @@ export async function authFetch(path, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(path, {
+  // Ensure we're using the full URL with API_PREFIX if path starts with /api
+  const url = path.startsWith('/api') ? makeUrl(path.replace('/api/v1', '')) : path;
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });
