@@ -14,12 +14,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 0;
+  gap: clamp(20px, 4vw, 60px);
 }
 
 .logo {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex-shrink: 0;
+  min-width: fit-content;
+  gap: 2px;
 }
 
 .logo-text {
@@ -29,18 +33,25 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 0;
 }
 
 .logo-tagline {
   font-size: 0.8rem;
   color: #718096;
   font-weight: 500;
+  line-height: 1;
+  margin-top: 0;
 }
 
 .nav {
   display: flex;
   gap: 30px;
   align-items: center;
+  flex: 0 1 auto;
+  margin-left: 20px;
+  min-width: fit-content;
 }
 
 .nav-link {
@@ -58,6 +69,8 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .search-container {
@@ -403,6 +416,15 @@
   .search-input {
     width: 200px;
   }
+  
+  .header-content {
+    gap: clamp(15px, 3vw, 40px);
+  }
+  
+  .nav {
+    margin-left: 20px;
+    gap: 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -432,6 +454,7 @@
   
   .header-content {
     padding: 10px 0;
+    gap: 15px;
   }
   
   .logo-text {

@@ -129,7 +129,23 @@ const Header = () => {
           </div>
 
           <div className="mobile-auth-buttons">
-
+            {!isAuthenticated ? (
+              <>
+                <NavLink to="/login" className="mobile-btn mobile-btn-secondary" onClick={closeMenu}>
+                  <LogIn size={18} />
+                  Login
+                </NavLink>
+                <NavLink to="/register" className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
+                  <User size={18} />
+                  Sign Up
+                </NavLink>
+              </>
+            ) : (
+              <NavLink to="/account" className="mobile-btn mobile-btn-primary" onClick={closeMenu}>
+                <User size={18} />
+                {user.username}
+              </NavLink>
+            )}
           </div>
         </div>
       </div>
