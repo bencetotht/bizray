@@ -78,7 +78,7 @@ export default function Pricing() {
 
             <footer className="pricing-cta">
               <Link className="btn btn-secondary" to="/register">Create free account</Link>
-              <Link className="btn btn-primary" to="/account#billing">Get network view</Link>
+              <Link className="btn btn-primary" to="/account#billing">Become a subscriber</Link>
             </footer>
 
             <div className="pricing-note">

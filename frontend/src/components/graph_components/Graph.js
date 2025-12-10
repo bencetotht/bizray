@@ -214,7 +214,7 @@ export default function Graph({ id_that_was_passed }) {
 
   const hasPremiumAccess =
     user?.role === "subscriber" || user?.role === "admin";
-  const isRegisteredOnly = user?.role === "registered";
+  const shouldShowPremiumBanner = !hasPremiumAccess;
 
 
     const [isLoading, setIsLoading] = useState(true);
@@ -629,7 +629,7 @@ useEffect(() => {
         {/* Graph Card */}
         <div
           className={`flex-1 w-full rounded-2xl overflow-hidden shadow-xl border border-slate-200 transition-all duration-300 ${
-            isRegisteredOnly ? "blur-sm" : ""
+            shouldShowPremiumBanner ? "blur-sm" : ""
           }`}
           style={{
             boxShadow: "0 20px 40px rgba(15, 23, 42, 0.15)",
@@ -652,9 +652,9 @@ useEffect(() => {
             zoomOnScroll
             zoomOnPinch
             zoomOnDoubleClick
-            nodesDraggable={!isRegisteredOnly}
-            nodesConnectable={!isRegisteredOnly}
-            elementsSelectable={!isRegisteredOnly}
+            nodesDraggable={!shouldShowPremiumBanner}
+            nodesConnectable={!shouldShowPremiumBanner}
+            elementsSelectable={!shouldShowPremiumBanner}
           >
             <Background
               variant="dots"
@@ -688,8 +688,8 @@ useEffect(() => {
           </ReactFlow>
         </div>
 
-        {/* Premium Overlay (unchanged logic, restyled with .btn classes idea) */}
-        {isRegisteredOnly && (
+        {/* Premium Overlay */}
+        {shouldShowPremiumBanner && (
           <div className="absolute  inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
             <div
               className="bg-white rounded-2xl p-8 max-w-lg w-full pointer-events-auto transform transition-all duration-300 hover:scale-[1.02]"
@@ -714,10 +714,10 @@ useEffect(() => {
 
                 <div className="w-full space-y-3 mt-2 ">
                   <Link
-                    to="/pricing"
+                    to={isAuthenticated ? "/account#billing" : "/register"}
                     className="btn btn-primary w-full text-center !mb-2"
                   >
-                    Upgrade to Premium
+                    {isAuthenticated ? "Become a Subscriber" : "Sign Up to Subscribe"}
                   </Link>
 
                   <Link

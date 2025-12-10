@@ -315,6 +315,63 @@ async def delete_profile(current_user: dict = Security(get_current_user)):
         session.close()
 
 
+@api_router.post("/auth/subscription/toggle", response_model=AuthResponse)
+async def toggle_subscription(current_user: dict = Security(get_current_user)):
+    """
+    Toggle subscription status between registered and subscriber roles
+    Users can only change their own role
+    Admin users cannot toggle their subscription
+    Requires: Bearer token in Authorization header
+    """
+    session = get_session()
+    try:
+        # Get user from database based on JWT token
+        user = session.query(User).filter(User.id == current_user["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Admin users cannot toggle their subscription
+        if user.user_role == "admin":
+            raise HTTPException(status_code=403, detail="Admin users cannot change their subscription status")
+
+        # Toggle between registered and subscriber
+        if user.user_role == "registered":
+            user.user_role = "subscriber"
+        elif user.user_role == "subscriber":
+            user.user_role = "registered"
+
+        session.commit()
+        session.refresh(user)
+
+        # Create new JWT token with updated role
+        token = create_jwt_token(
+            user_id=user.id,
+            user_uuid=user.uuid,
+            email=user.email,
+            user_role=user.user_role
+        )
+
+        return AuthResponse(
+            token=token,
+            user={
+                "id": user.id,
+                "uuid": user.uuid,
+                "username": user.username,
+                "email": user.email,
+                "role": user.user_role,
+                "registered_at": user.registered_at.isoformat()
+            }
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        session.close()
+
+
 @api_router.get("/company")
 async def get_companies(
     q: Optional[str] = None,

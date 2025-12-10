@@ -142,18 +142,12 @@ export default function AdminUserManagementPage() {
   }, [searchQuery, filterRole, fetchAllUsers]);
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch = 
+    const matchesSearch =
       user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.username?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    
-    let roleFilter = filterRole;
-    if (filterRole === "subscriber") {
-      roleFilter = "premium";
-    }
-    
-    const matchesRole = filterRole === "all" || user.role === roleFilter;
-    
+
+    const matchesRole = filterRole === "all" || user.role === filterRole;
+
     return matchesSearch && matchesRole;
   });
 
@@ -199,8 +193,8 @@ export default function AdminUserManagementPage() {
         return "role-badge admin";
       case "registered":
         return "role-badge registered";
-      case "premium":
-        return "role-badge subscriber"; 
+      case "subscriber":
+        return "role-badge subscriber";
       default:
         return "role-badge";
     }
@@ -212,7 +206,7 @@ export default function AdminUserManagementPage() {
         return "Admin";
       case "registered":
         return "Basic";
-      case "premium":
+      case "subscriber":
         return "Premium";
       default:
         return role || "N/A";
@@ -388,7 +382,7 @@ export default function AdminUserManagementPage() {
           <option value="all">All Roles</option>
           <option value="admin">Admin</option>
           <option value="registered">Basic (Registered)</option>
-          <option value="premium">Premium</option>
+          <option value="subscriber">Premium (Subscriber)</option>
         </select>
       </div>
 
@@ -579,7 +573,7 @@ export default function AdminUserManagementPage() {
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                 >
                   <option value="registered">Basic (Registered)</option>
-                  <option value="premium">Premium</option>
+                  <option value="subscriber">Premium (Subscriber)</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
