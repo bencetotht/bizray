@@ -18,7 +18,7 @@ import {
 import BackgroundNetwork from "../components/BackgroundNetwork";
 import "./AccountPage.css";
 import { useAuth } from "../context/AuthContext";
-import { changeUsernameRequest, changePasswordRequest, deleteAccountRequest, fetchCurrentUser } from "../api/auth";
+import { changeUsernameRequest, changePasswordRequest, deleteAccountRequest, fetchCurrentUser, toggleSubscriptionRequest, storeAccessToken } from "../api/auth";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -61,6 +61,11 @@ export default function AccountPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteInputError, setDeleteInputError] = useState("");
+
+  // Subscription state
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionSuccess, setSubscriptionSuccess] = useState("");
+  const [subscriptionError, setSubscriptionError] = useState("");
 
 
 
@@ -251,6 +256,35 @@ export default function AccountPage() {
       setPasswordError(error.message || "Failed to change password");
     } finally {
       setPasswordSaving(false);
+    }
+  };
+
+  const handleToggleSubscription = async () => {
+    setSubscriptionError("");
+    setSubscriptionSuccess("");
+    setSubscriptionLoading(true);
+
+    try {
+      const result = await toggleSubscriptionRequest();
+
+      // Store the new token
+      storeAccessToken(result.token);
+
+      // Update success message based on new role
+      const newRole = result.user.role;
+      if (newRole === "subscriber") {
+        setSubscriptionSuccess("Successfully subscribed to Premium! You now have access to network graphs and advanced features.");
+      } else {
+        setSubscriptionSuccess("Successfully unsubscribed. You've been moved back to the Basic plan.");
+      }
+
+      // Refresh user data to update context
+      await fetchCurrentUser();
+
+    } catch (error) {
+      setSubscriptionError(error.message || "Failed to toggle subscription");
+    } finally {
+      setSubscriptionLoading(false);
     }
   };
 
@@ -575,14 +609,48 @@ export default function AccountPage() {
                   <div className="billing-info">
                     <div className="billing-card">
                       <h3>Current Plan</h3>
-                      <div className="plan-badge free">Free</div>
-                      <p>Basic search and company details</p>
-                      <button
-                        className="btn btn-primary"
-                        style={{ marginTop: "16px" }}
-                      >
-                        Upgrade to Pro
-                      </button>
+                      <div className={`plan-badge ${user.role === "subscriber" ? "premium" : "free"}`}>
+                        {user.role === "subscriber" ? "Premium" : user.role === "admin" ? "Admin" : "Basic"}
+                      </div>
+                      <p>
+                        {user.role === "subscriber"
+                          ? "Premium access with network graphs and advanced features"
+                          : user.role === "admin"
+                          ? "Full administrative access"
+                          : "Basic search and company details"}
+                      </p>
+
+                      {subscriptionSuccess && (
+                        <div style={{ color: "green", marginTop: "16px", padding: "12px", backgroundColor: "#d4edda", borderRadius: "4px" }}>
+                          {subscriptionSuccess}
+                        </div>
+                      )}
+                      {subscriptionError && (
+                        <div style={{ color: "red", marginTop: "16px", padding: "12px", backgroundColor: "#f8d7da", borderRadius: "4px" }}>
+                          {subscriptionError}
+                        </div>
+                      )}
+
+                      {user.role !== "admin" && (
+                        <button
+                          className="btn btn-primary"
+                          style={{ marginTop: "16px" }}
+                          onClick={handleToggleSubscription}
+                          disabled={subscriptionLoading}
+                        >
+                          {subscriptionLoading
+                            ? "Processing..."
+                            : user.role === "subscriber"
+                            ? "Unsubscribe from Premium"
+                            : "Upgrade to Premium"}
+                        </button>
+                      )}
+
+                      {user.role === "admin" && (
+                        <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "#fff3cd", borderRadius: "4px", color: "#856404" }}>
+                          Admin accounts cannot change subscription status.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

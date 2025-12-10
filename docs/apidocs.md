@@ -196,6 +196,41 @@ Error Responses:
 - `404 Not Found`: User not found
 - `401 Unauthorized`: Invalid or missing authentication token
 
+### Toggle subscription status
+Request: `POST /api/v1/auth/subscription/toggle`
+
+Headers:
+- `Authorization`: `Bearer <token>` (required)
+
+Description:
+Toggles subscription status between `registered` (basic) and `subscriber` (premium) roles. Users can only change their own role. Admin users cannot toggle their subscription status.
+
+- If the user has role `registered`, it changes to `subscriber`
+- If the user has role `subscriber`, it changes to `registered`
+- Admin users will receive a 403 error
+
+The endpoint returns a new JWT token with the updated role, so the user doesn't need to re-login.
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "role": "subscriber",
+    "registered_at": "2025-01-15T10:30:00"
+  }
+}
+```
+
+Error Responses:
+- `403 Forbidden`: Admin users cannot change their subscription status
+- `404 Not Found`: User not found
+- `401 Unauthorized`: Invalid or missing authentication token
+
 ## Company information
 
 ### Get available cities for filtering

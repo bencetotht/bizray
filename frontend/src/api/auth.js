@@ -285,3 +285,48 @@ export async function deleteAccountRequest() {
     throw error;
   }
 }
+
+export async function toggleSubscriptionRequest() {
+  try {
+    const res = await authFetch("/api/v1/auth/subscription/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      let message = "Failed to toggle subscription";
+
+      if (errorBody.detail) {
+        if (Array.isArray(errorBody.detail)) {
+          message = errorBody.detail.map(err => err.msg || err).join(", ");
+        } else {
+          message = errorBody.detail;
+        }
+      } else if (errorBody.message) {
+        message = errorBody.message;
+      }
+
+      if (res.status === 401) {
+        throw new Error("Session expired. Please log in again.");
+      } else if (res.status === 403) {
+        throw new Error(message);
+      } else if (res.status === 404) {
+        throw new Error("User not found.");
+      } else if (res.status === 500) {
+        throw new Error(`Server error: ${message}`);
+      } else {
+        throw new Error(`${message} (${res.status})`);
+      }
+    }
+
+    return res.json(); // { token, user }
+  } catch (error) {
+    if (error.message.includes("fetch")) {
+      throw new Error("Network error: Unable to connect to server. Please check your connection.");
+    }
+    throw error;
+  }
+}
