@@ -23,7 +23,15 @@ async def lifespan(app: FastAPI):
     redis_connected.set(0)
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="BizRay API",
+    description="API for the BizRay application",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 # Configure CORS middleware
 app.add_middleware(
