@@ -502,6 +502,58 @@ Response:
 }
 ```
 
+## Company Recommendations
+Request: `GET /api/v1/recommendations`
+
+Description:
+Returns the top 5 most viewed companies in the last 24 hours based on visitation frequency. This endpoint tracks company page views from the `/api/v1/company/:id` endpoint and provides real-time trending companies.
+
+Response:
+```json
+{
+  "recommendations": [
+    {
+      "company_id": "661613k",
+      "name": "Körpermanufaktur KG",
+      "visit_count": 127
+    },
+    {
+      "company_id": "544393d",
+      "name": "13PUNKT4-Büro für Digitalisierung e.U.",
+      "visit_count": 89
+    },
+    {
+      "company_id": "471530b",
+      "name": "1425 Siegl Immobilien GmbH",
+      "visit_count": 54
+    },
+    {
+      "company_id": "511911k",
+      "name": "17 siebzehn GmbH in Liqu.",
+      "visit_count": 42
+    },
+    {
+      "company_id": "539261g",
+      "name": "2752 Siedlung Tirolerbach",
+      "visit_count": 38
+    }
+  ]
+}
+```
+
+**Important Notes:**
+- Only visits to the company detail endpoint (`GET /api/v1/company/:id`) are tracked
+- Visitation data is stored in Redis with a 24-hour TTL
+- If fewer than 5 companies have been viewed in the last 24 hours, fewer results will be returned
+- Companies with expired visit timestamps (older than 24 hours) are automatically filtered out
+- If Redis is unavailable, the endpoint returns an empty recommendations array
+- This endpoint does not require authentication
+
+**Caching:**
+Visit tracking uses Redis sorted sets for efficient querying:
+- Key `visits:trending`: Sorted set maintaining visit counts (score) and company IDs (members)
+- Key `visits:ts:{company_id}`: Individual timestamp keys with 24-hour TTL for expiration tracking
+
 ## Company Export
 
 ### Export company summary as PDF
