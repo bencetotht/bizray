@@ -45,3 +45,6 @@ email-validator==2.2.0
 
 fpdf2==2.8.5
 
+# Prometheus metrics
+prometheus-fastapi-instrumentator==7.0.0
+

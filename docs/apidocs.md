@@ -589,6 +589,51 @@ curl -o company_report.pdf "https://api.bizray.example/api/v1/company/661613k/ex
 
 Error Responses:
 - `404 Not Found`: Company with the specified ID does not exist
+
+## Monitoring & Observability
+
+### Prometheus Metrics
+Request: `GET /metrics`
+
+Description:
+Exposes Prometheus-formatted metrics for monitoring application health, performance, and business metrics. This endpoint is designed to be scraped by Prometheus and visualized in Grafana dashboards.
+
+**Authentication**: None required (configure firewall/network rules to restrict access)
+
+**Response Format**: Prometheus exposition format (text/plain)
+
+Response (excerpt):
+```
+# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",handler="/api/v1/company",status="2xx"} 1523
+
+# HELP bizray_company_searches_total Total number of company searches
+# TYPE bizray_company_searches_total counter
+bizray_company_searches_total{has_city_filter="False"} 1847
+bizray_company_searches_total{has_city_filter="True"} 523
+
+# HELP bizray_cache_hits_total Total number of cache hits
+# TYPE bizray_cache_hits_total counter
+bizray_cache_hits_total{entity_type="api"} 15234
+
+# HELP bizray_redis_connected Redis connection status (1=connected, 0=disconnected)
+# TYPE bizray_redis_connected gauge
+bizray_redis_connected 1
+```
+
+**Available Metric Categories**:
+- HTTP request metrics (count, latency, in-progress)
+- API usage metrics (searches, views, exports)
+- Authentication metrics (registrations, logins, failures)
+- Cache performance (hit/miss ratios, errors)
+- Database metrics (connections, query duration)
+- External API metrics (requests, errors, latency)
+- Admin operations tracking
+- Error tracking by endpoint and status code
+
+**Complete Documentation**: See `docs/metrics.md` for full metric definitions, example queries, and dashboard configuration.
+
 ## Admin Endpoints
 
 Admin endpoints require a Bearer token with `admin` role in the Authorization header.

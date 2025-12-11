@@ -10,6 +10,22 @@ from src.auth import hash_password, verify_password, create_jwt_token, get_curre
 from src.db import get_session, User
 from src.pdf_generator import create_company_pdf
 from src.api.queries import get_company_urkunde, get_all_urkunde_contents, calculate_risk_indicators
+from src.metrics import (
+    company_searches_total,
+    company_detail_views_total,
+    search_suggestions_total,
+    network_graph_requests_total,
+    pdf_exports_total,
+    recommendations_requests_total,
+    user_registrations_total,
+    user_logins_total,
+    failed_logins_total,
+    password_changes_total,
+    subscription_toggles_total,
+    visit_tracking_total,
+    visit_tracking_errors_total,
+    http_errors_total
+)
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -34,7 +50,11 @@ def _track_company_visit(company_id: str) -> None:
         visit_key = f"visits:ts:{company_id}"
         _redis_client.setex(visit_key, 86400, current_timestamp)
 
+        # Track metric
+        visit_tracking_total.inc()
+
     except Exception as e:
+        visit_tracking_errors_total.inc()
         print(f"Error tracking visit for company {company_id}: {e}")
 
 
@@ -105,6 +125,9 @@ async def register(request: RegisterRequest):
         session.commit()
         session.refresh(new_user)
 
+        # Track registration metric
+        user_registrations_total.inc()
+
         # Create JWT token
         token = create_jwt_token(
             user_id=new_user.id,
@@ -147,11 +170,16 @@ async def login(request: LoginRequest):
         # Find user by email
         user = session.query(User).filter(User.email == request.email).first()
         if not user:
+            failed_logins_total.inc()
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
         # Verify password
         if not verify_password(request.password, user.password_hash):
+            failed_logins_total.inc()
             raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # Track successful login
+        user_logins_total.inc()
 
         # Create JWT token
         token = create_jwt_token(
@@ -241,6 +269,9 @@ async def change_password(
         user.password_hash = new_password_hash
 
         session.commit()
+
+        # Track password change metric
+        password_changes_total.inc()
 
         return {
             "message": "Password changed successfully",
@@ -359,6 +390,7 @@ async def toggle_subscription(current_user: dict = Security(get_current_user)):
             raise HTTPException(status_code=403, detail="Admin users cannot change their subscription status")
 
         # Toggle between registered and subscriber
+        old_role = user.user_role
         if user.user_role == "registered":
             user.user_role = "subscriber"
         elif user.user_role == "subscriber":
@@ -366,6 +398,9 @@ async def toggle_subscription(current_user: dict = Security(get_current_user)):
 
         session.commit()
         session.refresh(user)
+
+        # Track subscription toggle metric
+        subscription_toggles_total.labels(from_role=old_role, to_role=user.user_role).inc()
 
         # Create new JWT token with updated role
         token = create_jwt_token(
@@ -430,6 +465,9 @@ async def get_companies(
         pass
 
     try:
+        # Track company search metric
+        company_searches_total.labels(has_city_filter=str(city is not None)).inc()
+
         total_companies = search_companies_amount(q, city)
         companies = search_companies(q, p, l, city)
         if isinstance(companies, dict):
@@ -473,6 +511,9 @@ async def get_company(company_id: str):
         if not company:
             raise HTTPException(status_code=404, detail="Company not found")
 
+        # Track company detail view metric
+        company_detail_views_total.inc()
+
         response = {"company": company}
 
         try:
@@ -514,6 +555,9 @@ async def get_network_graph(
     #     pass
 
     try:
+        # Track network graph request metric (premium feature)
+        network_graph_requests_total.labels(user_role=current_user.get("role", "unknown")).inc()
+
         company = get_company_network(company_id)
         if not company:
             raise HTTPException(status_code=404, detail="Company not found")
@@ -552,6 +596,9 @@ async def search_suggestions(q: Optional[str] = None):
         pass
     
     try:
+        # Track search suggestions metric
+        search_suggestions_total.inc()
+
         suggestions = get_search_suggestions(q)
         if isinstance(suggestions, dict):
             results = suggestions.get("results") or suggestions.get("suggestions") or []
@@ -559,14 +606,14 @@ async def search_suggestions(q: Optional[str] = None):
             results = suggestions
         else:
             results = []
-        
+
         response = {"suggestions": results}
-        
+
         try:
             set_cache(cache_key, response, entity_type="api", ttl=3600)
         except Exception:
             pass
-        
+
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -649,6 +696,9 @@ async def get_recommendations():
     Get top 5 most viewed companies in the last 24 hours
     Returns company names, IDs, and visit counts
     """
+    # Track recommendations request metric
+    recommendations_requests_total.inc()
+
     if _redis_client is None:
         return {"recommendations": []}
 
@@ -705,6 +755,9 @@ async def export_company_summary(company_id: str):
     """
     Fetches all company data and returns a downloadable summary report in PDF format
     """
+    # Track PDF export metric
+    pdf_exports_total.inc()
+
     company_data = get_company_by_id(company_id)
     if not company_data:
         raise HTTPException(status_code=404, detail="Company not found")
