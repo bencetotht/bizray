@@ -22,6 +22,7 @@ import json
 import os
 from typing import Any, Optional
 import redis
+from src.metrics import track_cache_operation, track_cache_error
 
 # Redis connection instance
 _redis_client: Optional[redis.Redis] = None
@@ -105,19 +106,26 @@ def get_cache(
     try:
         value = _redis_client.get(full_key)
         if value is None:
+            # Track cache miss
+            track_cache_operation(hit=False, entity_type=entity_type)
             return None
-        
+
+        # Track cache hit
+        track_cache_operation(hit=True, entity_type=entity_type)
+
         # For risk scores, parse JSON
         if entity_type.lower() == "risk":
             return json.loads(value)
-        
+
         # For API and DB queries, return as-is (or try to parse if it's JSON)
         try:
             return json.loads(value)
         except (json.JSONDecodeError, TypeError):
             return value
-    
+
     except redis.RedisError as e:
+        # Track cache error
+        track_cache_error("get")
         # Log error but don't fail - return None to allow fallback
         print(f"Redis error during get: {e}")
         return None
@@ -170,5 +178,6 @@ def set_cache(
         return bool(result)
 
     except (redis.RedisError, TypeError, ValueError) as e:
+        track_cache_error("set")
         print(f"Redis error during set: {e}")
         return False

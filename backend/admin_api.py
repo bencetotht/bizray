@@ -8,6 +8,7 @@ from src.auth import get_current_user, require_role
 from src.db import get_session, User
 from src.cache import get_cache, set_cache
 from src.controller import get_metrics
+from src.metrics import admin_user_operations_total
 
 admin_router = APIRouter(prefix="/api/v1/admin")
 
@@ -74,6 +75,9 @@ async def list_users(
 
     session = get_session()
     try:
+        # Track admin operation
+        admin_user_operations_total.labels(operation="list").inc()
+
         # Get total count
         total = session.query(User).count()
 
@@ -141,6 +145,9 @@ async def get_user(
 
     session = get_session()
     try:
+        # Track admin operation
+        admin_user_operations_total.labels(operation="get").inc()
+
         user = session.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -190,6 +197,9 @@ async def update_user(
     """
     session = get_session()
     try:
+        # Track admin operation
+        admin_user_operations_total.labels(operation="update").inc()
+
         user = session.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -263,6 +273,9 @@ async def delete_user(
     """
     session = get_session()
     try:
+        # Track admin operation
+        admin_user_operations_total.labels(operation="delete").inc()
+
         # Prevent admin from deleting themselves
         if current_user.get("user_id") == user_id:
             raise HTTPException(status_code=400, detail="Cannot delete your own account")
