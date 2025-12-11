@@ -5,7 +5,7 @@ import json
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import or_, and_, select, func
+from sqlalchemy import or_, and_, select, func, text
 from sqlalchemy.orm import Session
 
 from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content, get_all_urkunde_contents
@@ -184,9 +184,10 @@ def search_companies(
     session: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """
-    Search companies by string across several fields with pagination.
+    Search companies using PostgreSQL full-text search with relevance ranking.
+    Falls back to ILIKE search if search_vector is not available.
     Optionally filter by city.
-    Returns a dict with keys: companies (list), page, page_size, total, pages.
+    Returns a dict with keys: results (list of companies).
     """
     if page < 1:
         page = 1
@@ -208,42 +209,101 @@ def search_companies(
         owns_session = True
 
     try:
-        like = f"%{query}%"
-        filters = or_(
-            Company.name.ilike(like),
-            Company.firmenbuchnummer.ilike(like),
-            Company.seat.ilike(like),
-            Company.business_purpose.ilike(like),
-        )
+        # Check if search_vector column exists and is populated
+        # We'll try full-text search first, fallback to ILIKE if it fails
+        try:
+            # Use websearch_to_tsquery for better query parsing
+            # It handles phrases, AND/OR operators, and is more user-friendly
+            ts_query = func.websearch_to_tsquery('german', query)
 
-        # Build the query with optional city filter
-        if city:
-            # Join with Address table to filter by city
-            base_query = (
-                select(Company)
-                .join(Address, Company.id == Address.company_id)
-                .where(and_(filters, Address.city == city))
+            # Calculate relevance rank for ordering
+            rank_expr = func.ts_rank(
+                Company.search_vector,
+                ts_query
+            ).label('rank')
+
+            # Base filters for full-text search
+            search_filter = Company.search_vector.op('@@')(ts_query)
+
+            if city:
+                # Join with Address table to filter by city
+                base_query = (
+                    select(Company, rank_expr)
+                    .join(Address, Company.id == Address.company_id)
+                    .where(and_(search_filter, Address.city == city))
+                )
+                count_query = (
+                    select(func.count())
+                    .select_from(
+                        select(Company.id)
+                        .join(Address, Company.id == Address.company_id)
+                        .where(and_(search_filter, Address.city == city))
+                        .subquery()
+                    )
+                )
+            else:
+                base_query = (
+                    select(Company, rank_expr)
+                    .where(search_filter)
+                )
+                count_query = (
+                    select(func.count())
+                    .select_from(select(Company.id).where(search_filter).subquery())
+                )
+
+            total = session.execute(count_query).scalar_one()
+
+            # Order by relevance rank (descending), then by name
+            offset = (page - 1) * page_size
+            stmt = (
+                base_query
+                .order_by(text('rank DESC'), Company.name.asc())
+                .offset(offset)
+                .limit(page_size)
             )
-            count_query = (
-                select(func.count())
-                .select_from(
-                    select(Company.id)
+
+            results_with_rank = session.execute(stmt).all()
+            results = [row[0] for row in results_with_rank]
+
+        except Exception as fts_error:
+            # Fallback to ILIKE search if full-text search fails
+            # This ensures backward compatibility if migration hasn't run yet
+            print(f"Full-text search failed, falling back to ILIKE: {fts_error}")
+
+            like = f"%{query}%"
+            filters = or_(
+                Company.name.ilike(like),
+                Company.firmenbuchnummer.ilike(like),
+                Company.seat.ilike(like),
+                Company.business_purpose.ilike(like),
+            )
+
+            if city:
+                base_query = (
+                    select(Company)
                     .join(Address, Company.id == Address.company_id)
                     .where(and_(filters, Address.city == city))
-                    .subquery()
                 )
-            )
-        else:
-            base_query = select(Company).where(filters)
-            count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
+                count_query = (
+                    select(func.count())
+                    .select_from(
+                        select(Company.id)
+                        .join(Address, Company.id == Address.company_id)
+                        .where(and_(filters, Address.city == city))
+                        .subquery()
+                    )
+                )
+            else:
+                base_query = select(Company).where(filters)
+                count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
 
-        total = session.execute(count_query).scalar_one()
+            total = session.execute(count_query).scalar_one()
 
-        offset = (page - 1) * page_size
-        stmt = base_query.order_by(Company.name.asc()).offset(offset).limit(page_size)
-        results = session.execute(stmt).scalars().all()
+            offset = (page - 1) * page_size
+            stmt = base_query.order_by(Company.name.asc()).offset(offset).limit(page_size)
+            results = session.execute(stmt).scalars().all()
 
-        # load relationships
+        # Load relationships
         for c in results:
             _ = c.address
             _ = list(c.partners or [])
@@ -267,7 +327,7 @@ def search_companies(
 def search_companies_amount(query: str, city: Optional[str] = None, session: Optional[Session] = None) -> int:
     """
     Get the number of companies matching the query.
-    Uses the same search filters as search_companies for consistency.
+    Uses full-text search with fallback to ILIKE for consistency with search_companies.
     Optionally filter by city.
     """
     if len(query) < 3:
@@ -288,26 +348,46 @@ def search_companies_amount(query: str, city: Optional[str] = None, session: Opt
         owns_session = True
 
     try:
-        like = f"%{query}%"
-        filters = or_(
-            Company.name.ilike(like),
-            Company.firmenbuchnummer.ilike(like),
-            Company.seat.ilike(like),
-            Company.business_purpose.ilike(like),
-        )
+        # Try full-text search first, fallback to ILIKE if it fails
+        try:
+            ts_query = func.websearch_to_tsquery('german', query)
+            search_filter = Company.search_vector.op('@@')(ts_query)
 
-        if city:
-            count_query = (
-                select(func.count())
-                .select_from(
-                    select(Company.id)
-                    .join(Address, Company.id == Address.company_id)
-                    .where(and_(filters, Address.city == city))
-                    .subquery()
+            if city:
+                count_query = (
+                    select(func.count())
+                    .select_from(
+                        select(Company.id)
+                        .join(Address, Company.id == Address.company_id)
+                        .where(and_(search_filter, Address.city == city))
+                        .subquery()
+                    )
                 )
+            else:
+                count_query = select(func.count()).select_from(select(Company.id).where(search_filter).subquery())
+
+        except Exception:
+            # Fallback to ILIKE
+            like = f"%{query}%"
+            filters = or_(
+                Company.name.ilike(like),
+                Company.firmenbuchnummer.ilike(like),
+                Company.seat.ilike(like),
+                Company.business_purpose.ilike(like),
             )
-        else:
-            count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
+
+            if city:
+                count_query = (
+                    select(func.count())
+                    .select_from(
+                        select(Company.id)
+                        .join(Address, Company.id == Address.company_id)
+                        .where(and_(filters, Address.city == city))
+                        .subquery()
+                    )
+                )
+            else:
+                count_query = select(func.count()).select_from(select(Company.id).where(filters).subquery())
 
         total = session.execute(count_query).scalar_one()
 
@@ -325,62 +405,88 @@ def search_companies_amount(query: str, city: Optional[str] = None, session: Opt
 def get_search_suggestions(query: str, session: Optional[Session] = None, limit: int = 10) -> List[Dict[str, str]]:
     """
     Get search suggestions for companies matching the query.
+    Uses full-text search with fallback to ILIKE for better relevance.
     Returns a list of dictionaries with 'firmenbuchnummer' (fnr) and 'name' only.
-    
+
     Args:
         query: Search query string (minimum 3 characters)
         session: Optional database session
         limit: Maximum number of suggestions to return (default: 10)
-    
+
     Returns:
-        List of dictionaries with 'firmenbuchnummer' and 'name' keys
+        List of dictionaries with 'firmenbuchnummer' and 'name' keys, ordered by relevance
     """
     if len(query) < 3:
         return []
-    
+
     cache_key = f"db_search_suggestions:{query}:{limit}"
-    
+
     try:
         cached_result = get_cache(cache_key, entity_type="db")
         if cached_result is not None:
             return cached_result
     except Exception:
         pass
-    
+
     owns_session = False
     if session is None:
         session = SessionLocal()
         owns_session = True
-    
+
     try:
-        like = f"%{query}%"
-        filters = or_(
-            Company.name.ilike(like),
-            Company.firmenbuchnummer.ilike(like),
-        )
-        
-        stmt = (
-            select(Company.firmenbuchnummer, Company.name)
-            .where(filters)
-            .order_by(Company.name.asc())
-            .limit(limit)
-        )
-        
-        results = session.execute(stmt).all()
-        
-        suggestions = [
-            {
-                "firmenbuchnummer": row.firmenbuchnummer,
-                "name": row.name,
-            }
-            for row in results
-        ]
-        
+        # Try full-text search first for better relevance
+        try:
+            ts_query = func.websearch_to_tsquery('german', query)
+            rank_expr = func.ts_rank(Company.search_vector, ts_query).label('rank')
+            search_filter = Company.search_vector.op('@@')(ts_query)
+
+            stmt = (
+                select(Company.firmenbuchnummer, Company.name, rank_expr)
+                .where(search_filter)
+                .order_by(text('rank DESC'), Company.name.asc())
+                .limit(limit)
+            )
+
+            results = session.execute(stmt).all()
+
+            suggestions = [
+                {
+                    "firmenbuchnummer": row.firmenbuchnummer,
+                    "name": row.name,
+                }
+                for row in results
+            ]
+
+        except Exception:
+            # Fallback to ILIKE search
+            like = f"%{query}%"
+            filters = or_(
+                Company.name.ilike(like),
+                Company.firmenbuchnummer.ilike(like),
+            )
+
+            stmt = (
+                select(Company.firmenbuchnummer, Company.name)
+                .where(filters)
+                .order_by(Company.name.asc())
+                .limit(limit)
+            )
+
+            results = session.execute(stmt).all()
+
+            suggestions = [
+                {
+                    "firmenbuchnummer": row.firmenbuchnummer,
+                    "name": row.name,
+                }
+                for row in results
+            ]
+
         try:
             set_cache(cache_key, suggestions, entity_type="db", ttl=3600)
         except Exception:
             pass
-        
+
         return suggestions
     finally:
         if owns_session:

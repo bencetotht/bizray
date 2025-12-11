@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     create_engine,
 )
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -52,6 +53,9 @@ class Company(Base):
     # Risk-related
     risk_score: Mapped[float | None] = mapped_column(Float)
     reference_date: Mapped[date | None] = mapped_column(Date)
+
+    # Full-text search vector (managed by database trigger)
+    search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True)
 
     # Relationships
     address: Mapped[Address | None] = relationship(
