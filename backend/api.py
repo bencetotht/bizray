@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Security, Response
+from fastapi import APIRouter, HTTPException, Security, Response, Query
 from fastapi.security import HTTPAuthorizationCredentials
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
@@ -436,7 +436,7 @@ async def get_companies(
     q: Optional[str] = None,
     p: Optional[int] = 1,
     l: Optional[int] = 10,
-    city: Optional[str] = None
+    city: Optional[List[str]] = Query(None)
 ):
     """
     Company search with optional city filter
@@ -444,7 +444,8 @@ async def get_companies(
     - q: str - query string (required)
     - p: int - page number (default: 1)
     - l: int - page size (default: 10, max: 100)
-    - city: str - filter by city name (optional, exact match)
+    - city: List[str] - filter by one or more city names (optional, exact match)
+                         Can be provided multiple times: ?city=Linz&city=Wien
     """
     if q is None:
         raise HTTPException(status_code=400, detail="Query parameter is required")
@@ -455,7 +456,9 @@ async def get_companies(
     if l < 1 or l > 100:
         l = 10
 
-    cache_key = f"search:{q}:{p}:{l}:{city}"
+    # Create cache key with sorted cities for consistency
+    cities_key = ":".join(sorted(city)) if city else None
+    cache_key = f"search:{q}:{p}:{l}:{cities_key}"
 
     try:
         cached_result = get_cache(cache_key, entity_type="api")

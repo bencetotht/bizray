@@ -283,7 +283,9 @@ Response (with query `q=tech`):
 1. User enters search query "tech"
 2. Frontend calls `GET /api/v1/cities?q=tech` to get cities where "tech" companies are located
 3. Frontend displays city filter with only relevant cities (Wien: 523, Graz: 187, etc.)
-4. User selects a city and frontend calls `GET /api/v1/company?q=tech&city=Wien`
+4. User selects one or more cities and frontend calls:
+   - Single city: `GET /api/v1/company?q=tech&city=Wien`
+   - Multiple cities: `GET /api/v1/company?q=tech&city=Wien&city=Graz`
 
 **Caching:**
 - Without query (`q`): Cached for 24 hours
@@ -298,7 +300,9 @@ Parameters:
 - `q`: search query (required, minimum 3 characters)
 - `p`: page number (optional, default: 1)
 - `l`: number of results per page (optional, default: 10, max: 100)
-- `city`: filter by city name (optional, exact match - use cities from `/api/v1/cities`)
+- `city`: filter by one or more city names (optional, exact match - use cities from `/api/v1/cities`)
+  - Can be provided multiple times to filter by multiple cities: `city=Wien&city=Linz`
+  - Results will include companies from any of the specified cities (OR logic)
 
 Response:
 ```json
@@ -323,14 +327,21 @@ Response:
 }
 ```
 
-**Example with city filter:**
+**Example with single city filter:**
 ```
 GET /api/v1/company?q=praxis&city=Wien&p=1&l=10
 ```
 
 This will search for "praxis" only in companies located in Wien.
 
-Note: This endpoint is cached for 1 hour. Cache key includes the city parameter.
+**Example with multiple city filter:**
+```
+GET /api/v1/company?q=siemens&city=Linz&city=Wien&p=1&l=12
+```
+
+This will search for "siemens" in companies located in either Linz or Wien.
+
+Note: This endpoint is cached for 1 hour. Cache key includes the city parameter(s).
 
 ### Get detailed information about company
 Request: `GET /api/v1/company/:id`

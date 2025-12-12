@@ -180,12 +180,12 @@ def search_companies(
     query: str,
     page: int = 1,
     page_size: int = 10,
-    city: Optional[str] = None,
+    city: Optional[List[str]] = None,
     session: Optional[Session] = None,
 ) -> Dict[str, Any]:
     """
     Search companies by string across several fields with pagination.
-    Optionally filter by city.
+    Optionally filter by one or more cities.
     Returns a dict with keys: companies (list), page, page_size, total, pages.
     """
     if page < 1:
@@ -193,7 +193,9 @@ def search_companies(
     if page_size < 1:
         page_size = 10
 
-    cache_key = f"db_search_companies:{query}:{page}:{page_size}:{city}"
+    # Create cache key with sorted cities for consistency
+    cities_key = ":".join(sorted(city)) if city else None
+    cache_key = f"db_search_companies:{query}:{page}:{page_size}:{cities_key}"
 
     try:
         cached_result = get_cache(cache_key, entity_type="db")
@@ -218,18 +220,18 @@ def search_companies(
 
         # Build the query with optional city filter
         if city:
-            # Join with Address table to filter by city
+            # Join with Address table to filter by one or more cities
             base_query = (
                 select(Company)
                 .join(Address, Company.id == Address.company_id)
-                .where(and_(filters, Address.city == city))
+                .where(and_(filters, Address.city.in_(city)))
             )
             count_query = (
                 select(func.count())
                 .select_from(
                     select(Company.id)
                     .join(Address, Company.id == Address.company_id)
-                    .where(and_(filters, Address.city == city))
+                    .where(and_(filters, Address.city.in_(city)))
                     .subquery()
                 )
             )
@@ -264,16 +266,18 @@ def search_companies(
         if owns_session:
             session.close()
 
-def search_companies_amount(query: str, city: Optional[str] = None, session: Optional[Session] = None) -> int:
+def search_companies_amount(query: str, city: Optional[List[str]] = None, session: Optional[Session] = None) -> int:
     """
     Get the number of companies matching the query.
     Uses the same search filters as search_companies for consistency.
-    Optionally filter by city.
+    Optionally filter by one or more cities.
     """
     if len(query) < 3:
         return 0
 
-    cache_key = f"db_search_companies_amount:{query}:{city}"
+    # Create cache key with sorted cities for consistency
+    cities_key = ":".join(sorted(city)) if city else None
+    cache_key = f"db_search_companies_amount:{query}:{cities_key}"
 
     try:
         cached_result = get_cache(cache_key, entity_type="db")
@@ -302,7 +306,7 @@ def search_companies_amount(query: str, city: Optional[str] = None, session: Opt
                 .select_from(
                     select(Company.id)
                     .join(Address, Company.id == Address.company_id)
-                    .where(and_(filters, Address.city == city))
+                    .where(and_(filters, Address.city.in_(city)))
                     .subquery()
                 )
             )
