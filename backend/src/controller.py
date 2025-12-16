@@ -6,7 +6,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import or_, and_, select, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from .api.queries import calculate_risk_indicators, get_company_urkunde, get_urkunde_content, get_all_urkunde_contents
 from .cache import get_cache, set_cache
@@ -116,16 +116,17 @@ def get_company_by_id(company_id: str, session: Optional[Session] = None) -> Opt
     try:
         stmt = (
             select(Company)
+            .options(
+                selectinload(Company.address),
+                selectinload(Company.partners),
+                selectinload(Company.registry_entries),
+                selectinload(Company.risk_indicators)
+            )
             .where(Company.firmenbuchnummer == company_id)
         )
         result = session.execute(stmt).scalars().first()
         if result is None:
             return None
-
-        # preload relationships
-        _ = result.address
-        _ = list(result.partners or [])
-        _ = list(result.registry_entries or [])
 
         # calculate risk indicators result
         company_urkunde = get_company_urkunde(company_id)
@@ -242,15 +243,19 @@ def search_companies(
         total = session.execute(count_query).scalar_one()
 
         offset = (page - 1) * page_size
-        stmt = base_query.order_by(Company.name.asc()).offset(offset).limit(page_size)
+        stmt = (
+            base_query
+            .options(
+                selectinload(Company.address),
+                selectinload(Company.partners),
+                selectinload(Company.registry_entries),
+                selectinload(Company.risk_indicators)
+            )
+            .order_by(Company.name.asc())
+            .offset(offset)
+            .limit(page_size)
+        )
         results = session.execute(stmt).scalars().all()
-
-        # load relationships
-        for c in results:
-            _ = c.address
-            _ = list(c.partners or [])
-            _ = list(c.registry_entries or [])
-            _ = list(c.risk_indicators or [])
 
         list_items = [_serialize_company_list_item(c) for c in results]
 
@@ -519,9 +524,13 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
 
     session = SessionLocal()
     try:
-        # get company
+        # get company with eager loading of relationships
         stmt = (
             select(Company)
+            .options(
+                selectinload(Company.address),
+                selectinload(Company.partners)
+            )
             .where(Company.firmenbuchnummer == company_id)
         )
         company = session.execute(stmt).scalars().first()
@@ -529,9 +538,9 @@ def get_company_network(company_id: str, hops: int = 2) -> Dict[str, Any]:
         if company is None:
             return None
 
-        # load relationships
+        # relationships are already loaded
         address = company.address
-        partners = list(company.partners or [])
+        partners = company.partners or []
 
         # initialize nodes and edges
         nodes = []

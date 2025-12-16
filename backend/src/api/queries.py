@@ -1,4 +1,4 @@
-from .client import ZeepClient
+from .client import get_shared_client
 from .xml_parse import extract_bilanz_fields
 import numpy as np
 import os
@@ -12,14 +12,14 @@ def get_company_urkunde(fnr):
     Returns:
         urkunde_response: the response from the search_urkunde_by_fnr function
     """
-    client = ZeepClient(os.getenv("API_KEY"), os.getenv("WSDL_URL"))
+    client = get_shared_client()
     urkunde_response = client.search_urkunde_by_fnr(fnr)
     if urkunde_response is None or len(urkunde_response) == 0:
         return None
     urkunde_response_xmls = [urkunde for urkunde in urkunde_response if urkunde.KEY.endswith('XML')]
     if len(urkunde_response_xmls) == 0:
         return None
-    client.close()
+    # Don't close the shared client
     return urkunde_response_xmls
 
 def get_urkunde_content(key):
@@ -30,21 +30,20 @@ def get_urkunde_content(key):
     Returns:
         extracted_data: the extracted data from the urkunde
     """
-    client = ZeepClient(os.getenv("API_KEY"), os.getenv("WSDL_URL"))
+    client = get_shared_client()
     urkunde_content = client.get_urkunde(key)
     if urkunde_content is None:
-        client.close()
         return None
-    
+
     # Extract XML content from the response object
     content = urkunde_content.DOKUMENT.CONTENT
     if isinstance(content, bytes):
         xml_content = content.decode('utf-8', errors='replace')
     else:
         xml_content = str(content)
-    
+
     extracted_data = extract_bilanz_fields(xml_content)
-    client.close()
+    # Don't close the shared client
     return extracted_data
 
 def get_all_urkunde_contents(urkunde_list):
@@ -57,29 +56,27 @@ def get_all_urkunde_contents(urkunde_list):
     """
     if urkunde_list is None or len(urkunde_list) == 0:
         return []
-    
+
     all_extracted_data = []
-    client = ZeepClient(os.getenv("API_KEY"), os.getenv("WSDL_URL"))
-    
-    try:
-        for urkunde in urkunde_list:
-            key = urkunde.KEY
-            urkunde_content = client.get_urkunde(key)
-            if urkunde_content is None:
-                continue
-            
-            content = urkunde_content.DOKUMENT.CONTENT
-            if isinstance(content, bytes):
-                xml_content = content.decode('utf-8', errors='replace')
-            else:
-                xml_content = str(content)
-            
-            extracted_data = extract_bilanz_fields(xml_content)
-            if extracted_data is not None:
-                all_extracted_data.append(extracted_data)
-    finally:
-        client.close()
-    
+    client = get_shared_client()
+
+    for urkunde in urkunde_list:
+        key = urkunde.KEY
+        urkunde_content = client.get_urkunde(key)
+        if urkunde_content is None:
+            continue
+
+        content = urkunde_content.DOKUMENT.CONTENT
+        if isinstance(content, bytes):
+            xml_content = content.decode('utf-8', errors='replace')
+        else:
+            xml_content = str(content)
+
+        extracted_data = extract_bilanz_fields(xml_content)
+        if extracted_data is not None:
+            all_extracted_data.append(extracted_data)
+
+    # Don't close the shared client
     return all_extracted_data
 
 def calculate_risk_indicators(extracted_data, historical_data=None, registry_entries=None):
