@@ -9,7 +9,6 @@ from src.cache import get_cache, set_cache, _redis_client
 from src.auth import hash_password, verify_password, create_jwt_token, get_current_user, require_any_role
 from src.db import get_session, User
 from src.pdf_generator import create_company_pdf
-from src.api.queries import get_company_urkunde, get_all_urkunde_contents, calculate_risk_indicators
 from src.metrics import (
     company_searches_total,
     company_detail_views_total,
@@ -550,12 +549,12 @@ async def get_network_graph(
     """
     cache_key = f"network:{company_id}:{hops}"
 
-    # try:
-    #     cached_result = get_cache(cache_key, entity_type="network")
-    #     if cached_result is not None:
-    #         return cached_result
-    # except Exception:
-    #     pass
+    try:
+        cached_result = get_cache(cache_key, entity_type="network")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
 
     try:
         # Track network graph request metric (premium feature)
@@ -567,10 +566,10 @@ async def get_network_graph(
 
         response = {"company": company}
 
-        # try:
-        #     set_cache(cache_key, response, entity_type="api", ttl=7200)
-        # except Exception:
-        #     pass
+        try:
+            set_cache(cache_key, response, entity_type="network", ttl=7200)
+        except Exception:
+            pass
 
         return response
     except HTTPException:
@@ -702,6 +701,15 @@ async def get_recommendations():
     # Track recommendations request metric
     recommendations_requests_total.inc()
 
+    # Try cache first (5 minute TTL)
+    cache_key = "recommendations:trending"
+    try:
+        cached_result = get_cache(cache_key, entity_type="api")
+        if cached_result is not None:
+            return cached_result
+    except Exception:
+        pass
+
     if _redis_client is None:
         return {"recommendations": []}
 
@@ -746,7 +754,15 @@ async def get_recommendations():
                 print(f"Error fetching company {company_id} for recommendations: {e}")
                 continue
 
-        return {"recommendations": recommendations}
+        response = {"recommendations": recommendations}
+
+        # Cache recommendations for 5 minutes
+        try:
+            set_cache(cache_key, response, entity_type="api", ttl=300)
+        except Exception:
+            pass
+
+        return response
 
     except Exception as e:
         print(f"Error generating recommendations: {e}")
@@ -765,19 +781,10 @@ async def export_company_summary(company_id: str):
     if not company_data:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    company_urkunde_list = get_company_urkunde(company_id)
-
+    # Use risk indicators already calculated by get_company_by_id (cached)
     risk_data_for_pdf = {}
-    if company_urkunde_list:
-        all_docs = get_all_urkunde_contents(company_urkunde_list)
-        if all_docs:
-            risk_indicators_dict, _ = calculate_risk_indicators(
-                all_docs[-1],
-                historical_data=all_docs,
-                registry_entries=company_data.get("registry_entries", [])
-            )
-
-            risk_data_for_pdf = {"indicators": risk_indicators_dict}
+    if company_data.get("riskIndicators"):
+        risk_data_for_pdf = {"indicators": company_data.get("riskIndicators")}
 
     try:
         pdf_bytes = create_company_pdf(company_data, risk_data_for_pdf)

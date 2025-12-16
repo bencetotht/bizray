@@ -87,7 +87,7 @@ class Address(Base):
     street: Mapped[str | None] = mapped_column(String(256))
     house_number: Mapped[str | None] = mapped_column(String(64))
     postal_code: Mapped[str | None] = mapped_column(String(32))
-    city: Mapped[str | None] = mapped_column(String(256))
+    city: Mapped[str | None] = mapped_column(String(256), index=True)
     country: Mapped[str | None] = mapped_column(String(16))
 
     company: Mapped[Company] = relationship(back_populates="address")
@@ -100,9 +100,9 @@ class Partner(Base):
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), index=True)
 
     name: Mapped[str | None] = mapped_column(String(512))
-    first_name: Mapped[str | None] = mapped_column(String(256))
-    last_name: Mapped[str | None] = mapped_column(String(256))
-    birth_date: Mapped[date | None] = mapped_column(Date)
+    first_name: Mapped[str | None] = mapped_column(String(256), index=True)
+    last_name: Mapped[str | None] = mapped_column(String(256), index=True)
+    birth_date: Mapped[date | None] = mapped_column(Date, index=True)
     role: Mapped[str | None] = mapped_column(String(256))
     representation: Mapped[str | None] = mapped_column(String(256))
 
@@ -110,6 +110,7 @@ class Partner(Base):
 
     __table_args__ = (
         Index("ix_partners_company_id_last_name", "company_id", "last_name"),
+        Index("ix_partners_name_lookup", "first_name", "last_name", "birth_date"),
     )
 
 class RegistryEntry(Base):
@@ -147,14 +148,21 @@ def _make_engine():
         "DATABASE_URL",
         "postgresql+psycopg://admin:admin@192.168.88.46:5432/bizray",
     )
-    # return create_engine(database_url, pool_pre_ping=True)
     pool_size = int(os.getenv("BIZRAY_DB_POOL_SIZE", "20"))
     max_overflow = int(os.getenv("BIZRAY_DB_MAX_OVERFLOW", "40"))
+    pool_recycle = int(os.getenv("BIZRAY_DB_POOL_RECYCLE", "3600"))  # 1 hour default
+    pool_timeout = int(os.getenv("BIZRAY_DB_POOL_TIMEOUT", "30"))  # 30 seconds default
+
     return create_engine(
         database_url,
         pool_pre_ping=True,
         pool_size=pool_size,
         max_overflow=max_overflow,
+        pool_recycle=pool_recycle,  # Recycle connections after this many seconds
+        pool_timeout=pool_timeout,  # Timeout when getting connection from pool
+        connect_args={
+            "connect_timeout": 10,  # PostgreSQL connection timeout in seconds
+        },
     )
 
 engine = _make_engine()

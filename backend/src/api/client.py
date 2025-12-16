@@ -3,6 +3,11 @@ from zeep.transports import Transport
 from requests import Session
 from datetime import date
 import os
+import threading
+
+# Global SOAP client instance and lock for thread-safety
+_global_zeep_client = None
+_client_lock = threading.Lock()
 
 class ZeepClient:
     def __init__(self, API_KEY, WSDL_URL):
@@ -18,7 +23,9 @@ class ZeepClient:
         """
         self.session = Session()
         self.session.headers.update({'X-API-KEY': f'{self.API_KEY}', 'Content-Type': 'application/soap+xml;charset=UTF-8'})
-        self.transport = Transport(session=self.session)
+        # Configure session timeout
+        self.session.timeout = (10, 30)  # (connect timeout, read timeout)
+        self.transport = Transport(session=self.session, timeout=30, operation_timeout=30)
         client = Client(wsdl=self.WSDL_URL, transport=self.transport)
         for service in client.wsdl.services.values():
             for port in service.ports.values():
@@ -77,7 +84,9 @@ class ZeepClient:
         
     def close(self):
         """
-        Close the client and clean up resources
+        Close the client and clean up resources.
+        Note: When using get_shared_client(), this method should not be called
+        as the shared client is reused across requests.
         """
         try:
             if self.session is not None:
@@ -90,3 +99,30 @@ class ZeepClient:
         except Exception:
             # Silently handle errors during cleanup
             pass
+
+
+def get_shared_client():
+    """
+    Get or create a shared SOAP client instance (singleton pattern).
+    This client is reused across requests for better performance.
+    Thread-safe implementation.
+
+    Returns:
+        ZeepClient: Shared SOAP client instance
+    """
+    global _global_zeep_client
+
+    # Double-checked locking pattern for performance
+    if _global_zeep_client is None:
+        with _client_lock:
+            # Check again inside lock to prevent race condition
+            if _global_zeep_client is None:
+                api_key = os.getenv("API_KEY")
+                wsdl_url = os.getenv("WSDL_URL")
+
+                if not api_key or not wsdl_url:
+                    raise ValueError("API_KEY and WSDL_URL environment variables must be set")
+
+                _global_zeep_client = ZeepClient(api_key, wsdl_url)
+
+    return _global_zeep_client
