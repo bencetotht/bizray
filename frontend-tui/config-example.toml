@@ -1,0 +1,26 @@
+# BizRay TUI Configuration Example
+# Copy this file to ~/.config/bizray-tui/config.toml
+
+[api]
+# Backend API endpoint
+endpoint = "https://apibizray.bnbdevelopment.hu"
+# Request timeout in seconds
+timeout_seconds = 30
+
+[auth]
+# JWT token (auto-managed - do not edit manually)
+token = ""
+
+[ui]
+# Number of results per page
+page_size = 12
+# Show keyboard hints at the bottom
+show_hints = true
+# Color theme (default, dark, light)
+theme = "default"
+
+[cache]
+# Enable local caching of search results
+enable_cache = true
+# Cache time-to-live in seconds
+ttl_seconds = 300

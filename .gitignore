@@ -1,3 +1,15 @@
+
+# Rust
+/target/
+**/*.d
+**/*.rlib
+**/*.rmeta
+# Cargo files
+/.cargo/
+# Cargo.lock is generally committed to ensure reproducible builds,
+# but can be uncommented if you prefer to ignore it.
+# Cargo.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
