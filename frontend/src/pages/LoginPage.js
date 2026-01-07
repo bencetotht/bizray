@@ -166,7 +166,7 @@ export default function LoginPage() {
                 )}
               </div>
 
-              <div className="form-options">
+              {/*<div className="form-options">
                 <label className="checkbox-label">
                   <input type="checkbox" />
                   <span>Remember me</span>
@@ -174,7 +174,7 @@ export default function LoginPage() {
                 <Link to="/forgot-password" className="forgot-link">
                   Forgot password?
                 </Link>
-              </div>
+              </div>*/}
 
               <button type="submit" className="btn btn-primary btn-full">
                 Sign In

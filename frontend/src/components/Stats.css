@@ -1,5 +1,6 @@
 .stats {
-  background: rgba(255, 255, 255, 0);
+  background: transparent;
+  position: relative;
 }
 
 .stats-grid {
