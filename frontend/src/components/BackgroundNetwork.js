@@ -33,10 +33,10 @@ export default function BackgroundNetwork() {
   if (!ready) return null; 
 
   return (
-  <div id="background-network-wrapper" className="relative h-[100vh]">
+  <div id="background-network-wrapper">
     <Particles
       id="tsparticles"
-      className="absolute inset-0 -z-10"
+      className="absolute inset-0"
       options={options}
     />
     <div className="background-overlay" />   

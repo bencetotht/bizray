@@ -1,13 +1,8 @@
 .features-section {
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 0 200px 0;
-  min-height: calc(100vh - 80px);
-  background: radial-gradient(1200px 700px at 20% 10%, rgba(63,81,181,.14), transparent 60%),
-              radial-gradient(900px 600px at 80% 90%, rgba(0,0,0,.06), transparent 60%);
+  min-height: 100vh;
+  padding: 140px 20px 80px;
 }
 
 .features__overlay {
@@ -28,7 +23,7 @@
 .features-content {
   position: relative;
   z-index: 10;
-  width: 80vw;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
@@ -37,20 +32,22 @@
 
 .features-header {
   margin-bottom: 4rem;
+  text-align: center;
 }
 
 .features-title {
+  margin: 0 0 10px;
   font-size: 2.5rem;
   font-weight: 700;
   color: #2d3748;
 }
 
 .features-subtitle {
-  font-size: 1.2rem;
-  color: #4a5568;
-  max-width: 700px;
   margin: 1rem auto 0;
+  max-width: 700px;
+  color: #4a5568;
   line-height: 1.6;
+  font-size: 1.2rem;
 }
 
 .features-grid {

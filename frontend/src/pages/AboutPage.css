@@ -3,9 +3,7 @@
   position: relative;
   min-height: 100vh;
   overflow: hidden;
-  display: grid;
-  place-items: center;
-  padding: 56px 20px 80px;
+  padding: 140px 20px 80px;
 }
 
 
@@ -22,7 +20,9 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1080px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .about-header {
