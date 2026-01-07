@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   BarChart3, Users, Building2, FileText, UserCircle, 
-  Activity, Search, Shield, AlertCircle,
-  TrendingUp, Zap, Server
+  Search, TrendingUp
 } from "lucide-react";
 import { Bar } from "react-chartjs-2";
 import {

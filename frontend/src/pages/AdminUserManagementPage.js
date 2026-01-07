@@ -131,7 +131,7 @@ export default function AdminUserManagementPage() {
     if (!hasActiveFilters) {
       fetchUsers();
     }
-  }, [currentPage, fetchUsers]);
+  }, [currentPage, fetchUsers, searchQuery, filterRole]);
 
   // Fetch all users when filters are active (for client-side filtering)
   useEffect(() => {
