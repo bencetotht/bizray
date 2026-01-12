@@ -1,0 +1,29 @@
+{{- if .Values.ingressRoute.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Values.ingressRoute.name }}
+  namespace: {{ .Values.global.namespace }}
+  {{- with .Values.ingressRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- with .Values.ingressRoute.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  entryPoints:
+    {{- toYaml .Values.ingressRoute.entryPoints | nindent 4 }}
+  routes:
+    {{- range .Values.ingressRoute.routes }}
+    - match: {{ .match | quote }}
+      kind: {{ .kind }}
+      {{- if .priority }}
+      priority: {{ .priority }}
+      {{- end }}
+      services:
+        - name: {{ .serviceName }}
+          port: {{ .servicePort }}
+    {{- end }}
+{{- end }}

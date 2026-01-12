@@ -1,0 +1,45 @@
+{{- if .Values.frontend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bizray-frontend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: bizray-frontend
+    pod-security.kubernetes.io/audit: baseline
+    {{- with .Values.global.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: bizray-frontend
+  strategy:
+    {{- toYaml .Values.frontend.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.frontend.podLabels | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: bizray-frontend
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+        ports:
+        - containerPort: {{ .Values.frontend.service.targetPort }}
+          name: {{ .Values.frontend.service.portName }}
+        {{- with .Values.frontend.env }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        securityContext:
+          {{- toYaml .Values.frontend.securityContext | nindent 10 }}
+{{- end }}

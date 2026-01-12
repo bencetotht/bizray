@@ -1,0 +1,53 @@
+{{- if .Values.backend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bizray-backend
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: bizray-backend
+    pod-security.kubernetes.io/audit: baseline
+    {{- with .Values.global.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      app: bizray-backend
+  strategy:
+    {{- toYaml .Values.backend.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- toYaml .Values.backend.podLabels | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: bizray-backend
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+        ports:
+        - containerPort: {{ .Values.backend.service.targetPort }}
+          name: {{ .Values.backend.service.portName }}
+        env:
+          {{- range .Values.backend.env }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+          {{- range .Values.backend.secrets }}
+          - name: {{ .name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .secretName }}
+                key: {{ .key }}
+          {{- end }}
+        securityContext:
+          {{- toYaml .Values.backend.securityContext | nindent 10 }}
+{{- end }}
