@@ -86,6 +86,9 @@ Docker Compose provides a simple all-in-one deployment solution that includes al
    docker-compose ps
    ```
 
+> [!NOTE]
+> You may use the `compose.gcp.yml` file, which references cloud images published by the CD pipeline. Be aware that these images may be archived in the future; if that happens, revert to using the default self-built compose file.
+
 #### Services Included
 
 - **PostgreSQL**: Database service with persistent volume
