@@ -1,0 +1,34 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+BizRay Application has been deployed with the following components:
+
+{{- if .Values.frontend.enabled }}
+- Frontend: bizray-frontend ({{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }})
+  Service: {{ .Values.frontend.service.name }} on port {{ .Values.frontend.service.port }}
+{{- end }}
+
+{{- if .Values.backend.enabled }}
+- Backend: bizray-backend ({{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }})
+  Service: {{ .Values.backend.service.name }} on port {{ .Values.backend.service.port }}
+{{- end }}
+
+{{- if .Values.ingressRoute.enabled }}
+
+Access your application:
+{{- range .Values.ingressRoute.routes }}
+  {{ .match }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.serviceMonitor.enabled }}
+
+Prometheus ServiceMonitor has been created in namespace: {{ .Values.serviceMonitor.namespace }}
+Metrics endpoint: http://{{ .Values.backend.service.name }}:{{ .Values.backend.service.port }}/metrics
+{{- end }}

@@ -1,0 +1,16 @@
+{{- if .Values.serviceMonitor.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Values.serviceMonitor.name }}
+  namespace: {{ .Values.serviceMonitor.namespace }}
+  labels:
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    {{- toYaml .Values.serviceMonitor.selector | nindent 4 }}
+  namespaceSelector:
+    {{- toYaml .Values.serviceMonitor.namespaceSelector | nindent 4 }}
+  endpoints:
+    {{- toYaml .Values.serviceMonitor.endpoints | nindent 4 }}
+{{- end }}
