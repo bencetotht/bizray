@@ -9,7 +9,7 @@ export default function Pricing() {
     { name: "Company Details",      guest: "yes",     registered: "yes",     subscriber: "yes" },
     { name: "Search (basic)",       guest: "yes",     registered: "yes",     subscriber: "yes" },
     { name: "Network Visualization",guest: "no",      registered: "no",      subscriber: "yes" }, // paywall
-    { name: "Usage Limits",         guest: "limited", registered: "limited", subscriber: "yes" },
+
   ];
 
   const renderCell = (status) => {
@@ -81,11 +81,7 @@ export default function Pricing() {
               <Link className="btn btn-primary" to="/account#billing">Become a subscriber</Link>
             </footer>
 
-            <div className="pricing-note">
-              <p>
-                <strong>Note:</strong> "Limited" indicates reduced usage compared to Subscribers (e.g., lower daily request allowance). Exact limits may vary.
-              </p>
-            </div>
+           
           </div>
         </div>
       </div>

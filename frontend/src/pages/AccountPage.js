@@ -338,7 +338,7 @@ export default function AccountPage() {
                 <CreditCard size={20} />
                 Billing
               </button>
-              <button
+              {/* <button
                 className={`account-nav-item ${
                   activeTab === "notifications" ? "active" : ""
                 }`}
@@ -346,8 +346,8 @@ export default function AccountPage() {
               >
                 <Bell size={20} />
                 Notifications
-              </button>
-              <button
+              </button> */}
+              {/* <button
                 className={`account-nav-item ${
                   activeTab === "settings" ? "active" : ""
                 }`}
@@ -355,7 +355,7 @@ export default function AccountPage() {
               >
                 <Settings size={20} />
                 Settings
-              </button>
+              </button> */}
             </nav>
 
             <div className="account-actions">
@@ -437,7 +437,7 @@ export default function AccountPage() {
                       />
                     </div>
 
-                    <div className="form-group">
+                    {/* <div className="form-group">
                       <label htmlFor="phone">
                         <User size={18} />
                         Phone Number (Optional)
@@ -450,7 +450,7 @@ export default function AccountPage() {
                         value={formData.phone}
                         onChange={handleChange}
                       />
-                    </div>
+                    </div> */}
 
                     {successMessage && (
                       <div style={{ color: "green", marginBottom: "16px", padding: "12px", backgroundColor: "#d4edda", borderRadius: "4px" }}>
@@ -656,7 +656,7 @@ export default function AccountPage() {
                 </div>
               )}
 
-              {activeTab === "notifications" && (
+              {/* {activeTab === "notifications" && (
                 <div className="account-section">
                   <header className="account-section-header">
                     <h2>Notification Preferences</h2>
@@ -682,7 +682,7 @@ export default function AccountPage() {
                     </button>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {activeTab === "settings" && (
                 <div className="account-section">
