@@ -39,6 +39,7 @@ SKIP_EXTENSIONS = (
     ".ico",
     ".pdf",
     ".svg",
+    ".md",
 )
 
 ALLOW_EXTENSIONS = ()
