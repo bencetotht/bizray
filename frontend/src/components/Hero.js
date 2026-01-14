@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Shield, TrendingUp, Network } from 'lucide-react';
+import TrendingCompanies from './TrendingCompanies';
 import './Hero.css';
 
 const Hero = () => {
@@ -315,6 +316,7 @@ const Hero = () => {
             </div>
           </div> 
         </div>
+        <TrendingCompanies />
       </div>
     </section>
   );
