@@ -378,6 +378,12 @@
   color: #4a5568;
 }
 
+.hero-text {
+  max-width: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
 @media (max-width: 1024px) {
   .hero-content {
     grid-template-columns: 1fr;
