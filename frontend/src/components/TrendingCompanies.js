@@ -95,11 +95,13 @@ const TrendingCompanies = () => {
                 <div className="trending-card-content">
                   <h3 className="trending-card-name">{company.name}</h3>
                   
-                  <div className="trending-card-meta">
-                    <MapPin size={14} />
-                    <span>Vienna, Austria</span>
-                  </div>
-
+                  {company.address && (
+                    <div className="trending-card-meta">
+                        <MapPin size={14} />
+                        <span>{company.address}</span>
+                    </div>
+                  )}
+                  
                   <div className="trending-card-firmen">
                     <span className="firmen-label">Firmenbuchnummer:</span>
                     <span className="firmen-number">{company.company_id}</span>
