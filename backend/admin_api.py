@@ -7,6 +7,7 @@ from sqlalchemy import func
 from src.auth import get_current_user, require_role
 from src.db import get_session, User
 from src.cache import get_cache, set_cache
+from src import cache
 from src.controller import get_metrics
 from src.metrics import admin_user_operations_total
 
@@ -228,13 +229,12 @@ async def update_user(
         cache_key = f"admin:user:{user_id}"
         try:
             # Clear specific user cache
-            from src.cache import _redis_client
-            if _redis_client:
-                _redis_client.delete(f"api:{cache_key}")
+            if cache._redis_client:
+                cache._redis_client.delete(f"api:{cache_key}")
                 # Also invalidate the users list cache
                 pattern = "api:admin:users:list:*"
-                for key in _redis_client.scan_iter(match=pattern):
-                    _redis_client.delete(key)
+                for key in cache._redis_client.scan_iter(match=pattern):
+                    cache._redis_client.delete(key)
         except Exception:
             pass
 
@@ -290,15 +290,14 @@ async def delete_user(
 
         # Invalidate cache
         try:
-            from src.cache import _redis_client
-            if _redis_client:
+            if cache._redis_client:
                 # Clear specific user cache
                 cache_key = f"api:admin:user:{user_id}"
-                _redis_client.delete(cache_key)
+                cache._redis_client.delete(cache_key)
                 # Also invalidate the users list cache
                 pattern = "api:admin:users:list:*"
-                for key in _redis_client.scan_iter(match=pattern):
-                    _redis_client.delete(key)
+                for key in cache._redis_client.scan_iter(match=pattern):
+                    cache._redis_client.delete(key)
         except Exception:
             pass
 

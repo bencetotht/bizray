@@ -5,7 +5,8 @@ from pydantic import BaseModel, EmailStr, Field
 from uuid import uuid4
 
 from src.controller import search_companies, get_company_by_id, get_search_suggestions, get_metrics, get_company_network, search_companies_amount, get_available_cities
-from src.cache import get_cache, set_cache, _redis_client
+from src.cache import get_cache, set_cache
+from src import cache
 from src.auth import hash_password, verify_password, create_jwt_token, get_current_user, require_any_role
 from src.db import get_session, User
 from src.pdf_generator import create_company_pdf
@@ -35,7 +36,8 @@ def _track_company_visit(company_id: str) -> None:
     Track a company visit in Redis for recommendation system
     Uses sorted set to maintain visit counts with 24-hour expiration
     """
-    if _redis_client is None:
+    if cache._redis_client is None:
+        print("Redis client is not initialized")
         return
 
     try:
@@ -43,11 +45,11 @@ def _track_company_visit(company_id: str) -> None:
         current_timestamp = int(time.time())
 
         # Increment visit count in sorted set
-        _redis_client.zincrby("visits:trending", 1, company_id)
+        cache._redis_client.zincrby("visits:trending", 1, company_id)
 
         # Store last access timestamp with 24-hour TTL
         visit_key = f"visits:ts:{company_id}"
-        _redis_client.setex(visit_key, 86400, current_timestamp)
+        cache._redis_client.setex(visit_key, 86400, current_timestamp)
 
         # Track metric
         visit_tracking_total.inc()
@@ -499,11 +501,12 @@ async def get_company(company_id: str):
     """
     cache_key = f"company:{company_id}"
 
+    _track_company_visit(company_id)
+
     try:
         cached_result = get_cache(cache_key, entity_type="api")
         if cached_result is not None:
             # Track visit for recommendation system
-            _track_company_visit(company_id)
             return cached_result
     except Exception:
         pass
@@ -710,7 +713,7 @@ async def get_recommendations():
     except Exception:
         pass
 
-    if _redis_client is None:
+    if cache._redis_client is None:
         return {"recommendations": []}
 
     try:
@@ -719,17 +722,17 @@ async def get_recommendations():
         cutoff_timestamp = current_timestamp - 86400  # 24 hours ago
 
         # Get all companies from the sorted set (sorted by visit count descending)
-        trending_companies = _redis_client.zrevrange("visits:trending", 0, -1, withscores=True)
+        trending_companies = cache._redis_client.zrevrange("visits:trending", 0, -1, withscores=True)
 
         recommendations = []
         for company_id, visit_count in trending_companies:
             # Check if this company's last visit is within 24 hours
             visit_key = f"visits:ts:{company_id}"
-            last_visit_timestamp = _redis_client.get(visit_key)
+            last_visit_timestamp = cache._redis_client.get(visit_key)
 
             if last_visit_timestamp is None:
                 # Timestamp key expired, remove from trending set
-                _redis_client.zrem("visits:trending", company_id)
+                cache._redis_client.zrem("visits:trending", company_id)
                 continue
 
             last_visit = int(last_visit_timestamp)
