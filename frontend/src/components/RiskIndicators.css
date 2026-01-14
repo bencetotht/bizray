@@ -81,33 +81,6 @@
 
 .risk-pie-chart.full canvas {
   border-radius: 50%;
-  border: 2px solid rgba(0,0,0,0.03);
-  filter:
-    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15))
-    drop-shadow(0 8px 20px rgba(0, 0, 0, 0.10));
-
-}
-
-.risk-pie-chart.full::before {
-  content: "";
-  position: absolute;
-  inset: -12px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(0,0,0,0.10) 0%,
-    rgba(0,0,0,0) 70%
-  );
-  z-index: -2;
-}
-
-.risk-pie-chart.full::after {
-  content: "";
-  position: absolute;
-  inset: 35px;
-  border-radius: 50%;
-  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.15);
-  pointer-events: none;
 }
 
 .risk-columns {
@@ -132,10 +105,11 @@
 .risk-ui {
   display: grid;
   grid-template-columns: 350px 1fr;
-  align-items: center;
+  align-items: start;
   justify-content: center;
-  column-gap: 120px;
+  column-gap: 80px;
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 .risk-label-tooltip {
@@ -166,7 +140,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% + 12px);
-  transform: translate(-50%, -8px);
+  transform: translateX(-50%);
   width: 280px;
   background: white;
   color: #1e293b;
@@ -177,7 +151,7 @@
   line-height: 1.5;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   pointer-events: none;
   z-index: 100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -198,8 +172,6 @@
 .risk-label-tooltip:hover .risk-label-tooltip-text {
   opacity: 1;
   visibility: visible;
-  transform: translate(-50%, 0);
-  pointer-events: auto;
 }
 
 .risk-label-tooltip-text::after {
@@ -227,10 +199,15 @@
   border-radius: 0 0 8px 8px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1150px) {
   .risk-ui {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    row-gap: 50px;
     align-items: center;
+  }
+
+  .risk-columns::before {
+    display: none;
   }
 }
 
@@ -256,6 +233,7 @@
   grid-template-columns: repeat(4, 1fr);
   z-index: 3;
 }
+
 .pill-segment {
   position: relative;
 }
@@ -362,75 +340,93 @@
 }
 
 @media (max-width: 768px) {
-  .risk-ui {
-    grid-template-columns: 1fr;
-    column-gap: 0;
-    row-gap: 32px;
-  }
-
   .risk-pie {
-    max-width: 280px;
+    max-width: 100%;
+    padding: 0 20px;
   }
 
   .risk-pie-chart.full {
-    height: 220px;
-    width: 220px;
+    height: 240px;
+    width: 240px;
   }
 
   .risk-pie-percent {
-    font-size: 32px;
+    font-size: 36px;
   }
 
   .risk-pie-caption {
-    font-size: 18px;
-  }
-
-  .risk-columns::before {
-    display: none;
+    font-size: 19px;
+    margin-top: 16px;
   }
 
   .risk-row {
     grid-template-columns: 1fr;
-    row-gap: 8px;
-    padding: 12px 0;
+    row-gap: 12px;
+    padding: 16px 0;
     border-bottom: 1px solid #edf2f7;
   }
 
   .risk-label {
-    font-size: 0.95rem;
+    font-size: 1rem;
+    min-height: 44px;
+    align-items: center;
   }
 
   .pill {
     width: 100%;
-    max-width: 280px;
-    margin: 0 auto;
+    max-width: 100%;
+    height: 40px;
+    margin: 0;
   }
 
   .pill-boolean {
     width: 100%;
-    max-width: 280px;
-    margin: 0 auto;
+    max-width: 100%;
+    height: 40px;
+    margin: 0;
+  }
+
+  .pill-label {
+    font-size: 15px;
+  }
+
+  .pill-label-boolean {
+    font-size: 13px;
+  }
+
+  .risk-label-tooltip {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    margin-left: 8px;
   }
 
   .risk-label-tooltip-text {
-    width: 220px;
-    font-size: 12px;
-    padding: 10px 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 40px);
+    max-width: 340px;
+  }
+
+  .risk-label-tooltip-text::after {
+    left: auto;
+    right: 30px;
+    transform: none;
   }
 }
 
 @media (max-width: 480px) {
   .risk-pie {
-    max-width: 240px;
+    padding: 0 16px;
   }
 
   .risk-pie-chart.full {
-    height: 180px;
-    width: 180px;
+    height: 200px;
+    width: 200px;
   }
 
   .risk-pie-percent {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .risk-pie-center-label {
@@ -438,46 +434,49 @@
   }
 
   .risk-pie-caption {
-    font-size: 16px;
+    font-size: 17px;
+    margin-top: 14px;
   }
 
   .risk-row {
-    padding: 10px 0;
+    padding: 14px 0;
   }
 
   .risk-label {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    min-height: 40px;
   }
 
   .pill {
-    width: 100%;
-    max-width: 240px;
-    height: 28px;
+    height: 36px;
   }
 
   .pill-boolean {
-    width: 100%;
-    max-width: 240px;
-    height: 28px;
+    height: 36px;
   }
 
   .pill-label {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .pill-label-boolean {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .risk-label-tooltip {
-    width: 16px;
-    height: 16px;
-    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
   }
 
   .risk-label-tooltip-text {
-    width: 200px;
-    font-size: 11px;
-    padding: 8px 10px;
+    width: calc(100vw - 30px);
+    max-width: 300px;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .risk-label-tooltip-text::after {
+    right: 25px;
   }
 }
