@@ -4,6 +4,9 @@
 
 BizRay is a full-stack web application designed to provide comprehensive search capabilities and financial risk assessment for companies registered in the Austrian court registry (Firmenbuch). The platform integrates with the Austrian Justiz SOAP API to retrieve company data, balance sheets, and registry documents, then applies quantitative risk analysis algorithms to provide actionable business intelligence.
 
+> [!NOTE]
+> This project was created for a school assignment, not to be deployed in a production environment.
+
 ## Overview
 
 BizRay enables users to:
